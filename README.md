@@ -1,22 +1,24 @@
-# ZANISTARAST Scientific Papers
+# ZANISTARAST Papers
 
-Official scientific documentation of the Zanistarast ecosystem.
+Official scientific documentation for the ZANISTARAST ecosystem.
 
-Repositories
+## Repositories
 
-- zanistarast-formal-foundations
+- Website
 - zanistarast-ai-native-model
+- zanistarast-formal-foundations
 - zanistarast-ontology
 - zanistarast-simulations
-- Website
 
-Research Areas
+## Research Areas
 
 - Formal Verification
+- Deterministic Artificial Intelligence
 - Ontology
-- Deterministic AI
-- AI Native Architecture
-- Simulation
 - Knowledge Representation
+- AI Native Systems
+- Simulation
+
+
 
 
