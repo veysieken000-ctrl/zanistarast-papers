@@ -1,20 +1,28 @@
 # Chapter 14 — Core Theorems
 
-Version: 1.0
+Version: 1.1
 
 ---
 
 # Purpose
 
-This chapter presents the first fundamental theorems derived from the primitive definitions, the core axioms and the deterministic chain.
+This chapter establishes the first non-trivial theorems of the Zanistarast mathematical framework.
 
-No additional axioms are introduced.
+Every theorem combines multiple axioms and lemmas.
+
+No theorem merely restates a definition.
 
 ---
 
-# Theorem 14.1 — Identity Preservation Theorem
+# Theorem 14.1 — Preservation of Identity
 
-Every successful execution of the deterministic chain preserves the originating Yek.
+## Statement
+
+For every admissible entity x,
+
+if the deterministic chain completes successfully,
+
+then the originating Yek of x is preserved throughout the entire chain.
 
 ## Depends on
 
@@ -33,59 +41,19 @@ Lemmas
 
 ---
 
-# Statement
+# Theorem 14.2 — Deterministic Composition
 
-For every entity x
+## Statement
 
-if
+The composition
 
-Rasterast(Rabûn(Mabûn(Zanabûn(Hebûn(x)))))
+Rasterast ∘ Rabûn ∘ Mabûn ∘ Zanabûn ∘ Hebûn
 
-is defined,
-
-then
-
-Yek(x)
-
-is preserved.
-
----
-
-# Theorem 14.2 — Chain Completeness Theorem
-
-Every Rasterast-verified process necessarily contains the complete deterministic chain.
+is deterministic whenever every intermediate transformation is defined.
 
 ## Depends on
 
-Axiom 5
-
-Lemma 13.5
-
----
-
-# Statement
-
-No Rasterast verification exists independently of
-
-Hebûn,
-
-Zanabûn,
-
-Mabûn,
-
-and Rabûn.
-
----
-
-# Theorem 14.3 — Deterministic Output Theorem
-
-Under identical assumptions,
-
-identical admissible inputs
-
-produce identical verified outputs.
-
-## Depends on
+Functions and Domains
 
 Axiom 10
 
@@ -93,44 +61,63 @@ Lemma 13.4
 
 ---
 
-# Statement
+# Theorem 14.3 — Verification Closure
 
-If
+## Statement
 
-Input₁ = Input₂
+Every Rasterast-verified object belongs to the mathematical universe U.
 
-then
+## Depends on
 
-VerifiedOutput₁ = VerifiedOutput₂.
+Universe of Discourse
 
----
-
-# Theorem 14.4 — Verification Integrity Theorem
-
-Rasterast never validates an execution that contradicts any previous layer.
-
----
-
-# Depends on
-
-Axiom 9
+Functions
 
 Lemma 13.5
 
 ---
 
-# Statement
+# Theorem 14.4 — Dependency Preservation
 
-Verification preserves the integrity of the complete deterministic chain.
+## Statement
+
+Removing any layer from the deterministic chain makes Rasterast verification undefined.
+
+## Depends on
+
+Dependency Chain
+
+Axiom 7
+
+Lemma 13.4
+
+---
+
+# Theorem 14.5 — Yek Consistency
+
+## Statement
+
+No successful deterministic chain can produce two distinct verified objects from one identical Yek under identical assumptions.
+
+## Depends on
+
+Definition of Yek
+
+Axiom 1
+
+Axiom 10
+
+Lemma 13.3
 
 ---
 
 # Scientific Review Note
 
-These theorems establish the mathematical behavior of the deterministic framework.
+Every theorem presented in this chapter derives from multiple previous results.
 
-They introduce no new assumptions beyond the primitive definitions, axioms and lemmas.
+No theorem introduces additional assumptions.
 
+The theorem set forms the mathematical core of Book I.
 
 
 
