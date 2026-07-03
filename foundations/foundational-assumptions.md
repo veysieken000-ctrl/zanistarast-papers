@@ -99,5 +99,16 @@ They are methodological assumptions rather than mathematical theorems.
 
 Their adequacy is expected to be evaluated through future mathematical development, formal verification and simulation.
 
+## Assumption 7 — Principle of Underlying Order
+
+Within the Zanistarast framework, nature is assumed to possess an intrinsic and coherent order.
+
+Phenomena commonly described as "chaos" are interpreted not as the absence of order, but as states whose governing structure has not yet been fully identified or whose long-term organization has not yet been understood.
+
+Accordingly, apparent disorder is treated as part of the progression toward the completion of an underlying ordered system rather than as evidence of a fundamentally chaotic reality.
+
+This assumption serves as a methodological principle for future mathematical modeling, simulation and verification within the Zanistarast framework.
+
+
 
 
