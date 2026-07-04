@@ -1,106 +1,176 @@
-# Chapter 02 — Core Mathematical Axioms
+# Core Axioms
 
 Version: 1.0
+
+Status: Core Mathematical Axioms
 
 ---
 
 # Purpose
 
-This chapter defines the minimal axiomatic foundation of the Zanistarast mathematical framework.
+The following axioms constitute the mathematical foundation of
+Zanistarast.
 
-Every theorem, lemma, proof and formal verification developed in later chapters must be derived from these axioms.
+Every definition,
 
-No theorem may contradict these axioms.
+lemma,
+
+theorem,
+
+proof,
+
+simulation,
+
+and formal verification
+
+must ultimately depend upon these axioms.
+
+The axioms are accepted without proof.
+
+Their purpose is to define the mathematical universe of
+Zanistarast.
 
 ---
 
-# Axiom 1 — Uniqueness of Yek
+# Axiom 1
+
+## Existence Axiom
+
+Every created mathematical object possesses ontological existence.
+
+No mathematical reasoning inside Zanistarast may refer to a created
+object lacking ontological existence.
+
+---
+
+# Axiom 2
+
+## Identity Axiom
 
 Every created entity possesses exactly one Yek.
 
-No two distinct created entities share the same Yek.
+No two created entities share the same Yek.
+
+Yek uniquely determines ontological identity.
 
 ---
 
-# Axiom 2 — Existence Precedes Knowledge
+# Axiom 3
 
-Without Hebûn there is no Zanabûn.
+## Unity Axiom
 
-Formally
+Every fundamental Yek belongs to exactly one fundamental Vahid.
 
-Hebûn(x)
+A fundamental Vahid contains only Yek belonging to the same
+ontological level and the same essential nature.
 
-⇒
-
-Zanabûn(x)
-
----
-
-# Axiom 3 — Knowledge Precedes Structure
-
-Without Zanabûn there is no Mabûn.
-
-Formally
-
-Zanabûn(x)
-
-⇒
-
-Mabûn(x)
+No Yek may simultaneously belong to two different
+fundamental Vahid.
 
 ---
 
-# Axiom 4 — Structure Precedes Action
+# Axiom 4
 
-Without Mabûn there is no Rabûn.
+## Organizational Axiom
 
-Formally
+Every created Yek possesses an internal Hebûn.
 
-Mabûn(x)
+Hebûn is the organizational principle preserving the ontological
+integrity of the entity.
 
-⇒
+Without Hebûn,
 
-Rabûn(x)
+organization,
 
----
+continuity,
 
-# Axiom 5 — Action Precedes Verification
+and coherence
 
-Without Rabûn there is no Rasterast.
-
-Formally
-
-Rabûn(x)
-
-⇒
-
-Rasterast(x)
+cannot exist.
 
 ---
 
-# Axiom 6 — Deterministic Verification Chain
+# Axiom 5
 
-Every Rasterast necessarily contains
+## Knowledge Axiom
 
-Hebûn
+Meaningful knowledge can exist only upon organized ontological
+structures.
 
-Zanabûn
+Therefore,
 
-Mabûn
+every Zanabûn depends upon an existing Hebûn.
 
-Rabûn
-
-Therefore
-
-Rasterast represents verification of the complete deterministic chain.
+Knowledge without organization is undefined.
 
 ---
 
-# Axiom 7 — Chain Preservation
+# Axiom 6
 
-No intermediate stage of the chain may be skipped.
+## Memory Axiom
 
-The only valid order is
+Persistent memory requires validated knowledge.
+
+Therefore,
+
+every Mabûn depends upon Zanabûn.
+
+Unverified information cannot become permanent memory.
+
+
+---
+
+# Axiom 7
+
+## Governance Axiom
+
+Sustainable organization requires persistent memory.
+
+Therefore,
+
+every Rabûn depends upon Mabûn.
+
+Without persistent memory,
+
+long-term organization cannot exist.
+
+---
+
+# Axiom 8
+
+## Verification Axiom
+
+Every mathematical statement,
+
+every theorem,
+
+every model,
+
+and every derived result
+
+must ultimately pass Rasterast verification.
+
+Results failing Rasterast verification shall not be accepted as completed mathematical conclusions.
+
+---
+
+# Axiom 9
+
+## Deterministic Dependency Axiom
+
+The primitive principles of Zanistarast form a deterministic dependency chain.
+
+Ehad
+
+↓
+
+Yek
+
+↓
+
+Vahid
+
+↓
 
 Hebûn
 
@@ -120,35 +190,84 @@ Rabûn
 
 Rasterast
 
----
+Every higher principle depends upon the existence of the previous one.
 
-# Axiom 8 — Monotonic Construction
-
-Each stage extends the previous stage.
-
-No stage invalidates a previously verified stage.
+This dependency represents ontological necessity rather than temporal sequence.
 
 ---
 
-# Axiom 9 — Verification Integrity
+# Axiom 10
 
-Rasterast never verifies information that has not successfully passed through the previous stages.
+## Consistency Axiom
+
+The mathematical system of Zanistarast shall remain internally consistent.
+
+No accepted theorem may contradict
+
+Primitive Definitions,
+
+Core Axioms,
+
+or previously verified theorems.
+
+Whenever contradiction appears,
+
+the mathematical formulation shall be revised rather than introducing inconsistency into the system.
 
 ---
 
-# Axiom 10 — Deterministic Output
+# Axiom 11
 
-Identical verified inputs shall always produce identical verified outputs.
+## Non-Contradiction Axiom
 
-This axiom establishes deterministic behavior throughout the framework.
+No mathematical proposition may simultaneously be true and false under the same ontological interpretation.
+
+Contradictory propositions shall be rejected unless the underlying definitions are revised.
 
 ---
 
-# Scope
+# Axiom 12
 
-These ten axioms constitute the complete core axiomatic system of Book I.
+## Ontological Layer Axiom
 
-Additional axioms may only be introduced in future versions if they do not contradict these core axioms.
+Ontological structures are hierarchical.
 
+Each higher ontological layer depends upon the existence and integrity of the lower layers.
 
+The hierarchy represents dependency rather than temporal succession.
 
+---
+
+# Consequences
+
+From these axioms the following mathematical objects may be formally developed.
+
+• Primitive Definitions
+
+• Functions
+
+• Domains
+
+• Propositions
+
+• Lemmas
+
+• Theorems
+
+• Formal Proofs
+
+• Computational Models
+
+• Formal Verification
+
+---
+
+# Mathematical Principle
+
+The purpose of these axioms is not to describe isolated mathematical objects.
+
+Their purpose is to establish a deterministic mathematical foundation capable of representing organized ontological systems.
+
+---
+
+# End of File
