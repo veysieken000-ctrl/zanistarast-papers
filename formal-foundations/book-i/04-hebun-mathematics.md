@@ -1,168 +1,225 @@
-# Chapter 04 — Hebûn Mathematics
+# Hebûn Mathematics
 
 Version: 1.0
+
+Status: Core Organizational Mathematics
 
 ---
 
 # Purpose
 
-This chapter introduces the mathematical structure of Hebûn.
+Hebûn is the first organizational principle of Zanistarast Mathematics.
 
-Hebûn is the first operational object of the Zanistarast framework.
+Primitive identity is represented by Yek.
 
-It determines whether an entity is mathematically admissible for further reasoning.
+Ontological unity is represented by Vahid.
 
----
+Hebûn explains how that unity becomes an organized, coherent, and persistent existence.
 
-# Definition 4.1 — Hebûn
-
-Hebûn denotes validated existence.
-
-Only entities satisfying Hebûn may enter the deterministic verification chain.
+Every higher mathematical structure begins with Hebûn.
 
 ---
 
-# Mathematical Domain
+# Definition
 
-Let
+Hebûn is the fundamental organizational principle that establishes and preserves the ontological integrity of a created entity.
 
-E
+Hebûn is not an object.
 
-be the set of all candidate entities.
+Hebûn is not matter.
 
-Hebûn is defined as
+Hebûn is not energy.
 
-Hebûn : E → {True, False}
+Hebûn is not merely a relation.
 
----
-
-# Interpretation
-
-For every entity x ∈ E
-
-Hebûn(x)=True
-
-means
-
-x is admitted into the framework.
-
-Hebûn(x)=False
-
-means
-
-x is rejected.
+Hebûn is the mathematical principle that allows multiple ontological layers to exist as one coherent entity.
 
 ---
 
-# Properties
+# Fundamental Principle
 
-H1
+Every created Yek possesses Hebûn.
 
-Hebûn is deterministic.
+Without Hebûn,
 
-The same entity always produces the same Hebûn result under identical assumptions.
+the ontological layers of a Yek cannot function as one existence.
 
-H2
+Therefore,
 
-Hebûn is idempotent.
-
-Applying Hebûn repeatedly does not change the result.
-
-Hebûn(Hebûn(x))
-
-=
-
-Hebûn(x)
-
-H3
-
-Hebûn never creates entities.
-
-It only validates or rejects them.
-
-H4
-
-Hebûn never modifies Yek.
+Hebûn is a necessary condition of created existence.
 
 ---
 
-# Admissibility Principle
+# Internal Organization
 
-An entity may participate in the Zanistarast framework if and only if
+Hebûn organizes the internal ontological structure of a Yek.
 
-Hebûn(x)=True
+Its role is to preserve
 
----
+• integrity,
 
-# Closure Principle
+• coherence,
 
-Every entity accepted by Hebûn belongs to the admissible mathematical universe.
+• continuity,
 
----
+• organization.
 
-# Lemma 4.1
-
-Every entity participating in Zanabûn has already satisfied Hebûn.
+Hebûn therefore represents the mathematical structure of ordered existence.
 
 ---
 
-# Proof Sketch
+# Scale Independence
 
-By Axiom 2
+Hebûn is independent of physical scale.
 
-Hebûn precedes Zanabûn.
+The same organizational principle may appear within
 
-Therefore
+an atom,
 
-membership in Zanabûn implies successful Hebûn validation.
+a molecule,
 
----
+a cell,
 
-# Theorem 4.1
+an organism,
 
-No entity can bypass Hebûn.
+a family,
 
----
+a society,
 
-# Proof Sketch
+or a civilization.
 
-Suppose an entity reaches Zanabûn without Hebûn.
+The manifestation changes,
 
-This contradicts Core Axiom 2.
-
-Therefore such an entity cannot exist within the framework.
+but the organizational principle remains the same.
 
 ---
 
-# Example
+# Recursive Principle
 
-Entity A
+Hebûn is recursive.
+
+Every organized whole may itself become a Yek at a higher ontological level.
+
+That higher Yek again possesses Hebûn.
+
+Thus organization repeats recursively throughout creation.
+
+---
+
+# Ontological Integrity
+
+Hebûn preserves the integrity of every created entity.
+
+Integrity means that the ontological layers of an entity remain organized as a single coherent existence.
+
+If Hebûn is destroyed,
+
+the organization of the entity collapses,
+
+even if its individual components remain.
+
+Therefore,
+
+Hebûn governs organization rather than material composition.
+
+---
+
+# Hebûn and Vahid
+
+Hebûn does not create Vahid.
+
+Vahid defines ontological unity.
+
+Hebûn organizes that unity.
+
+Thus,
+
+Vahid answers:
+
+"What fundamentally belongs together?"
+
+Hebûn answers:
+
+"How does that unity remain organized?"
+
+The two principles are complementary.
+
+---
+
+# Hebûn and Yek
+
+Every Yek possesses exactly one Hebûn.
+
+Hebûn belongs to the organization of that Yek.
+
+Growth,
+
+learning,
+
+adaptation,
+
+or structural transformation
+
+do not create another Hebûn.
+
+Only the emergence of a new ontological Yek establishes a new Hebûn.
+
+---
+
+# Deterministic Dependency
+
+The first deterministic organizational chain is
+
+Yek
 
 ↓
 
-Hebûn(A)=True
+Vahid
 
 ↓
 
-A enters Zanabûn.
+Hebûn
 
-Entity B
+No organized ontological structure can bypass this sequence.
 
-↓
-
-Hebûn(B)=False
-
-↓
-
-B is excluded from the framework.
+This dependency is necessary rather than optional.
 
 ---
 
-# Scientific Review Note
+# Mathematical Consequences
 
-Hebûn is intentionally modeled as an admissibility operator.
+From Hebûn emerge
 
-Future versions may refine this into richer mathematical objects (for example, graded admissibility or probabilistic validation), but Version 1.0 treats Hebûn as a deterministic Boolean operator.
+• organized knowledge (Zanabûn),
 
+• persistent memory (Mabûn),
 
+• sustainable governance (Rabûn),
 
+• deterministic verification (Rasterast).
+
+Thus Hebûn is the first mathematical principle from which all higher organizational mathematics proceeds.
+
+---
+
+# Summary
+
+Hebûn is the universal organizational principle of Zanistarast Mathematics.
+
+It is independent of scale,
+
+independent of physical form,
+
+and independent of material composition.
+
+Its purpose is to establish,
+
+preserve,
+
+and continuously organize ontological integrity.
+
+Every higher mathematical structure within Zanistarast depends upon Hebûn.
+
+---
+
+# End of File
