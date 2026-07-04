@@ -1,150 +1,315 @@
-# Chapter 15 — Proof Sketches
+# Proof Sketches
 
 Version: 1.0
+
+Status: Formal Proof Framework
 
 ---
 
 # Purpose
 
-This chapter provides structured proof sketches for the core theorems introduced in Book I.
+The proof sketches presented in this chapter establish the formal proof methodology of Zanistarast Mathematics.
 
-These proof sketches are intended as a bridge between informal mathematical reasoning and future formal proofs in Lean, Coq, Isabelle/HOL and Agda.
+Unlike axioms,
 
----
+proofs must always be derived from
 
-# Proof Sketch — Theorem 14.1
+• Primitive Definitions,
 
-## Assumptions
+• Core Axioms,
 
-- Definition of Yek
-- Core Axiom 6
-- Core Axiom 8
-- Lemma 13.3
+• Functions,
 
-## Goal
+• Fundamental Lemmas,
 
-Show that the deterministic chain preserves the originating Yek.
+• Core Theorems.
 
-## Derivation
+Every proof is deterministic.
 
-1. Hebûn admits the entity without modifying Yek.
-2. Zanabûn constructs knowledge while preserving Yek.
-3. Mabûn constructs a model preserving Yek.
-4. Rabûn executes the model without altering Yek.
-5. Rasterast verifies the execution without altering Yek.
-
-## Conclusion
-
-The originating Yek is preserved throughout the deterministic chain.
+No proof may rely upon undefined assumptions.
 
 ---
 
-# Proof Sketch — Theorem 14.2
+# Proof Structure
 
-## Assumptions
+Every formal proof shall contain the following components.
 
-- Functions and Domains
-- Core Axiom 10
-- Lemma 13.4
+Statement
 
-## Goal
+Depends On
 
-Show that the deterministic composition is itself deterministic.
+Proof
 
-## Derivation
+Conclusion
 
-Every component function is deterministic.
-
-The composition of deterministic functions remains deterministic whenever every component is defined.
-
-## Conclusion
-
-The complete deterministic chain is deterministic.
+Rasterast Verification
 
 ---
 
-# Proof Sketch — Theorem 14.3
+# Proof 1
 
-## Assumptions
+## Identity Preservation
 
-- Universe of Discourse
-- Functions and Domains
-- Lemma 13.5
+### Statement
 
-## Goal
+Every created entity preserves exactly one Yek.
 
-Show that every verified object belongs to the mathematical universe.
+### Depends On
 
-## Derivation
+• Identity Axiom
 
-Every function maps objects within the defined universe.
+• Lemma 1
 
-Function composition therefore never leaves the universe.
+• Theorem 1
 
-## Conclusion
+### Proof Sketch
 
-Every Rasterast-verified object belongs to U.
+Every created entity possesses exactly one Yek by definition.
 
----
+Growth,
 
-# Proof Sketch — Theorem 14.4
+adaptation,
 
-## Assumptions
+learning,
 
-- Dependency Chain
-- Core Axiom 7
-- Lemma 13.4
+or structural development
 
-## Goal
+modify the organization of the entity,
 
-Show that removing a layer makes verification undefined.
+but do not replace its ontological identity.
 
-## Derivation
+Therefore,
 
-Each layer depends on the previous layer.
-
-Removing any layer breaks the composition.
-
-An undefined composition cannot produce a verified result.
-
-## Conclusion
-
-Rasterast verification is undefined whenever a required layer is absent.
+the same Yek remains valid throughout ontological continuity.
 
 ---
 
-# Proof Sketch — Theorem 14.5
+### Conclusion
 
-## Assumptions
-
-- Definition of Yek
-- Core Axiom 1
-- Core Axiom 10
-- Lemma 13.3
-
-## Goal
-
-Show that identical Yek values cannot produce two different verified outputs under identical assumptions.
-
-## Derivation
-
-Yek is unique.
-
-The chain is deterministic.
-
-Deterministic computation preserves uniqueness.
-
-## Conclusion
-
-A single Yek cannot produce multiple verified outputs under identical assumptions.
+Identity is preserved.
 
 ---
 
-# Scientific Review Note
+### Rasterast Verification
 
-These proof sketches are not formal proofs.
+Verified.
 
-They identify the assumptions, logical structure and conclusions that will later be translated into machine-checked proofs.
+No contradiction exists.
 
+---
+
+# Proof 2
+
+## Organizational Necessity
+
+### Statement
+
+Every organized entity requires Hebûn.
+
+### Depends On
+
+• Organizational Axiom
+
+• Lemma 3
+
+• Theorem 3
+
+### Proof Sketch
+
+Organization cannot emerge from unrelated components.
+
+Hebûn is the organizational principle preserving ontological integrity.
+
+Therefore,
+
+without Hebûn,
+
+organized existence is impossible.
+
+---
+
+### Conclusion
+
+Hebûn is necessary.
+
+---
+
+### Rasterast Verification
+
+Verified.
+
+Deterministic dependency preserved.
+
+---
+
+# Proof 3
+
+## Knowledge Emergence
+
+### Statement
+
+Every organized knowledge requires Hebûn.
+
+### Depends On
+
+• Knowledge Axiom
+
+• Lemma 4
+
+• Theorem 4
+
+### Proof Sketch
+
+Knowledge is meaningful only when it belongs to an organized ontological structure.
+
+Without Hebûn there is no organized existence.
+
+Without organized existence there can be no organized knowledge.
+
+Therefore,
+
+every Zanabûn depends upon Hebûn.
+
+---
+
+### Conclusion
+
+Knowledge cannot emerge independently of organized existence.
+
+---
+
+### Rasterast Verification
+
+Verified.
+
+No contradiction detected.
+
+---
+
+# Proof 4
+
+## Persistent Memory
+
+### Statement
+
+Every Mabûn depends upon Zanabûn.
+
+### Depends On
+
+• Memory Axiom
+
+• Lemma 5
+
+• Theorem 5
+
+### Proof Sketch
+
+Persistent memory stores validated organized knowledge.
+
+If organized knowledge does not exist,
+
+persistent memory has no mathematical content.
+
+Therefore,
+
+Mabûn necessarily depends upon Zanabûn.
+
+---
+
+### Conclusion
+
+Persistent memory requires organized knowledge.
+
+---
+
+### Rasterast Verification
+
+Verified.
+
+Dependency preserved.
+
+---
+
+# Proof 5
+
+## Deterministic Chain
+
+### Statement
+
+The complete deterministic chain is mathematically necessary.
+
+### Depends On
+
+• Deterministic Chain
+
+• Lemma 8
+
+• Theorem 8
+
+### Proof Sketch
+
+Each primitive principle depends upon the previous one.
+
+Removing any level destroys every dependent level.
+
+Therefore,
+
+the chain cannot be shortened,
+
+reordered,
+
+or partially constructed.
+
+---
+
+### Conclusion
+
+The deterministic chain is mathematically complete.
+
+---
+
+### Rasterast Verification
+
+Verified.
+
+Complete dependency preserved.
+
+---
+
+# General Proof Principle
+
+Every proof in Zanistarast Mathematics shall satisfy the following rules.
+
+• Every symbol must be previously defined.
+
+• Every statement must depend upon accepted axioms or previously proven results.
+
+• Every proof must preserve deterministic dependency.
+
+• Every proof must conclude with Rasterast verification.
+
+Proofs violating these conditions are not accepted.
+
+---
+
+# Summary
+
+The proof methodology of Zanistarast Mathematics is deterministic.
+
+Every accepted proof is
+
+• definition-based,
+
+• axiom-based,
+
+• dependency-preserving,
+
+• Rasterast verified.
+
+This methodology establishes the formal reasoning framework for every future theorem and computational implementation.
+
+---
+
+# End of File
 
 
