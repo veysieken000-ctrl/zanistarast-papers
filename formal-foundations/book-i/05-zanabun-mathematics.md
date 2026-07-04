@@ -1,124 +1,174 @@
-# Chapter 05 — Zanabûn Mathematics
+# Zanabûn Mathematics
 
 Version: 1.0
+
+Status: Core Knowledge Mathematics
 
 ---
 
 # Purpose
 
-This chapter defines the mathematical structure of Zanabûn.
+Hebûn establishes organized existence.
 
-Zanabûn represents the knowledge layer of the Zanistarast framework.
+Zanabûn establishes organized knowledge.
 
-It transforms admissible existence into organized knowledge.
+Within Zanistarast Mathematics,
+knowledge is not treated as isolated information.
 
----
+Knowledge is the mathematical organization of meaningful relationships emerging from an existing Hebûn.
 
-# Definition 5.1 — Zanabûn
+Therefore,
 
-Zanabûn denotes knowledge derived from entities that satisfy Hebûn.
-
-Only entities admitted by Hebûn may participate in Zanabûn.
-
----
-
-# Mathematical Domain
-
-Let
-
-H
-
-be the set of entities satisfying Hebûn.
-
-Zanabûn is defined as
-
-Z : H → K
-
-where
-
-K
-
-is the set of valid knowledge objects.
+Zanabûn is impossible without Hebûn.
 
 ---
 
-# Interpretation
+# Definition
 
-For every entity
+Zanabûn is the mathematical principle governing organized knowledge.
 
-x ∈ H
+It transforms organized ontological existence into organized understanding.
 
-Zanabûn(x)
+Zanabûn is not information.
 
-produces a knowledge object
+Zanabûn is not memory.
 
-k ∈ K.
+Zanabûn is not intelligence alone.
+
+Rather,
+
+Zanabûn represents verified and meaningful knowledge emerging from organized existence.
+
+---
+
+# Dependency
+
+Every Zanabûn depends upon Hebûn.
+
+Without organization,
+
+knowledge has no coherent structure.
+
+Therefore,
+
+Hebûn is a necessary prerequisite for Zanabûn.
 
 ---
 
 # Properties
 
-Z1
+Every Zanabûn possesses
 
-Every knowledge object has exactly one originating entity.
+• structure,
 
-Z2
+• meaning,
 
-Zanabûn never creates existence.
+• coherence,
 
-Z3
+• relational consistency.
 
-Zanabûn preserves Yek.
+Knowledge is never treated as isolated fragments.
 
-Z4
-
-Knowledge cannot contradict Hebûn.
+Each element derives meaning from its relation to the organized whole.
 
 ---
 
-# Knowledge Preservation Principle
+# Ontological Role
 
-Every valid knowledge object preserves the uniqueness of its originating entity.
+Hebûn answers
 
----
+"How does organized existence remain coherent?"
 
-# Consistency Principle
+Zanabûn answers
 
-Knowledge produced by Zanabûn shall never contradict Core Axiom 2.
+"How can organized existence become understandable?"
 
----
+Thus,
 
-# Lemma 5.1
+Hebûn organizes existence.
 
-Every valid knowledge object originates from Hebûn.
-
----
-
-# Proof Sketch
-
-Directly follows from Axiom 2.
+Zanabûn organizes knowledge.
 
 ---
 
-# Theorem 5.1
+# Scale Independence
 
-Knowledge without Hebûn cannot exist inside the framework.
+Like Hebûn,
+
+Zanabûn is independent of scale.
+
+Knowledge organization may appear within
+
+cells,
+
+organisms,
+
+human beings,
+
+scientific systems,
+
+civilizations,
+
+or computational systems.
+
+The manifestation changes,
+
+but the mathematical principle remains identical.
+
 
 ---
 
-# Proof Sketch
+# Recursive Principle
 
-Assume a knowledge object exists without Hebûn.
+Zanabûn is recursive.
 
-This contradicts Axiom 2.
+Whenever a higher ontological organization emerges,
 
-Therefore the assumption is false.
+a corresponding higher knowledge organization also emerges.
+
+Thus,
+
+organized knowledge grows together with organized existence.
+
+The recursive relationship between Hebûn and Zanabûn is deterministic.
 
 ---
 
-# Example
+# Mathematical Interpretation
 
-Entity
+Let
+
+H
+
+represent an organized Hebûn.
+
+There exists a corresponding
+
+Z(H)
+
+such that
+
+Z(H)
+
+represents the organized knowledge associated with
+
+H.
+
+Knowledge therefore does not exist independently,
+
+but is always associated with an organized ontological structure.
+
+---
+
+# Deterministic Dependency
+
+The deterministic dependency is
+
+Yek
+
+↓
+
+Vahid
 
 ↓
 
@@ -126,18 +176,56 @@ Hebûn
 
 ↓
 
-Knowledge
-
-↓
-
 Zanabûn
+
+No organized knowledge may exist without the previous principles.
+
+This dependency is ontological,
+
+not temporal.
 
 ---
 
-# Scientific Review Note
+# Mathematical Consequences
 
-Version 1.0 models Zanabûn as a deterministic knowledge transformation.
+From Zanabûn emerge
 
-Future versions may introduce richer mathematical structures while preserving these core properties.
+• validated understanding,
 
+• coherent interpretation,
 
+• organized reasoning,
+
+• the possibility of persistent memory.
+
+Therefore,
+
+Mabûn depends directly upon Zanabûn.
+
+---
+
+# Summary
+
+Zanabûn is the mathematical principle governing organized knowledge.
+
+Its purpose is not to accumulate information,
+
+but to organize meaningful knowledge emerging from Hebûn.
+
+Every higher cognitive,
+
+scientific,
+
+or computational structure depends upon Zanabûn.
+
+Together,
+
+Hebûn and Zanabûn establish the first deterministic transition
+
+from organized existence
+
+to organized knowledge.
+
+---
+
+# End of File
