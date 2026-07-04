@@ -1,123 +1,306 @@
-# Chapter 14 — Core Theorems
+# Core Theorems
 
-Version: 1.1
+Version: 1.0
+
+Status: Fundamental Mathematical Theorems
 
 ---
 
 # Purpose
 
-This chapter establishes the first non-trivial theorems of the Zanistarast mathematical framework.
+The Core Theorems constitute the first formal mathematical consequences of
+the Primitive Definitions,
+Core Axioms,
+Functions,
+and Fundamental Lemmas.
 
-Every theorem combines multiple axioms and lemmas.
+Unlike lemmas,
 
-No theorem merely restates a definition.
-
----
-
-# Theorem 14.1 — Preservation of Identity
-
-## Statement
-
-For every admissible entity x,
-
-if the deterministic chain completes successfully,
-
-then the originating Yek of x is preserved throughout the entire chain.
-
-## Depends on
-
-Definitions
-
-- Yek
-
-Axioms
-
-- Axiom 6
-- Axiom 8
-
-Lemmas
-
-- Lemma 13.3
+theorems establish universal mathematical principles that govern every
+organized ontological system represented within Zanistarast Mathematics.
 
 ---
 
-# Theorem 14.2 — Deterministic Composition
+# Theorem 1
 
-## Statement
+## Identity Preservation Theorem
 
-The composition
+### Statement
 
-Rasterast ∘ Rabûn ∘ Mabûn ∘ Zanabûn ∘ Hebûn
+Every created entity preserves exactly one Yek throughout its ontological continuity.
 
-is deterministic whenever every intermediate transformation is defined.
+### Depends On
 
-## Depends on
+• Identity Axiom
 
-Functions and Domains
+• Lemma 1
 
-Axiom 10
+### Meaning
 
-Lemma 13.4
+Growth,
 
----
+adaptation,
 
-# Theorem 14.3 — Verification Closure
+learning,
 
-## Statement
+or structural development
 
-Every Rasterast-verified object belongs to the mathematical universe U.
+never generate a second Yek.
 
-## Depends on
-
-Universe of Discourse
-
-Functions
-
-Lemma 13.5
+Identity remains unique.
 
 ---
 
-# Theorem 14.4 — Dependency Preservation
+# Theorem 2
 
-## Statement
+## Unique Ontological Unity Theorem
 
-Removing any layer from the deterministic chain makes Rasterast verification undefined.
+### Statement
 
-## Depends on
+Every created Yek belongs to exactly one fundamental Vahid.
 
-Dependency Chain
+### Depends On
 
-Axiom 7
+• Unity Axiom
 
-Lemma 13.4
+• Lemma 2
 
----
+### Meaning
 
-# Theorem 14.5 — Yek Consistency
+Fundamental ontological membership is unique.
 
-## Statement
-
-No successful deterministic chain can produce two distinct verified objects from one identical Yek under identical assumptions.
-
-## Depends on
-
-Definition of Yek
-
-Axiom 1
-
-Axiom 10
-
-Lemma 13.3
+Relational structures never alter fundamental ontological unity.
 
 ---
 
-# Scientific Review Note
+# Theorem 3
 
-Every theorem presented in this chapter derives from multiple previous results.
+## Organizational Necessity Theorem
 
-No theorem introduces additional assumptions.
+### Statement
 
-The theorem set forms the mathematical core of Book I.
+No organized ontological existence is possible without Hebûn.
 
+### Depends On
+
+• Organizational Axiom
+
+• Lemma 3
+
+### Meaning
+
+Hebûn is the first necessary organizational principle of every created entity.
+
+---
+
+# Theorem 4
+
+## Knowledge Emergence Theorem
+
+### Statement
+
+Organized knowledge exists only upon organized existence.
+
+### Depends On
+
+• Knowledge Axiom
+
+• Lemma 4
+
+### Meaning
+
+Knowledge cannot emerge independently of Hebûn.
+
+Every Zanabûn presupposes organized ontological structure.
+
+---
+
+# Theorem 5
+
+## Persistent Continuity Theorem
+
+### Statement
+
+Persistent validated memory exists only upon organized knowledge.
+
+### Depends On
+
+• Memory Axiom
+
+• Lemma 5
+
+### Meaning
+
+Mabûn preserves validated knowledge through deterministic continuity.
+
+Memory without organized knowledge is impossible.
+
+---
+
+# Theorem 6
+
+## Sustainable Governance Theorem
+
+### Statement
+
+Sustainable organization exists only upon persistent validated memory.
+
+### Depends On
+
+• Governance Axiom
+
+• Lemma 6
+
+### Meaning
+
+Rabûn cannot exist independently of Mabûn.
+
+Every sustainable organization requires validated continuity.
+
+---
+
+# Theorem 7
+
+## Deterministic Verification Theorem
+
+### Statement
+
+Every accepted mathematical result must satisfy Rasterast verification.
+
+### Depends On
+
+• Verification Axiom
+
+• Lemma 7
+
+### Meaning
+
+Verification is the final condition for mathematical acceptance.
+
+A theorem failing Rasterast cannot belong to Zanistarast Mathematics.
+
+---
+
+# Theorem 8
+
+## Deterministic Dependency Theorem
+
+### Statement
+
+Every primitive mathematical principle depends upon its predecessor within the Deterministic Chain.
+
+### Depends On
+
+• Deterministic Chain
+
+• Lemma 8
+
+### Meaning
+
+The dependency chain is universal.
+
+No primitive principle may exist independently of its mathematical foundation.
+
+---
+
+# Theorem 9
+
+## Recursive Organization Theorem
+
+### Statement
+
+Every organized ontological structure may itself become a higher-level organized identity.
+
+### Depends On
+
+• Hebûn Mathematics
+
+• Lemma 9
+
+### Meaning
+
+Organization is recursively preserved throughout every ontological level.
+
+The same deterministic principles govern every scale.
+
+---
+
+# Theorem 10
+
+## Mathematical Completeness Theorem
+
+### Statement
+
+A Zanistarast mathematical model is complete if and only if every required level of the Deterministic Chain is present.
+
+### Depends On
+
+• Rasterast Verification
+
+• Deterministic Chain
+
+• Lemma 10
+
+### Meaning
+
+No complete theorem,
+
+proof,
+
+simulation,
+
+or computational implementation
+
+may omit a required ontological dependency.
+
+---
+
+# Consequences
+
+These theorems establish the first complete mathematical framework of Zanistarast.
+
+Every subsequent proof,
+
+algorithm,
+
+simulation,
+
+formal verification,
+
+and AI implementation
+
+must satisfy these theorems.
+
+---
+
+# Summary
+
+The Core Theorems demonstrate that
+
+• identity is preserved,
+
+• ontological unity is unique,
+
+• organization is necessary,
+
+• knowledge depends upon organization,
+
+• memory depends upon knowledge,
+
+• governance depends upon memory,
+
+• verification depends upon governance,
+
+• deterministic dependency is universal,
+
+• organization is recursive,
+
+• mathematical completeness requires the entire deterministic chain.
+
+Together these theorems define the formal mathematical architecture of Zanistarast.
+
+---
+
+# End of File
 
 
