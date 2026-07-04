@@ -1,140 +1,166 @@
-# Chapter 06 — Mabûn Mathematics
+# Mabûn Mathematics
 
 Version: 1.0
+
+Status: Core Memory Mathematics
 
 ---
 
 # Purpose
 
-This chapter defines the mathematical structure of Mabûn.
+Hebûn establishes organized existence.
 
-Mabûn represents the model layer of the Zanistarast framework.
+Zanabûn establishes organized knowledge.
 
-Its purpose is to transform validated knowledge into an internally consistent mathematical model.
+Mabûn establishes organized continuity.
 
----
+Within Zanistarast Mathematics,
 
-# Layer Definition
+memory is not merely stored information.
 
-Mabûn is the third layer of the deterministic chain.
+Memory represents the persistence of validated knowledge through time while preserving ontological integrity.
 
-Hebûn
+Therefore,
 
-↓
-
-Zanabûn
-
-↓
-
-Mabûn
+Mabûn cannot exist independently of Zanabûn.
 
 ---
 
-# Definition 6.1 — Mabûn
+# Definition
 
-Mabûn denotes structured knowledge.
+Mabûn is the mathematical principle governing persistent and validated memory.
 
-It organizes validated knowledge into a coherent model suitable for reasoning and execution.
+Mabûn preserves organized knowledge.
 
----
+It enables continuity,
 
-# Mathematical Domain
+stability,
 
-Let
-
-K
-
-be the set of valid knowledge objects.
-
-Let
-
-M
-
-be the set of valid models.
-
-Mabûn is defined as
-
-Mabûn : K → M
+and accumulation without losing ontological coherence.
 
 ---
 
-# Interpretation
+# Dependency
 
-For every knowledge object
+Every Mabûn depends upon Zanabûn.
 
-k ∈ K
+Knowledge must first exist before it can persist.
 
-Mabûn(k)
+Therefore,
 
-produces
+unorganized information cannot become Mabûn.
 
-m ∈ M.
+Only validated knowledge may enter persistent memory.
 
 ---
 
 # Properties
 
-M1
+Every Mabûn possesses
 
-Every model originates from validated knowledge.
+• persistence,
 
-M2
+• continuity,
 
-Mabûn never creates new knowledge.
+• validation,
 
-M3
+• stability,
 
-Mabûn preserves consistency.
+• recoverability.
 
-M4
+Memory is not passive storage.
 
-Mabûn preserves the originating Yek.
-
----
-
-# Model Preservation Principle
-
-Every model maintains the identity of its originating knowledge object.
+It actively preserves organizational integrity across time.
 
 ---
 
-# Structural Consistency Principle
+# Ontological Role
 
-A valid model shall never contradict the knowledge from which it is constructed.
+Hebûn organizes existence.
 
----
+Zanabûn organizes knowledge.
 
-# Lemma 6.1
+Mabûn organizes continuity.
 
-Every valid model originates from Zanabûn.
+Without Mabûn,
 
----
-
-# Proof Sketch
-
-Direct consequence of Core Axiom 3.
+organized knowledge cannot survive change.
 
 ---
 
-# Theorem 6.1
+# Scale Independence
 
-No model may exist inside the framework without validated knowledge.
+The principle of Mabûn appears at every ontological scale.
+
+Examples include
+
+genetic inheritance,
+
+cellular regulation,
+
+neural memory,
+
+scientific knowledge,
+
+cultural transmission,
+
+and computational memory.
+
+Although their physical realization differs,
+
+their mathematical principle remains identical.
 
 ---
 
-# Proof Sketch
+# Recursive Principle
 
-Assume a model exists without Zanabûn.
+Every higher organized knowledge system requires a corresponding higher persistent memory.
 
-This contradicts Core Axiom 3.
+Therefore,
 
-Therefore such a model cannot exist.
+Mabûn is recursive.
+
+As ontological organization grows,
+
+persistent memory also grows while preserving continuity.
 
 ---
 
-# Example
+# Mathematical Interpretation
 
-Entity
+Let
+
+Z
+
+represent an organized Zanabûn.
+
+There exists a corresponding
+
+M(Z)
+
+such that
+
+M(Z)
+
+represents the persistent and validated memory associated with
+
+Z.
+
+Thus,
+
+memory is mathematically defined as the continuity of organized knowledge.
+
+---
+
+# Deterministic Dependency
+
+The deterministic dependency is
+
+Yek
+
+↓
+
+Vahid
 
 ↓
 
@@ -142,27 +168,88 @@ Hebûn
 
 ↓
 
-Knowledge
-
-↓
-
 Zanabûn
-
-↓
-
-Model
 
 ↓
 
 Mabûn
 
+Persistent memory cannot emerge independently.
+
+Every Mabûn requires the complete organizational chain preceding it.
+
 ---
 
-# Scientific Review Note
+# Preservation Principle
 
-Version 1.0 intentionally models Mabûn as a deterministic model-construction layer.
+Mabûn preserves validated knowledge while allowing the system to evolve.
 
-Future versions may introduce model composition, refinement and transformation operators while preserving the current axioms.
+Growth,
 
+adaptation,
 
+and refinement
 
+do not destroy Mabûn.
+
+Instead,
+
+they extend its organized continuity.
+
+Thus,
+
+continuity and development are compatible.
+
+---
+
+# Mathematical Consequences
+
+From Mabûn emerge
+
+• persistent organization,
+
+• historical continuity,
+
+• cumulative learning,
+
+• sustainable governance.
+
+Therefore,
+
+Rabûn depends directly upon Mabûn.
+
+---
+
+# Summary
+
+Mabûn is the mathematical principle governing persistent and validated memory.
+
+Its purpose is not merely to store information,
+
+but to preserve organized knowledge through deterministic continuity.
+
+Every stable biological,
+
+cognitive,
+
+social,
+
+or computational system requires Mabûn.
+
+Together,
+
+Hebûn,
+
+Zanabûn,
+
+and Mabûn establish the deterministic transition
+
+from organized existence
+
+to organized knowledge
+
+to organized continuity.
+
+---
+
+# End of File
