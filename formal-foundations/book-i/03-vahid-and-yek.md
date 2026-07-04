@@ -1,162 +1,268 @@
-# Chapter 03 — Vahid and Yek
+# Yek and Vahid
 
 Version: 1.0
+
+Status: Core Mathematical Structures
 
 ---
 
 # Purpose
 
-This chapter formalizes the mathematical distinction between
-Vahid and Yek.
+Yek and Vahid constitute the first mathematical structures built upon the
+Primitive Definitions and Core Axioms.
 
-The distinction forms the basis of all later mathematical
-structures within the Zanistarast framework.
+Yek represents the primitive ontological identity of every created entity.
 
----
+Vahid represents the organized ontological whole formed from Yek.
 
-# Definition 3.1 — Vahid
-
-Vahid denotes the undivided whole.
-
-Vahid is considered the universal container of all created
-entities.
-
-It is treated as a primitive mathematical object.
+Together they establish the mathematical basis of all higher Zanistarast
+structures.
 
 ---
 
-# Properties of Vahid
+# Yek
 
-P1
+## Definition
 
-Vahid is unique.
+A Yek is the primitive mathematical identity of a created entity.
 
-P2
+A Yek is not a physical object.
 
-Vahid contains every created entity.
+A Yek is not merely a label.
 
-P3
-
-Removing a created entity changes the state of Vahid.
-
-P4
-
-Vahid is not equivalent to any individual Yek.
+A Yek represents the unique ontological identity of existence.
 
 ---
 
-# Definition 3.2 — Yek
+## Properties
 
-Yek denotes the uniqueness of one created entity.
+Every created entity possesses exactly one Yek.
 
-A Yek is represented by
+Every Yek is unique.
 
-Identity
+A Yek cannot be copied.
 
-Context
+A Yek cannot be divided.
 
-History
-
-Relations
-
-Temporal Trace
-
-Spatial Trace
+A Yek cannot simultaneously represent two different created entities.
 
 ---
 
-# Mathematical Representation
+## Identity
 
-A Yek may be represented as
+Identity remains preserved while the internal state of the entity changes.
 
-Y = (I,C,H,R,T,S)
+Growth,
 
-where
+development,
 
-I = Identity
+learning,
 
-C = Context
+adaptation,
 
-H = History
+or structural transformation
 
-R = Relations
+do not create a new Yek.
 
-T = Temporal Trace
-
-S = Spatial Trace
+Only ontological replacement produces another Yek.
 
 ---
 
-# Uniqueness Principle
+## Scale Independence
 
-For any two created entities
+The concept of Yek is independent of scale.
 
-a
+Examples include
 
-and
+an atom,
 
-b
+a molecule,
+
+a cell,
+
+an organism,
+
+a human,
+
+a society,
+
+or a civilization.
+
+Each possesses its own ontological identity.
+
+---
+
+# Vahid
+
+## Definition
+
+A Vahid is the organized ontological whole formed by Yek belonging to the
+same ontological level and essential nature.
+
+Vahid is not equivalent to a mathematical set.
+
+A mathematical set may contain arbitrary elements.
+
+A Vahid contains only ontologically compatible Yek.
+
+---
+
+## Fundamental Property
+
+Every fundamental Yek belongs to exactly one
+fundamental Vahid.
+
+Fundamental membership cannot overlap.
+
+Therefore,
+
+Humanity,
+
+Atoms,
+
+Trees,
+
+Stars,
+
+or Angels
+
+represent different fundamental Vahid.
+
+
+---
+
+## Ontological Membership
+
+Membership within a Vahid is ontological rather than relational.
+
+For example,
+
+a human belongs fundamentally to the Humanity Vahid.
+
+The same human may participate in
+
+a family,
+
+a city,
+
+a profession,
+
+or an institution,
+
+but these relations do not establish additional fundamental Vahid.
+
+They are organizational structures built upon existing ontological identity.
+
+---
+
+## Yek–Vahid Relationship
+
+The relationship between Yek and Vahid is deterministic.
+
+Every Vahid is constituted by Yek.
+
+No Vahid exists without Yek.
+
+No Yek exists outside the ontological structure represented by a Vahid.
+
+This dependency establishes the first mathematical organization of created existence.
+
+---
+
+## Mathematical Interpretation
+
+Let
+
+Y denote the set of all primitive Yek.
+
+For every
+
+y ∈ Y,
+
+there exists exactly one fundamental Vahid
+
+V(y)
+
+such that
+
+y ∈ V(y).
+
+Furthermore,
 
 if
 
-Yek(a)=Yek(b)
+y₁ ≠ y₂,
 
-then
+their ontological identities remain distinct even when they belong to the same Vahid.
 
-a=b
+Thus,
 
----
+identity is preserved,
 
-# Inclusion Principle
-
-Every Yek belongs to exactly one Vahid.
-
-Formally
-
-Yek(x)
-
-⊂
-
-Vahid
+while unity is established.
 
 ---
 
-# Non-Equivalence Principle
+## Ontological Consequences
 
-Vahid
+The distinction between Yek and Vahid prevents confusion between
 
-≠
+identity
+
+and
+
+unity.
+
+Yek answers the question
+
+"What is uniquely this entity?"
+
+Vahid answers the question
+
+"Within which ontological whole does this entity fundamentally exist?"
+
+Both concepts are necessary.
+
+Without Yek,
+
+uniqueness disappears.
+
+Without Vahid,
+
+organized ontological unity disappears.
+
+---
+
+## Deterministic Principle
+
+Every higher mathematical structure within Zanistarast begins with the ordered relationship
 
 Yek
 
-A whole shall never be identified with one of its members.
+↓
+
+Vahid
+
+↓
+
+Hebûn
+
+No mathematical organization may bypass this sequence.
+
+This deterministic dependency constitutes the foundation of all subsequent structures developed in this work.
 
 ---
 
-# Preservation Principle
+## Summary
 
-Changing one Yek does not redefine the mathematical definition
-of Vahid.
+The concepts of Yek and Vahid establish the first level of mathematical organization.
 
-It changes only the current state of Vahid.
+Yek provides ontological uniqueness.
 
----
+Vahid provides ontological unity.
 
-# Observation
-
-The uniqueness of a created entity is represented by Yek.
-
-The unity of the complete system is represented by Vahid.
-
-These concepts shall never be treated as interchangeable.
+Together they form the mathematical basis upon which Hebûn, Zanabûn, Mabûn, Rabûn, and Rasterast are constructed.
 
 ---
 
-# Reserved Statement
-
-Ehad is intentionally excluded from this mathematical model.
-
-Only Vahid and Yek are formalized in Version 1.
-
-
-
+# End of File
