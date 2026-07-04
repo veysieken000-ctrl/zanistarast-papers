@@ -1,136 +1,400 @@
-# Chapter 10 — Symbols and Notation
+# Symbols and Notation
 
 Version: 1.0
+
+Status: Mathematical Language
 
 ---
 
 # Purpose
 
-This chapter defines the mathematical symbols used throughout Book I.
+This chapter defines the formal mathematical language used throughout Zanistarast Mathematics.
 
-Each symbol has exactly one meaning within Version 1.0.
+The notation is designed to provide a deterministic and unambiguous representation of ontological structures.
 
-No symbol shall be assigned multiple meanings.
+Every subsequent definition,
+
+axiom,
+
+lemma,
+
+theorem,
+
+and proof
+
+shall use the notation defined in this chapter.
 
 ---
 
-# Primitive Objects
+# Primitive Symbols
 
-V
+## E
 
-Vahid
+Ehad
 
-Y
+Absolute Unity.
+
+Reserved exclusively for Allah.
+
+Never treated as a created mathematical object.
+
+---
+
+## Y
 
 Yek
 
-H
+Primitive ontological identity.
+
+Represents the unique identity of every created entity.
+
+---
+
+## V
+
+Vahid
+
+Fundamental ontological whole.
+
+Represents organized ontological unity.
+
+---
+
+## H
 
 Hebûn
 
-Z
+Fundamental organizational principle.
+
+---
+
+## Z
 
 Zanabûn
 
-M
+Organized knowledge.
+
+---
+
+## M
 
 Mabûn
 
-R
+Persistent validated memory.
+
+---
+
+## R
 
 Rabûn
 
-RS
+Sustainable organization.
+
+---
+
+## T
 
 Rasterast
 
----
-
-# Sets
-
-E
-
-Set of candidate entities.
-
-EH
-
-Set of entities satisfying Hebûn.
-
-K
-
-Set of valid knowledge objects.
-
-M
-
-Set of valid models.
-
-X
-
-Set of executable processes.
-
-VX
-
-Set of verified executions.
-
----
-
-# Functions
-
-Hebûn : E → EH
-
-Zanabûn : EH → K
-
-Mabûn : K → M
-
-Rabûn : M → X
-
-Rasterast : X → VX
+Deterministic verification.
 
 ---
 
 # Relations
 
-⊆
-
-Subset.
-
 ∈
 
 Membership.
 
-=
+A Yek belongs to a Vahid.
 
-Equality.
+Example
 
-≠
+y ∈ V
 
-Inequality.
+---
 
-→
+⊂
 
-Function mapping.
+Dependency or containment.
+
+Used only when an organizational dependency exists.
+
+---
 
 ⇒
 
-Logical implication.
+Deterministic implication.
+
+Represents mandatory dependency.
+
+Not probabilistic implication.
+
+---
+
+⇔
+
+Ontological equivalence.
+
+Represents logical equivalence under identical ontological interpretation.
+
+---
+
+≠
+
+Distinct ontological identity.
+
+Used to distinguish different Yek.
+
+---
+
+=
+
+Identity under the current mathematical interpretation.
+
+---
+
+# Functions
+
+V(y)
+
+Fundamental Vahid of Yek y.
+
+---
+
+H(y)
+
+Hebûn associated with Yek y.
+
+---
+
+Z(H)
+
+Knowledge organized upon Hebûn.
+
+---
+
+M(Z)
+
+Persistent memory associated with organized knowledge.
+
+---
+
+R(M)
+
+Sustainable organization associated with persistent memory.
+
+---
+
+T(R)
+
+Deterministic verification associated with sustainable organization.
+
+---
+
+# Deterministic Chain Notation
+
+The complete deterministic dependency is written as
+
+E
+
+↓
+
+Y
+
+↓
+
+V
+
+↓
+
+H
+
+↓
+
+Z
+
+↓
+
+M
+
+↓
+
+R
+
+↓
+
+T
+
+where
+
+E = Ehad
+
+Y = Yek
+
+V = Vahid
+
+H = Hebûn
+
+Z = Zanabûn
+
+M = Mabûn
+
+R = Rabûn
+
+T = Rasterast
+
+This notation represents ontological dependency rather than temporal sequence.
+
+---
+
+# Logical Symbols
+
+∀
+
+For every.
+
+---
+
+∃
+
+There exists.
+
+---
+
+∃!
+
+There exists exactly one.
+
+Used primarily for Yek.
+
+Example
+
+∀x
+
+∃!Y(x)
+
+Every created entity possesses exactly one Yek.
+
+---
+
+∧
+
+Logical AND.
+
+---
+
+∨
+
+Logical OR.
+
+---
+
+¬
+
+Logical negation.
+
+---
+
+⊥
+
+Contradiction.
+
+---
 
 ⊢
 
-Derivation relation (reserved for future formalization).
+Formal derivation.
+
+Represents that a proposition follows from the accepted axioms.
 
 ---
 
 # Naming Convention
 
-Each mathematical object has exactly one canonical symbol.
+Definitions
 
-Alternative symbols are not introduced in Version 1.0.
+D1
+
+D2
+
+...
 
 ---
 
-# Scope
+Axioms
 
-The notation defined in this chapter shall remain fixed throughout Book I.
+A1
+
+A2
+
+...
+
+---
+
+Lemmas
+
+L1
+
+L2
+
+...
+
+---
+
+Theorems
+
+T1
+
+T2
+
+...
+
+---
+
+Corollaries
+
+C1
+
+C2
+
+...
+
+---
+
+# Mathematical Principle
+
+Symbols never replace definitions.
+
+Notation exists only to simplify mathematical reasoning.
+
+Whenever ambiguity appears,
+
+the formal definition always takes precedence over symbolic representation.
+
+---
+
+# Summary
+
+The notation defined in this chapter establishes a deterministic mathematical language for Zanistarast.
+
+Every subsequent proposition,
+
+lemma,
+
+theorem,
+
+proof,
+
+simulation,
+
+and formal implementation
+
+shall use these symbols consistently.
+
+---
+
+# End of File
 
 
 
