@@ -48,6 +48,16 @@ pub struct RuntimeExecutionResult {
     pub runtime_trace: RuntimeTrace,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RuntimeReplayReport {
+    pub runtime_id: RuntimeId,
+    pub replay_verified: bool,
+    pub expected_certified: bool,
+    pub actual_certified: bool,
+    pub checked_at: DateTime<Utc>,
+    pub diagnostics: Vec<String>,
+}
+
 pub struct DeterministicRuntime {
     verification_engine: VerificationEngine,
     certification_manager: CertificationManager,
@@ -71,42 +81,19 @@ impl DeterministicRuntime {
             entries: Vec::new(),
         };
 
-        Self::push_trace(
-            &mut trace,
-            RuntimeState::Created,
-            "runtime created",
-        );
+        Self::push_trace(&mut trace, RuntimeState::Created, "runtime created");
+        Self::push_trace(&mut trace, RuntimeState::Initialized, "runtime initialized");
+        Self::push_trace(&mut trace, RuntimeState::Executing, "verification started");
 
-        Self::push_trace(
-            &mut trace,
-            RuntimeState::Initialized,
-            "runtime initialized",
-        );
+        let (verification, verification_trace) = self.verification_engine.verify(&object);
 
-        Self::push_trace(
-            &mut trace,
-            RuntimeState::Executing,
-            "verification started",
-        );
-
-        let (verification, verification_trace) =
-            self.verification_engine.verify(&object);
-
-        Self::push_trace(
-            &mut trace,
-            RuntimeState::Verifying,
-            "verification completed",
-        );
+        Self::push_trace(&mut trace, RuntimeState::Verifying, "verification completed");
 
         let (certification, certification_record) =
             self.certification_manager.certify(&object, &verification);
 
         if certification.verified {
-            Self::push_trace(
-                &mut trace,
-                RuntimeState::Certified,
-                "certification granted",
-            );
+            Self::push_trace(&mut trace, RuntimeState::Certified, "certification granted");
 
             let publication = self.registry.publish(
                 object,
@@ -151,6 +138,57 @@ impl DeterministicRuntime {
                 publication: None,
                 runtime_trace: trace,
             }
+        }
+    }
+
+    pub fn replay(&self, result: &RuntimeExecutionResult) -> RuntimeReplayReport {
+        let has_runtime_trace = !result.runtime_trace.entries.is_empty();
+        let has_verification_trace = !result.verification_trace.entries.is_empty();
+
+        let expected_certified = result.verification.passed;
+        let actual_certified = result.certification.verified;
+
+        let publication_valid = if actual_certified {
+            result.publication.is_some()
+        } else {
+            result.publication.is_none()
+        };
+
+        let replay_verified =
+            has_runtime_trace
+                && has_verification_trace
+                && expected_certified == actual_certified
+                && publication_valid;
+
+        let mut diagnostics = Vec::new();
+
+        if !has_runtime_trace {
+            diagnostics.push("runtime replay failed: missing runtime trace".to_string());
+        }
+
+        if !has_verification_trace {
+            diagnostics.push("runtime replay failed: missing verification trace".to_string());
+        }
+
+        if expected_certified != actual_certified {
+            diagnostics.push(
+                "runtime replay failed: verification and certification mismatch".to_string(),
+            );
+        }
+
+        if !publication_valid {
+            diagnostics.push(
+                "runtime replay failed: publication state does not match certification".to_string(),
+            );
+        }
+
+        RuntimeReplayReport {
+            runtime_id: result.runtime_id.clone(),
+            replay_verified,
+            expected_certified,
+            actual_certified,
+            checked_at: Utc::now(),
+            diagnostics,
         }
     }
 
