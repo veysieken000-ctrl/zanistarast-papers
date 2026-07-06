@@ -1,0 +1,70 @@
+use anyhow::Result;
+use chrono::Utc;
+use serde_json::json;
+use tracing::info;
+use zanistarast_ai::NativeAiRuntime;
+use zanistarast_core::{CssId, ScientificObject};
+
+fn main() -> Result<()> {
+    tracing_subscriber::fmt::init();
+
+    let object = ScientificObject {
+        css_id: CssId("CSS-ZANISTARAST-001".to_string()),
+        title: "First Certified Scientific Object".to_string(),
+        version: "1.0.0".to_string(),
+        created_at: Utc::now(),
+        payload: json!({
+            "type": "scientific_claim",
+            "claim": "A scientific object must pass deterministic verification before certification.",
+            "layers": {
+                "hebun": "existence verified",
+                "zanabun": "meaning verified",
+                "mabun": "structure verified",
+                "rabun": "operation verified",
+                "rasterast": "final verification required"
+            }
+        }),
+    };
+
+    let mut ai_runtime = NativeAiRuntime::new();
+
+    let result = ai_runtime.execute_scientific_request(object);
+
+    info!("AI Session ID: {:?}", result.ai_session_id);
+    info!("Kernel ID: {:?}", result.kernel_result.kernel_id);
+    info!("Runtime ID: {:?}", result.kernel_result.runtime_result.runtime_id);
+    info!(
+        "Verification passed: {}",
+        result.kernel_result.runtime_result.verification.passed
+    );
+    info!(
+        "Certification verified: {}",
+        result.kernel_result.runtime_result.certification.verified
+    );
+    info!(
+        "Registry publication: {:?}",
+        result.kernel_result.runtime_result.publication.registry_id
+    );
+
+    println!("ZANISTARAST END-TO-END CERTIFIED EXECUTION");
+    println!("----------------------------------------");
+    println!("AI Session: {:?}", result.ai_session_id);
+    println!("Kernel: {:?}", result.kernel_result.kernel_id);
+    println!("Runtime: {:?}", result.kernel_result.runtime_result.runtime_id);
+    println!(
+        "Verification Passed: {}",
+        result.kernel_result.runtime_result.verification.passed
+    );
+    println!(
+        "Certification Verified: {}",
+        result.kernel_result.runtime_result.certification.verified
+    );
+    println!(
+        "Registry ID: {:?}",
+        result.kernel_result.runtime_result.publication.registry_id
+    );
+
+    Ok(())
+}
+
+
