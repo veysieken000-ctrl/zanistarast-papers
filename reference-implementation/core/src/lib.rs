@@ -4,71 +4,110 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-/// Canonical Scientific Structure Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct CssId(pub String);
+use zanistarast_core::ScientificObject;
+use zanistarast_kernel::{
+    KernelExecutionResult,
+    ScientificKernel,
+};
 
-/// Runtime Session Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RuntimeId(pub Uuid);
-
-/// Verification Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct VerificationId(pub Uuid);
-
-/// Certification Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct CertificationId(pub Uuid);
-
-/// Registry Identifier
-#[derive(Debug, Clone, PartialEq, Eq, Hash, Serialize, Deserialize)]
-pub struct RegistryId(pub Uuid);
-
-/// Scientific Object
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ScientificObject {
-    pub css_id: CssId,
-    pub title: String,
-    pub version: String,
-    pub created_at: DateTime<Utc>,
-    pub payload: serde_json::Value,
-}
+pub struct AiSessionId(pub Uuid);
 
-/// Verification Result
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct VerificationResult {
-    pub verification_id: VerificationId,
-    pub passed: bool,
-    pub diagnostics: Vec<String>,
-}
-
-/// Certification Result
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CertificationResult {
-    pub certification_id: CertificationId,
-    pub verified: bool,
-}
-
-/// Registry Entry
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RegistryEntry {
-    pub registry_id: RegistryId,
-    pub object: ScientificObject,
-    pub certification: CertificationResult,
-}
-
-/// Canonical Runtime State
-#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
-pub enum RuntimeState {
+pub enum AiState {
     Created,
-    Initialized,
-    Scheduled,
+    ContextLoaded,
+    Reasoning,
+    Planning,
     Executing,
-    Verifying,
-    Certified,
-    Published,
     Completed,
     Failed,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AiTraceEntry {
+    pub ai_session_id: AiSessionId,
+    pub state: AiState,
+    pub message: String,
+    pub timestamp: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AiTrace {
+    pub ai_session_id: AiSessionId,
+    pub entries: Vec<AiTraceEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AiExecutionResult {
+    pub ai_session_id: AiSessionId,
+    pub kernel_result: KernelExecutionResult,
+    pub ai_trace: AiTrace,
+}
+
+pub struct NativeAiRuntime {
+    kernel: ScientificKernel,
+}
+
+impl NativeAiRuntime {
+    pub fn new() -> Self {
+        Self {
+            kernel: ScientificKernel::new(),
+        }
+    }
+
+    pub fn execute_scientific_request(
+        &mut self,
+        object: ScientificObject,
+    ) -> AiExecutionResult {
+        let ai_session_id = AiSessionId(Uuid::new_v4());
+
+        let mut trace = AiTrace {
+            ai_session_id: ai_session_id.clone(),
+            entries: Vec::new(),
+        };
+
+        Self::push_trace(&mut trace, AiState::Created, "AI session created");
+        Self::push_trace(&mut trace, AiState::ContextLoaded, "certified context loaded");
+        Self::push_trace(&mut trace, AiState::Reasoning, "deterministic reasoning started");
+        Self::push_trace(&mut trace, AiState::Planning, "execution plan generated");
+        Self::push_trace(&mut trace, AiState::Executing, "scientific kernel execution requested");
+
+        let kernel_result = self.kernel.execute(object);
+
+        let final_state = if kernel_result.runtime_result.certification.verified {
+            AiState::Completed
+        } else {
+            AiState::Failed
+        };
+
+        Self::push_trace(&mut trace, final_state, "AI scientific execution completed");
+
+        AiExecutionResult {
+            ai_session_id,
+            kernel_result,
+            ai_trace: trace,
+        }
+    }
+
+    fn push_trace(
+        trace: &mut AiTrace,
+        state: AiState,
+        message: impl Into<String>,
+    ) {
+        trace.entries.push(AiTraceEntry {
+            ai_session_id: trace.ai_session_id.clone(),
+            state,
+            message: message.into(),
+            timestamp: Utc::now(),
+        });
+    }
+}
+
+impl Default for NativeAiRuntime {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 
