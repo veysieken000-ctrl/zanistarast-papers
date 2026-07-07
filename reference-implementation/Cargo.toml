@@ -39,4 +39,7 @@ path = "examples/config_usage.rs"
 name = "provider_registry"
 path = "examples/provider_registry.rs"
 
+[[example]]
+name = "end_to_end"
+path = "examples/end_to_end.rs"
 
