@@ -27,42 +27,36 @@ fn main() -> Result<()> {
     };
 
     let mut ai_runtime = NativeAiRuntime::new();
-
     let result = ai_runtime.execute_scientific_request(object);
+
+    let runtime_result = &result.kernel_result.runtime_result;
 
     info!("AI Session ID: {:?}", result.ai_session_id);
     info!("Kernel ID: {:?}", result.kernel_result.kernel_id);
-    info!("Runtime ID: {:?}", result.kernel_result.runtime_result.runtime_id);
-    info!(
-        "Verification passed: {}",
-        result.kernel_result.runtime_result.verification.passed
-    );
-    info!(
-        "Certification verified: {}",
-        result.kernel_result.runtime_result.certification.verified
-    );
-    info!(
-        "Registry publication: {:?}",
-        result.kernel_result.runtime_result.publication.registry_id
-    );
+    info!("Runtime ID: {:?}", runtime_result.runtime_id);
+    info!("Verification passed: {}", runtime_result.verification.passed);
+    info!("Certification verified: {}", runtime_result.certification.verified);
 
     println!("ZANISTARAST END-TO-END CERTIFIED EXECUTION");
     println!("----------------------------------------");
     println!("AI Session: {:?}", result.ai_session_id);
     println!("Kernel: {:?}", result.kernel_result.kernel_id);
-    println!("Runtime: {:?}", result.kernel_result.runtime_result.runtime_id);
-    println!(
-        "Verification Passed: {}",
-        result.kernel_result.runtime_result.verification.passed
-    );
-    println!(
-        "Certification Verified: {}",
-        result.kernel_result.runtime_result.certification.verified
-    );
-    println!(
-        "Registry ID: {:?}",
-        result.kernel_result.runtime_result.publication.registry_id
-    );
+    println!("Runtime: {:?}", runtime_result.runtime_id);
+    println!("Verification Passed: {}", runtime_result.verification.passed);
+    println!("Certification Verified: {}", runtime_result.certification.verified);
+
+    match &runtime_result.publication {
+        Some(publication) => {
+            info!("Registry publication: {:?}", publication.registry_id);
+            println!("Registry ID: {:?}", publication.registry_id);
+            println!("Publication Status: Published");
+        }
+        None => {
+            info!("Registry publication skipped");
+            println!("Registry ID: None");
+            println!("Publication Status: Skipped");
+        }
+    }
 
     Ok(())
 }
