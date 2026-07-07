@@ -1,36 +1,59 @@
-use std::collections::HashMap;
+use zanistarast_core::provider::{ProviderError, ProviderMetadata, ScientificProvider};
+use zanistarast_core::ScientificObject;
 
-use crate::ScientificObject;
+use crate::NativeAiRuntime;
 
-pub type ProviderMetadata = HashMap<String, String>;
+pub struct NativeAiProvider;
 
-pub trait ScientificProvider: Send + Sync {
-    /// Unique provider identifier.
-    fn id(&self) -> &'static str;
-
-    /// Human readable provider name.
-    fn name(&self) -> &'static str;
-
-    /// Provider version.
-    fn version(&self) -> &'static str;
-
-    /// Execute a scientific request.
-    fn execute(
-        &self,
-        object: &ScientificObject,
-    ) -> Result<ScientificObject, ProviderError>;
-
-    /// Provider metadata.
-    fn metadata(&self) -> ProviderMetadata {
-        ProviderMetadata::new()
+impl NativeAiProvider {
+    pub fn new() -> Self {
+        Self
     }
 }
 
-#[derive(Debug)]
-pub enum ProviderError {
-    Unsupported,
-    InvalidInput(String),
-    Internal(String),
+impl ScientificProvider for NativeAiProvider {
+    fn id(&self) -> &'static str {
+        "native-ai"
+    }
+
+    fn name(&self) -> &'static str {
+        "Zanistarast Native AI Provider"
+    }
+
+    fn version(&self) -> &'static str {
+        "0.1.0"
+    }
+
+    fn execute(
+        &self,
+        object: &ScientificObject,
+    ) -> Result<ScientificObject, ProviderError> {
+        let mut runtime = NativeAiRuntime::new();
+        let result = runtime.execute_scientific_request(object.clone());
+
+        if result.kernel_result.runtime_result.certification.verified {
+            Ok(result.kernel_result.runtime_result.publication
+                .map(|_| object.clone())
+                .unwrap_or_else(|| object.clone()))
+        } else {
+            Err(ProviderError::Internal(
+                "native AI execution failed certification".to_string(),
+            ))
+        }
+    }
+
+    fn metadata(&self) -> ProviderMetadata {
+        let mut metadata = ProviderMetadata::new();
+        metadata.insert("type".to_string(), "native-ai-runtime".to_string());
+        metadata.insert("deterministic".to_string(), "true".to_string());
+        metadata
+    }
+}
+
+impl Default for NativeAiProvider {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 
