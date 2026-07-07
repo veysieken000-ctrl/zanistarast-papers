@@ -10,7 +10,8 @@ members = [
     "registry",
     "ai",
     "cli",
-    "benchmarks"
+    "benchmarks",
+    "formal-backends"
 ]
 
 [workspace.package]
@@ -29,6 +30,7 @@ chrono = { version = "0.4", features = ["serde"] }
 tokio = { version = "1", features = ["full"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
+
 
 
 
