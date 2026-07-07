@@ -154,11 +154,10 @@ impl DeterministicRuntime {
             result.publication.is_none()
         };
 
-        let replay_verified =
-            has_runtime_trace
-                && has_verification_trace
-                && expected_certified == actual_certified
-                && publication_valid;
+        let replay_verified = has_runtime_trace
+            && has_verification_trace
+            && expected_certified == actual_certified
+            && publication_valid;
 
         let mut diagnostics = Vec::new();
 
