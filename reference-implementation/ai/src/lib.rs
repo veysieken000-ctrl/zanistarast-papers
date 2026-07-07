@@ -1,3 +1,5 @@
+pub mod provider;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -65,53 +67,21 @@ impl NativeAiRuntime {
             entries: Vec::new(),
         };
 
-        Self::push_trace(
-            &mut trace,
-            AiState::Created,
-            "AI session created",
-        );
-
-        Self::push_trace(
-            &mut trace,
-            AiState::ContextLoaded,
-            "certified context loaded",
-        );
-
-        Self::push_trace(
-            &mut trace,
-            AiState::Reasoning,
-            "deterministic reasoning started",
-        );
-
-        Self::push_trace(
-            &mut trace,
-            AiState::Planning,
-            "execution plan generated",
-        );
-
-        Self::push_trace(
-            &mut trace,
-            AiState::Executing,
-            "scientific kernel execution requested",
-        );
+        Self::push_trace(&mut trace, AiState::Created, "AI session created");
+        Self::push_trace(&mut trace, AiState::ContextLoaded, "certified context loaded");
+        Self::push_trace(&mut trace, AiState::Reasoning, "deterministic reasoning started");
+        Self::push_trace(&mut trace, AiState::Planning, "execution plan generated");
+        Self::push_trace(&mut trace, AiState::Executing, "scientific kernel execution requested");
 
         let kernel_result = self.kernel.execute(object);
 
-        let final_state = if kernel_result
-            .runtime_result
-            .certification
-            .verified
-        {
+        let final_state = if kernel_result.runtime_result.certification.verified {
             AiState::Completed
         } else {
             AiState::Failed
         };
 
-        Self::push_trace(
-            &mut trace,
-            final_state,
-            "AI scientific execution completed",
-        );
+        Self::push_trace(&mut trace, final_state, "AI scientific execution completed");
 
         AiExecutionResult {
             ai_session_id,
@@ -139,6 +109,5 @@ impl Default for NativeAiRuntime {
         Self::new()
     }
 }
-
 
 
