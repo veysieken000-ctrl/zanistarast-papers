@@ -37,7 +37,3 @@ fn main() {
     println!("Elapsed: {:?}", elapsed);
 }
 
-
-
-
-
