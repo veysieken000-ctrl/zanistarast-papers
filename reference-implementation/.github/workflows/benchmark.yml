@@ -1,0 +1,30 @@
+name: Runtime Benchmark
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "reference-implementation/**"
+
+jobs:
+  benchmark:
+    name: Run Reference Benchmark
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: reference-implementation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Build workspace
+        run: cargo build --workspace
+
+      - name: Run runtime benchmark
+        run: cargo run -p zanistarast-benchmarks
+
