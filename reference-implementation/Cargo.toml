@@ -35,5 +35,8 @@ toml = "0.8"
 name = "config_usage"
 path = "examples/config_usage.rs"
 
+[[example]]
+name = "provider_registry"
+path = "examples/provider_registry.rs"
 
 
