@@ -1,5 +1,6 @@
 pub mod provider;
 pub mod provider_registry;
+pub mod config;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
