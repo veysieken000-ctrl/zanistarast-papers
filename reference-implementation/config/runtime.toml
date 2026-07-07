@@ -1,0 +1,15 @@
+[runtime]
+deterministic = true
+replay_enabled = true
+
+[verification]
+strict_mode = true
+stop_on_failure = true
+
+[provider]
+default_provider = "native-ai"
+
+[logging]
+level = "info"
+
+
