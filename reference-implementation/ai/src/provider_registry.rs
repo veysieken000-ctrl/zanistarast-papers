@@ -4,6 +4,7 @@ use crate::ollama_provider::OllamaProvider;
 use crate::openai_provider::OpenAiProvider;
 use crate::provider::NativeAiProvider;
 use zanistarast_core::provider::{ProviderMetadata, ScientificProvider};
+use crate::llamacpp_provider::LlamaCppProvider;
 
 pub struct AiProviderRegistry;
 
@@ -15,6 +16,8 @@ impl AiProviderRegistry {
             "anthropic",
             "gemini",
             "ollama",
+            "llama.cpp",
+
         ]
     }
 
@@ -25,6 +28,7 @@ impl AiProviderRegistry {
             "anthropic" => Some(AnthropicProvider::new().metadata()),
             "gemini" => Some(GeminiProvider::new().metadata()),
             "ollama" => Some(OllamaProvider::new().metadata()),
+            "llama.cpp" => Some(LlamaCppProvider::new().metadata()),
             _ => None,
         }
     }
