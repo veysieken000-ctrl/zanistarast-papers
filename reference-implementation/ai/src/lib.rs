@@ -7,6 +7,7 @@ pub mod provider_registry;
 pub mod provider_factory;
 pub mod llamacpp_provider;
 pub mod api_key_manager;
+pub mod provider_config;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
