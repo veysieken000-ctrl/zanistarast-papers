@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use chrono::Utc;
 use serde_json::json;
 use tracing::info;
@@ -8,7 +8,8 @@ use zanistarast_core::config_loader::load_config;
 
 fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
-let config = load_config("config/runtime.toml")?;
+let config = load_config("config/runtime.toml")
+    .map_err(|err| anyhow!(err.to_string()))?;
     let object = ScientificObject {
         css_id: CssId("CSS-ZANISTARAST-001".to_string()),
         title: "First Certified Scientific Object".to_string(),
