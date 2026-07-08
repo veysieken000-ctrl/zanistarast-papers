@@ -1,5 +1,3 @@
----
-
 # Component E6 — Rasterast Verification Manager
 
 ## Purpose
