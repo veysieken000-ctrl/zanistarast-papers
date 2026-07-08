@@ -2,30 +2,32 @@ default_provider = "native-ai"
 
 [providers.native-ai]
 enabled = true
+model = "native-ai-runtime"
 
 [providers.openai]
 enabled = false
 model = "gpt-5"
+api_key_env = "OPENAI_API_KEY"
 
 [providers.anthropic]
 enabled = false
 model = "claude"
+api_key_env = "ANTHROPIC_API_KEY"
 
 [providers.gemini]
 enabled = false
 model = "gemini-pro"
+api_key_env = "GEMINI_API_KEY"
 
 [providers.ollama]
 enabled = false
 model = "llama3"
+endpoint = "http://localhost:11434"
 
 [providers.llama_cpp]
 enabled = false
 model = "llama-3-8b.gguf"
-
-
-
-
+endpoint = "http://localhost:8080"
 
 
 
