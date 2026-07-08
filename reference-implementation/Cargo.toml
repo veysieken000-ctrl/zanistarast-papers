@@ -31,15 +31,3 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 toml = "0.8"
 
-[[example]]
-name = "config_usage"
-path = "examples/config_usage.rs"
-
-[[example]]
-name = "provider_registry"
-path = "examples/provider_registry.rs"
-
-[[example]]
-name = "end_to_end"
-path = "examples/end_to_end.rs"
-
