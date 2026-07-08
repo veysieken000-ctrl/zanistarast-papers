@@ -3,27 +3,25 @@ use std::env;
 pub struct ApiKeyManager;
 
 impl ApiKeyManager {
+    pub fn get(key_name: &str) -> Option<String> {
+        env::var(key_name).ok()
+    }
+
     pub fn openai() -> Option<String> {
-        env::var("OPENAI_API_KEY").ok()
+        Self::get("OPENAI_API_KEY")
     }
 
     pub fn anthropic() -> Option<String> {
-        env::var("ANTHROPIC_API_KEY").ok()
+        Self::get("ANTHROPIC_API_KEY")
     }
 
     pub fn gemini() -> Option<String> {
-        env::var("GEMINI_API_KEY").ok()
+        Self::get("GEMINI_API_KEY")
     }
 
-    pub fn has_openai() -> bool {
-        Self::openai().is_some()
-    }
-
-    pub fn has_anthropic() -> bool {
-        Self::anthropic().is_some()
-    }
-
-    pub fn has_gemini() -> bool {
-        Self::gemini().is_some()
+    pub fn has(key_name: &str) -> bool {
+        Self::get(key_name).is_some()
     }
 }
+
+
