@@ -8,7 +8,6 @@ pub mod provider_factory;
 pub mod llamacpp_provider;
 pub mod api_key_manager;
 pub mod provider_config;
-pub mod provider_config;
 pub mod provider_loader;
 
 use chrono::{DateTime, Utc};
