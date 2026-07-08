@@ -1,0 +1,26 @@
+default_provider = "native-ai"
+
+[providers.native-ai]
+enabled = true
+
+[providers.openai]
+enabled = false
+model = "gpt-5"
+
+[providers.anthropic]
+enabled = false
+model = "claude"
+
+[providers.gemini]
+enabled = false
+model = "gemini-pro"
+
+[providers.ollama]
+enabled = false
+model = "llama3"
+
+[providers.llama_cpp]
+enabled = false
+model = "llama-3-8b.gguf"
+
+
