@@ -3,6 +3,7 @@ pub mod openai_provider;
 pub mod anthropic_provider;
 pub mod gemini_provider;
 pub mod ollama_provider;
+pub mod provider_registry;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
