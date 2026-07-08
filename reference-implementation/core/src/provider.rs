@@ -1,59 +1,31 @@
-use zanistarast_core::provider::{ProviderError, ProviderMetadata, ScientificProvider};
-use zanistarast_core::ScientificObject;
+use std::collections::HashMap;
 
-use crate::NativeAiRuntime;
+use crate::ScientificObject;
 
-pub struct NativeAiProvider;
+pub type ProviderMetadata = HashMap<String, String>;
 
-impl NativeAiProvider {
-    pub fn new() -> Self {
-        Self
-    }
-}
+pub trait ScientificProvider: Send + Sync {
+    fn id(&self) -> &'static str;
 
-impl ScientificProvider for NativeAiProvider {
-    fn id(&self) -> &'static str {
-        "native-ai"
-    }
+    fn name(&self) -> &'static str;
 
-    fn name(&self) -> &'static str {
-        "Zanistarast Native AI Provider"
-    }
-
-    fn version(&self) -> &'static str {
-        "0.1.0"
-    }
+    fn version(&self) -> &'static str;
 
     fn execute(
         &self,
         object: &ScientificObject,
-    ) -> Result<ScientificObject, ProviderError> {
-        let mut runtime = NativeAiRuntime::new();
-        let result = runtime.execute_scientific_request(object.clone());
-
-        if result.kernel_result.runtime_result.certification.verified {
-            Ok(result.kernel_result.runtime_result.publication
-                .map(|_| object.clone())
-                .unwrap_or_else(|| object.clone()))
-        } else {
-            Err(ProviderError::Internal(
-                "native AI execution failed certification".to_string(),
-            ))
-        }
-    }
+    ) -> Result<ScientificObject, ProviderError>;
 
     fn metadata(&self) -> ProviderMetadata {
-        let mut metadata = ProviderMetadata::new();
-        metadata.insert("type".to_string(), "native-ai-runtime".to_string());
-        metadata.insert("deterministic".to_string(), "true".to_string());
-        metadata
+        ProviderMetadata::new()
     }
 }
 
-impl Default for NativeAiProvider {
-    fn default() -> Self {
-        Self::new()
-    }
+#[derive(Debug)]
+pub enum ProviderError {
+    Unsupported,
+    InvalidInput(String),
+    Internal(String),
 }
 
 
