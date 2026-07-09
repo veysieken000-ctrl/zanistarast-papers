@@ -28,6 +28,13 @@ impl OllamaProvider {
         }
     }
 
+pub fn with_config(endpoint: Option<String>, model: Option<String>) -> Self {
+    Self {
+        endpoint: endpoint.unwrap_or_else(|| "http://localhost:11434".to_string()),
+        model: model.unwrap_or_else(|| "llama3".to_string()),
+    }
+}
+    
     pub async fn generate(&self, prompt: &str) -> Result<String, ProviderError> {
         let client = reqwest::Client::new();
 
