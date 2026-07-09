@@ -1,4 +1,5 @@
 use zanistarast_ai::ollama_provider::OllamaProvider;
+use zanistarast_core::provider::ScientificProvider;
 
 #[tokio::test]
 async fn ollama_provider_has_metadata() {
@@ -7,7 +8,10 @@ async fn ollama_provider_has_metadata() {
 
     assert_eq!(metadata.get("provider"), Some(&"ollama".to_string()));
     assert_eq!(metadata.get("api_enabled"), Some(&"true".to_string()));
-    assert_eq!(metadata.get("deterministic_wrapper"), Some(&"true".to_string()));
+    assert_eq!(
+        metadata.get("deterministic_wrapper"),
+        Some(&"true".to_string())
+    );
 }
 
 
