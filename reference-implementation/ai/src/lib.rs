@@ -10,6 +10,7 @@ pub mod api_key_manager;
 pub mod provider_config;
 pub mod provider_loader;
 pub mod provider_selector;
+pub mod configured_provider;
 
 
 use chrono::{DateTime, Utc};
