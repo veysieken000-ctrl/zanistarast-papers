@@ -1,0 +1,26 @@
+name: Anthropic Live Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  anthropic-live:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify secret exists
+        run: |
+          test -n "${{ secrets.ANTHROPIC_API_KEY }}"
+
+      - name: Run Anthropic live test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cargo test anthropic_live -- --ignored --nocapture
+
+
+
