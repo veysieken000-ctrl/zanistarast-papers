@@ -16,8 +16,9 @@ pub struct GeminiProvider {
 
 impl GeminiProvider {
     pub fn new() -> Self {
-        let model = std::env::var("GEMINI_MODEL")
-            .unwrap_or_else(|_| "gemini-3-flash-preview".to_string()
+       let model = std::env::var("GEMINI_MODEL")
+    .unwrap_or_else(|_| "gemini-3-flash-preview".to_string());
+
         
         Self { model }
     }
