@@ -1,0 +1,60 @@
+name: llama.cpp Live Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  llamacpp-live:
+    name: Run llama.cpp Live Integration Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: reference-implementation
+
+    env:
+      LLAMACPP_ENDPOINT: http://localhost:8080
+      LLAMACPP_MODEL: local-model
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Start llama.cpp server
+        run: |
+          docker run --name llamacpp-live \
+            -d \
+            -p 8080:8080 \
+            ghcr.io/ggml-org/llama.cpp:server \
+            -hf ggml-org/tiny-llamas:Q4_0 \
+            --alias local-model \
+            --host 0.0.0.0 \
+            --port 8080 \
+            -n 64
+
+      - name: Wait for llama.cpp server
+        run: |
+          for attempt in {1..60}; do
+            if curl --silent --fail http://localhost:8080/health > /dev/null; then
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          docker logs llamacpp-live
+          exit 1
+
+      - name: Run llama.cpp live test
+        run: cargo test -p zanistarast-ai --test llamacpp_live -- --ignored --nocapture
+
+      - name: Show llama.cpp logs on failure
+        if: failure()
+        run: docker logs llamacpp-live
+
+
+
+
