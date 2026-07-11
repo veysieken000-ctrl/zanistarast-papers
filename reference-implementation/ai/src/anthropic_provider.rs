@@ -1,11 +1,23 @@
+use crate::anthropic_responses::AnthropicMessagesClient;
+use crate::api_key_manager::ApiKeyManager;
+
 use zanistarast_core::provider::{ProviderError, ProviderMetadata, ScientificProvider};
 use zanistarast_core::ScientificObject;
 
-pub struct AnthropicProvider;
+pub struct AnthropicProvider {
+    client: Option<AnthropicMessagesClient>,
+}
 
 impl AnthropicProvider {
     pub fn new() -> Self {
-        Self
+        let client = ApiKeyManager::anthropic().map(|api_key| {
+            AnthropicMessagesClient::new(
+                api_key,
+                "claude-3-5-haiku-latest".to_string(),
+            )
+        });
+
+        Self { client }
     }
 }
 
@@ -34,7 +46,10 @@ impl ScientificProvider for AnthropicProvider {
         metadata.insert("type".to_string(), "cloud-ai-provider".to_string());
         metadata.insert("provider".to_string(), "anthropic".to_string());
         metadata.insert("deterministic_wrapper".to_string(), "true".to_string());
-        metadata.insert("api_enabled".to_string(), "false".to_string());
+        metadata.insert(
+            "api_enabled".to_string(),
+            self.client.is_some().to_string(),
+        );
         metadata
     }
 }
