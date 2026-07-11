@@ -1,0 +1,36 @@
+name: Gemini Live Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  gemini-live:
+    name: Run Gemini Live Integration Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: reference-implementation
+
+    env:
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: gemini-2.5-flash
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Verify secret exists
+        run: |
+          if [ -z "$GEMINI_API_KEY" ]; then
+            echo "GEMINI_API_KEY secret is not configured."
+            exit 1
+          fi
+
+      - name: Run Gemini live test
+        run: cargo test -p zanistarast-ai --test gemini_live -- --ignored --nocapture
+
+
