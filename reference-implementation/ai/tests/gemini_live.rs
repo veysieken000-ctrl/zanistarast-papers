@@ -7,8 +7,8 @@ use zanistarast_core::{CssId, ScientificObject};
 #[tokio::test]
 #[ignore = "requires GEMINI_API_KEY and makes a real API request"]
 async fn gemini_live_request_returns_scientific_object() {
-    let model = std::env::var("GEMINI_MODEL")
-        .unwrap_or_else(|_| "gemini-3-flash-preview".to_string()
+   let model = std::env::var("GEMINI_MODEL")
+    .unwrap_or_else(|_| "gemini-3-flash-preview".to_string());
 
     let provider = GeminiProvider::with_model(model);
 
