@@ -1,58 +1,58 @@
-serde_json::json kullanın;
+use serde_json::json;
 
-zanistarast_core::provider::{ kullanın
-    Sağlayıcı Hatası,
-    SağlayıcıMetaverileri,
-    Bilimsel Sağlayıcı,
+use zanistarast_core::provider::{
+    ProviderError,
+    ProviderMetadata,
+    ScientificProvider,
 };
-zanistarast_core:: ScientificObject kullanın ;
+use zanistarast_core::ScientificObject;
 
-`use crate::api_key_manager:: ApiKeyManager;`
-`use crate::gemini_responses:: GeminiGenerateClient;`
+use crate::api_key_manager::ApiKeyManager;
+use crate::gemini_responses::GeminiGenerateClient;
 
 pub struct GeminiProvider {
-    model: Dize,
+    model: String,
 }
 
 impl GeminiProvider {
     pub fn new() -> Self {
         let model = std::env::var("GEMINI_MODEL")
-            .unwrap_or_else(|_| "gemini-2.5-flash".to_string() );
+            .unwrap_or_else(|_| "gemini-2.5-flash".to_string());
 
-        Kendi modeli
+        Self { model }
     }
 
     pub fn with_model(model: impl Into<String>) -> Self {
-        Kendim {
+        Self {
             model: model.into(),
         }
     }
 
     pub async fn generate(
-        &kendisi,
-        istem: &str,
-    ) -> Sonuç<Dize, SağlayıcıHatası> {
-        let api_key = ApiKeyManager::gemini().ok_or_ else(|| {
+        &self,
+        prompt: &str,
+    ) -> Result<String, ProviderError> {
+        let api_key = ApiKeyManager::gemini().ok_or_else(|| {
             ProviderError::InvalidInput(
-                "GEMINI_API_KEY ortam değişkeni yapılandırılmamış."
+                "GEMINI_API_KEY environment variable is not configured"
                     .to_string(),
             )
         })?;
 
-        Müşteriyi bırak =
-            GeminiGenerateClient::new(api_key , self.model.clone());
+        let client =
+            GeminiGenerateClient::new(api_key, self.model.clone());
 
-        istemci.oluştur(istem).bekle
+        client.generate(prompt).await
     }
 
     pub async fn execute_remote(
-        &kendisi,
-        nesne: &BilimselNesne,
-    ) -> Sonuç<BilimselNesne, SağlayıcıHatası> {
+        &self,
+        object: &ScientificObject,
+    ) -> Result<ScientificObject, ProviderError> {
         let prompt = object
-            .yük
+            .payload
             .get("claim")
-            .ve_sonra(|değer| değer.str())
+            .and_then(|value| value.as_str())
             .unwrap_or(&object.title);
 
         let response_text = self.generate(prompt).await?;
@@ -60,29 +60,29 @@ impl GeminiProvider {
         let mut output = object.clone();
 
         if let Some(payload) = output.payload.as_object_mut() {
-            yük.ekle(
+            payload.insert(
                 "gemini_response".to_string(),
-                json!(yanıt_metni),
+                json!(response_text),
             );
-            yük.ekle(
+            payload.insert(
                 "gemini_model".to_string(),
                 json!(self.model),
             );
-        } başka {
-            çıktı.yük = json!({
-                "orijinal_yük": object.payload.clone(),
-                "gemini_response": yanıt_metni,
+        } else {
+            output.payload = json!({
+                "original_payload": object.payload.clone(),
+                "gemini_response": response_text,
                 "gemini_model": self.model
             });
         }
 
-        Tamam (çıktı)
+        Ok(output)
     }
 }
 
-GeminiProvider için ScientificProvider'ı uygulayın {
+impl ScientificProvider for GeminiProvider {
     fn id(&self) -> &'static str {
-        "ikizler burcu"
+        "gemini"
     }
 
     fn name(&self) -> &'static str {
@@ -93,44 +93,44 @@ GeminiProvider için ScientificProvider'ı uygulayın {
         "0.1.0"
     }
 
-    fn yürüt(
-        &kendisi,
-        nesne: &BilimselNesne,
-    ) -> Sonuç<BilimselNesne, SağlayıcıHatası> {
-        Tamam(nesne.klon())
+    fn execute(
+        &self,
+        object: &ScientificObject,
+    ) -> Result<ScientificObject, ProviderError> {
+        Ok(object.clone())
     }
 
     fn metadata(&self) -> ProviderMetadata {
         let mut metadata = ProviderMetadata::new();
 
-        metadata.ekle(
+        metadata.insert(
             "type".to_string(),
-            "cloud-ai-provider".to_string( ) ,
+            "cloud-ai-provider".to_string(),
         );
-        metadata.ekle(
-            "sağlayıcı".to_string(),
+        metadata.insert(
+            "provider".to_string(),
             "gemini".to_string(),
         );
-        metadata.ekle(
+        metadata.insert(
             "model".to_string(),
-            kendi modelini klonla(),
+            self.model.clone(),
         );
-        metadata.ekle(
-            "deterministic_wrapper".to_string (),
+        metadata.insert(
+            "deterministic_wrapper".to_string(),
             "true".to_string(),
         );
-        metadata.ekle(
+        metadata.insert(
             "api_enabled".to_string(),
-            ApiKeyManager::gemini().is_some ().to_string(),
+            ApiKeyManager::gemini().is_some().to_string(),
         );
 
-        meta veriler
+        metadata
     }
 }
 
-GeminiProvider için varsayılan değer uygulanmıştır.
+impl Default for GeminiProvider {
     fn default() -> Self {
-        Kendi::yeni()
+        Self::new()
     }
 }
 
