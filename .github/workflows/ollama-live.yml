@@ -1,0 +1,50 @@
+name: Ollama Live Test
+
+on:
+  workflow_dispatch:
+
+jobs:
+  ollama-live:
+    name: Run Ollama Live Integration Test
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: reference-implementation
+
+    env:
+      OLLAMA_ENDPOINT: http://localhost:11434
+      OLLAMA_MODEL: tinyllama
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install Ollama
+        run: curl -fsSL https://ollama.com/install.sh | sh
+
+      - name: Start Ollama server
+        run: |
+          ollama serve > /tmp/ollama.log 2>&1 &
+          for attempt in {1..30}; do
+            if curl --silent --fail http://localhost:11434/api/tags > /dev/null; then
+              exit 0
+            fi
+            sleep 2
+          done
+
+          cat /tmp/ollama.log
+          exit 1
+
+      - name: Pull Ollama model
+        run: ollama pull "$OLLAMA_MODEL"
+
+      - name: Run Ollama live test
+        run: cargo test -p zanistarast-ai --test ollama_live -- --ignored --nocapture
+
+
+
+
