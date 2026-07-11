@@ -2,6 +2,7 @@ pub mod provider;
 pub mod openai_provider;
 pub mod anthropic_provider;
 pub mod gemini_provider;
+pub mod gemini_responses;
 pub mod ollama_provider;
 pub mod provider_registry;
 pub mod provider_factory;
