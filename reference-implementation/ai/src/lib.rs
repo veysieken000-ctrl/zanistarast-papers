@@ -12,6 +12,7 @@ pub mod provider_loader;
 pub mod provider_selector;
 pub mod configured_provider;
 pub mod openai_responses;
+pub mod anthropic_responses;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
