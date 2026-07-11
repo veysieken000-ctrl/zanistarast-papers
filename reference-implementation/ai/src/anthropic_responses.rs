@@ -130,3 +130,19 @@ impl AnthropicMessagesClient {
             })
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn creates_anthropic_client() {
+        let client = AnthropicMessagesClient::new(
+            "test-key".to_string(),
+            "claude-3-5-haiku-latest".to_string(),
+        );
+
+        assert_eq!(client.model, "claude-3-5-haiku-latest");
+    }
+}
+
+
