@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "ZANISTARAST Reference Implementation yazılımını kullanıyorsanız lütfen bu dosyadaki bilgileri kullanarak atıf yapın."
+
+title: "ZANISTARAST Reference Implementation"
+version: "1.0.0"
+date-released: "2026-07-12"
+
+type: software
+
+authors:
+  - family-names: "Eken"
+    given-names: "Veysi"
+
+repository-code: "https://github.com/veysieken000-ctrl/zanistarast-papers"
+url: "https://github.com/veysieken000-ctrl/zanistarast-papers/tree/main/reference-implementation"
+
+license: "Apache-2.0"
+
+abstract: >-
+  A deterministic scientific reference implementation for structured
+  modeling, verification, certification, runtime replay, scientific
+  registries, and provider-based artificial intelligence integration.
+
+keywords:
+  - ZANISTARAST
+  - deterministic artificial intelligence
+  - scientific verification
+  - reproducible computation
+  - scientific certification
+  - multi-provider artificial intelligence
+
+
+
