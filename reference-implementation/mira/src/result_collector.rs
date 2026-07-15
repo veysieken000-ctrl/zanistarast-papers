@@ -80,13 +80,15 @@ impl ResultCollector {
         for result in execution_results {
             let provider_id = result.provider.provider_id().to_string();
 
-            let collected = CollectedProviderResult {
-                provider: result.provider,
-                provider_metadata: result.provider_metadata,
-                succeeded: result.succeeded(),
-                output: result.output,
-                error: result.error,
-            };
+           let succeeded = result.succeeded();
+
+let collected = CollectedProviderResult {
+    provider: result.provider,
+    provider_metadata: result.provider_metadata,
+    succeeded,
+    output: result.output,
+    error: result.error,
+};
 
             if unique_results
                 .insert(provider_id, collected)
