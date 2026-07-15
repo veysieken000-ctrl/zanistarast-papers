@@ -10,6 +10,7 @@ pub mod provider_bridge;
 pub mod provider_executor;
 pub mod result_collector;
 pub mod rasterast_review;
+pub mod approval_workflow;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
