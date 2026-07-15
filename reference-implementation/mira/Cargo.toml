@@ -13,5 +13,4 @@ uuid.workspace = true
 thiserror.workspace = true
 
 zanistarast-core = { path = "../core" }
-
-
+zanistarast-ai = { path = "../ai" }
