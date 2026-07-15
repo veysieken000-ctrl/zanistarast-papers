@@ -10,7 +10,8 @@ members = [
     "registry",
     "ai",
     "cli",
-    "benchmarks"
+    "benchmarks",
+    "mira",
 ]
 
 [workspace.package]
