@@ -1,4 +1,4 @@
-use crate::{MiraCore, MiraTask, MiraTaskStatus};
+use crate::{MiraCore, MiraTaskStatus};
 
 impl MiraCore {
     /// Görevi planlama aşamasına geçirir.
