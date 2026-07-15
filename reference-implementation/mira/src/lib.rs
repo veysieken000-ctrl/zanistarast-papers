@@ -12,6 +12,7 @@ pub mod result_collector;
 pub mod rasterast_review;
 pub mod approval_workflow;
 pub mod recommendation_report;
+pub mod chat_interface;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
