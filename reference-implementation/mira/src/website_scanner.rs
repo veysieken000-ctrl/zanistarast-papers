@@ -244,7 +244,7 @@ mod tests {
         let index_page = report
             .pages
             .iter()
-            .find(|page| page.relative_path == PathBuf::from("index.html"))
+           .find(|page| page.relative_path == Path::new("index.html"))
             .expect("index page should exist");
 
         assert_eq!(index_page.title.as_deref(), Some("Zanistarast"));
