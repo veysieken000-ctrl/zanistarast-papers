@@ -8,6 +8,7 @@ pub mod knowledge_map;
 pub mod agent_dispatch;
 pub mod provider_bridge;
 pub mod provider_executor;
+pub mod result_collector;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
