@@ -9,6 +9,7 @@ pub mod agent_dispatch;
 pub mod provider_bridge;
 pub mod provider_executor;
 pub mod result_collector;
+pub mod rasterast_review;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
