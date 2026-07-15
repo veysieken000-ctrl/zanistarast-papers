@@ -3,6 +3,7 @@ pub mod repository_scanner;
 pub mod website_scanner;
 pub mod article_inventory;
 pub mod article_candidate_analysis;
+pub mod topic_clustering;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
