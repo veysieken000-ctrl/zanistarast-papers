@@ -1,4 +1,5 @@
 pub mod task_engine;
+pub mod repository_scanner;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
