@@ -4,6 +4,7 @@ pub mod website_scanner;
 pub mod article_inventory;
 pub mod article_candidate_analysis;
 pub mod topic_clustering;
+pub mod knowledge_map;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
