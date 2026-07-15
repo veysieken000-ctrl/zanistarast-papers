@@ -6,6 +6,7 @@ pub mod article_candidate_analysis;
 pub mod topic_clustering;
 pub mod knowledge_map;
 pub mod agent_dispatch;
+pub mod provider_bridge;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
