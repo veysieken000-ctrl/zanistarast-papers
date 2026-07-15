@@ -120,7 +120,7 @@ impl CommandRouter {
 mod tests {
     use super::*;
     use std::fs;
-    use std::path::PathBuf;
+   use std::path::{Path, PathBuf};
 
     fn create_test_site() -> PathBuf {
         let test_root = std::env::temp_dir().join(format!(
@@ -230,8 +230,9 @@ mod tests {
         assert_eq!(report.total_candidate_count(), 2);
 
         assert!(report.candidates.iter().any(|candidate| {
-            candidate.relative_path
-                == PathBuf::from("articles/hebun.html")
+           candidate.relative_path
+    == Path::new("articles/hebun.html")
+
         }));
 
         fs::remove_dir_all(test_root)
