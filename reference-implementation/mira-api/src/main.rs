@@ -143,7 +143,19 @@ async fn get_session(
     })?;
 
 /// Mira'da kayıtlı bütün görevleri salt okunur döndürür.
-async fn list_tasks(
+ 
+    let session = service.session(session_id).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: format!(
+                    "Mira sohbet oturumu bulunamadı: {session_id}"
+                ),
+            }),
+        )
+    })?;
+
+  async fn list_tasks(
     State(state): State<AppState>,
 ) -> Result<
     Json<TaskListResponse>,
@@ -167,17 +179,6 @@ async fn list_tasks(
     }))
 }
     
-    let session = service.session(session_id).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError {
-                error: format!(
-                    "Mira sohbet oturumu bulunamadı: {session_id}"
-                ),
-            }),
-        )
-    })?;
-
     Ok(Json(SessionDetailResponse {
         session_id: session.session_id,
         title: session.title.clone(),
