@@ -10,10 +10,10 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
-use uuid::Uuid;
 use zanistarast_mira::{
     chat_orchestrator::ChatInteractionResult,
     chat_service::MiraChatService,
+    chat_session::ChatMessage,
 };
 
 /// Mira API tarafından paylaşılan uygulama durumu.
@@ -103,6 +103,16 @@ async fn create_session(
             status: "created",
         }),
     ))
+}
+/// Sohbet oturumu ve mesaj geçmişi cevabı.
+#[derive(Debug, Serialize)]
+struct SessionDetailResponse {
+    session_id: Uuid,
+    title: String,
+    created_at: String,
+    updated_at: String,
+    message_count: usize,
+    messages: Vec<ChatMessage>,
 }
 
 /// Mevcut Mira sohbet oturumuna Müdebbir mesajı gönderir.
@@ -205,6 +215,58 @@ async fn main() {
         .await
         .expect("Mira API server should run");
 }
+
+/// Belirtilen sohbet oturumunu ve mesaj geçmişini döndürür.
+async fn get_session(
+    Path(session_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<
+    Json<SessionDetailResponse>,
+    (StatusCode, Json<ApiError>),
+> {
+    let service = state.chat_service.lock().map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                error: "Mira sohbet servisine erişilemedi."
+                    .to_string(),
+            }),
+        )
+    })?;
+
+    let session = service.session(session_id).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: format!(
+                    "Mira sohbet oturumu bulunamadı: {session_id}"
+                ),
+            }),
+        )
+    })?;
+
+    Ok(Json(SessionDetailResponse {
+        session_id: session.session_id,
+        title: session.title.clone(),
+        created_at: session.created_at.to_rfc3339(),
+        updated_at: session.updated_at.to_rfc3339(),
+        message_count: session.message_count(),
+        messages: session.messages().to_vec(),
+    }))
+}
+
+let app = Router::new()
+    .route("/health", get(health))
+    .route("/sessions", post(create_session))
+    .route(
+        "/sessions/{session_id}",
+        get(get_session),
+    )
+    .route(
+        "/sessions/{session_id}/messages",
+        post(send_message),
+    )
+    .with_state(state);
 
 #[cfg(test)]
 mod tests {
@@ -405,4 +467,76 @@ mod tests {
             .expect("test directory should be removed");
     }
 }
+
+#[tokio::test]
+async fn session_detail_returns_message_history() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let session_id = {
+        let mut service = state
+            .chat_service
+            .lock()
+            .expect("chat service lock should succeed");
+
+        service.create_session(
+            "Hebûn mesaj geçmişi",
+        )
+    };
+
+    send_message(
+        Path(session_id),
+        State(state.clone()),
+        Json(SendMessageRequest {
+            message: "durum".to_string(),
+        }),
+    )
+    .await
+    .expect("message should succeed");
+
+    let response = get_session(
+        Path(session_id),
+        State(state),
+    )
+    .await
+    .expect("session detail should succeed");
+
+    assert_eq!(response.0.session_id, session_id);
+    assert_eq!(
+        response.0.title,
+        "Hebûn mesaj geçmişi"
+    );
+    assert_eq!(response.0.message_count, 2);
+    assert_eq!(response.0.messages.len(), 2);
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+#[tokio::test]
+async fn unknown_session_detail_returns_not_found() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let error = get_session(
+        Path(Uuid::new_v4()),
+        State(state),
+    )
+    .await
+    .expect_err("unknown session should fail");
+
+    assert_eq!(error.0, StatusCode::NOT_FOUND);
+    assert!(
+        error
+            .1
+            .0
+            .error
+            .contains("Mira sohbet oturumu bulunamadı")
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+
 
