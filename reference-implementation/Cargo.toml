@@ -12,6 +12,7 @@ members = [
     "cli",
     "benchmarks",
     "mira",
+    "mira-api",
 ]
 
 [workspace.package]
