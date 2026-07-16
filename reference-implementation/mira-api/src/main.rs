@@ -876,5 +876,5 @@ async fn unknown_task_detail_returns_not_found() {
         .expect("test directory should be removed");
 }
 
-}
+
 
