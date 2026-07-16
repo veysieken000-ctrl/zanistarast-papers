@@ -15,6 +15,7 @@ use zanistarast_mira::{
     chat_orchestrator::ChatInteractionResult,
     chat_service::MiraChatService,
     chat_session::ChatMessage,
+    MiraTask,
 };
 
 /// Mira API tarafından paylaşılan uygulama durumu.
@@ -44,6 +45,7 @@ struct CreateSessionResponse {
     title: String,
     status: &'static str,
 }
+
 /// Sohbet oturumu ve mesaj geçmişi cevabı.
 #[derive(Debug, Serialize)]
 struct SessionDetailResponse {
@@ -54,6 +56,14 @@ struct SessionDetailResponse {
     message_count: usize,
     messages: Vec<ChatMessage>,
 }
+
+/// Mira görev listesinin salt okunur cevabı.
+#[derive(Debug, Serialize)]
+struct TaskListResponse {
+    task_count: usize,
+    tasks: Vec<MiraTask>,
+}
+
 /// Mira’ya gönderilecek yazılı mesaj.
 #[derive(Debug, Deserialize)]
 struct SendMessageRequest {
@@ -132,6 +142,31 @@ async fn get_session(
         )
     })?;
 
+/// Mira'da kayıtlı bütün görevleri salt okunur döndürür.
+async fn list_tasks(
+    State(state): State<AppState>,
+) -> Result<
+    Json<TaskListResponse>,
+    (StatusCode, Json<ApiError>),
+> {
+    let service = state.chat_service.lock().map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                error: "Mira sohbet servisine erişilemedi."
+                    .to_string(),
+            }),
+        )
+    })?;
+
+    let tasks = service.tasks().to_vec();
+
+    Ok(Json(TaskListResponse {
+        task_count: tasks.len(),
+        tasks,
+    }))
+}
+    
     let session = service.session(session_id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
@@ -229,7 +264,7 @@ async fn main() {
         repository_root,
     };
 
-   let app = Router::new()
+let app = Router::new()
     .route("/health", get(health))
     .route("/sessions", post(create_session))
     .route(
@@ -240,7 +275,9 @@ async fn main() {
         "/sessions/{session_id}/messages",
         post(send_message),
     )
+    .route("/tasks", get(list_tasks))
     .with_state(state);
+    
     let address =
         SocketAddr::from(([127, 0, 0, 1], 3000));
 
@@ -525,5 +562,65 @@ async fn unknown_session_detail_returns_not_found() {
         fs::remove_dir_all(test_root)
             .expect("test directory should be removed");
     }
+#[tokio::test]
+async fn task_list_starts_empty() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let response = list_tasks(
+        State(state),
+    )
+    .await
+    .expect("task list should succeed");
+
+    assert_eq!(response.0.task_count, 0);
+    assert!(response.0.tasks.is_empty());
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+#[tokio::test]
+async fn task_list_returns_created_repository_task() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let session_id = {
+        let mut service = state
+            .chat_service
+            .lock()
+            .expect("chat service lock should succeed");
+
+        service.create_session(
+            "Görev listesi testi",
+        )
+    };
+
+    let _ = send_message(
+        Path(session_id),
+        State(state.clone()),
+        Json(SendMessageRequest {
+            message: "depo tara".to_string(),
+        }),
+    )
+    .await
+    .expect("message should succeed");
+
+    let response = list_tasks(
+        State(state),
+    )
+    .await
+    .expect("task list should succeed");
+
+    assert_eq!(response.0.task_count, 1);
+    assert_eq!(
+        response.0.tasks[0].title,
+        "Salt okunur repository taraması"
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
 }
 
