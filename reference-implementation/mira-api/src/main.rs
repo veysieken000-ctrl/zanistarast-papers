@@ -523,7 +523,6 @@ async fn protected_route_accepts_valid_token() {
     fs::remove_dir_all(test_root)
         .expect("test directory should be removed");
 }
-    }
 
     #[tokio::test]
     async fn health_response_reports_ok() {
@@ -874,7 +873,7 @@ async fn unknown_task_detail_returns_not_found() {
 
     fs::remove_dir_all(test_root)
         .expect("test directory should be removed");
-}
+    }
 
-
+ }
 
