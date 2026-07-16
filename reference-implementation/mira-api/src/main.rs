@@ -189,6 +189,49 @@ async fn list_tasks(
     }))
 }
 
+/// Kimliğine göre tek bir Mira görevini salt okunur döndürür.
+async fn get_task(
+    Path(task_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<
+    Json<TaskDetailResponse>,
+    (StatusCode, Json<ApiError>),
+> {
+    let service = state.chat_service.lock().map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                error: "Mira sohbet servisine erişilemedi."
+                    .to_string(),
+            }),
+        )
+    })?;
+
+    let task = service
+        .tasks()
+        .iter()
+        .find(|task| task.id == task_id)
+        .cloned()
+        .ok_or_else(|| {
+            (
+                StatusCode::NOT_FOUND,
+                Json(ApiError {
+                    error: format!(
+                        "Mira görevi bulunamadı: {task_id}"
+                    ),
+                }),
+            )
+        })?;
+
+    Ok(Json(TaskDetailResponse { task }))
+}
+
+/// Tek bir Mira görevinin salt okunur cevabı.
+#[derive(Debug, Serialize)]
+struct TaskDetailResponse {
+    task: MiraTask,
+}
+
 /// Mevcut Mira sohbet oturumuna Müdebbir mesajı gönderir.
 async fn send_message(
     Path(session_id): Path<Uuid>,
@@ -276,8 +319,13 @@ let app = Router::new()
         "/sessions/{session_id}/messages",
         post(send_message),
     )
+   
     .route("/tasks", get(list_tasks))
-    .with_state(state);
+.route(
+    "/tasks/{task_id}",
+    get(get_task),
+)
+.with_state(state);
     
     let address =
         SocketAddr::from(([127, 0, 0, 1], 3000));
@@ -617,6 +665,78 @@ async fn task_list_returns_created_repository_task() {
     assert_eq!(
         response.0.tasks[0].title,
         "Salt okunur repository taraması"
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+    #[tokio::test]
+async fn task_detail_returns_created_task() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let session_id = {
+        let mut service = state
+            .chat_service
+            .lock()
+            .expect("chat service lock should succeed");
+
+        service.create_session(
+            "Tek görev ayrıntısı testi",
+        )
+    };
+
+    let interaction = send_message(
+        Path(session_id),
+        State(state.clone()),
+        Json(SendMessageRequest {
+            message: "depo tara".to_string(),
+        }),
+    )
+    .await
+    .expect("message should succeed");
+
+    let task_id = interaction
+        .0
+        .created_task_id
+        .expect("task id should exist");
+
+    let response = get_task(
+        Path(task_id),
+        State(state),
+    )
+    .await
+    .expect("task detail should succeed");
+
+    assert_eq!(response.0.task.id, task_id);
+    assert_eq!(
+        response.0.task.title,
+        "Salt okunur repository taraması"
+    );
+    assert!(!response.0.task.requires_mudebbir_approval);
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+#[tokio::test]
+async fn unknown_task_detail_returns_not_found() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+    let task_id = Uuid::new_v4();
+
+    let error = get_task(
+        Path(task_id),
+        State(state),
+    )
+    .await
+    .expect_err("unknown task should fail");
+
+    assert_eq!(error.0, StatusCode::NOT_FOUND);
+    assert_eq!(
+        error.1.0.error,
+        format!("Mira görevi bulunamadı: {task_id}")
     );
 
     fs::remove_dir_all(test_root)
