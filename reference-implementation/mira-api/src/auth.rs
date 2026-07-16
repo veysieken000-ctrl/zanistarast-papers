@@ -1,5 +1,3 @@
-#![allow(dead_code)]
-
 use subtle::ConstantTimeEq;
 
 /// Yalnızca Müdebbirin kullanacağı API erişim anahtarını doğrular.
