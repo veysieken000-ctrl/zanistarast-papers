@@ -10,6 +10,7 @@ use std::{
     path::PathBuf,
     sync::{Arc, Mutex},
 };
+use uuid::Uuid;
 use zanistarast_mira::{
     chat_orchestrator::ChatInteractionResult,
     chat_service::MiraChatService,
@@ -43,7 +44,16 @@ struct CreateSessionResponse {
     title: String,
     status: &'static str,
 }
-
+/// Sohbet oturumu ve mesaj geçmişi cevabı.
+#[derive(Debug, Serialize)]
+struct SessionDetailResponse {
+    session_id: Uuid,
+    title: String,
+    created_at: String,
+    updated_at: String,
+    message_count: usize,
+    messages: Vec<ChatMessage>,
+}
 /// Mira’ya gönderilecek yazılı mesaj.
 #[derive(Debug, Deserialize)]
 struct SendMessageRequest {
@@ -104,15 +114,43 @@ async fn create_session(
         }),
     ))
 }
-/// Sohbet oturumu ve mesaj geçmişi cevabı.
-#[derive(Debug, Serialize)]
-struct SessionDetailResponse {
-    session_id: Uuid,
-    title: String,
-    created_at: String,
-    updated_at: String,
-    message_count: usize,
-    messages: Vec<ChatMessage>,
+/// Belirtilen sohbet oturumunu ve mesaj geçmişini döndürür.
+async fn get_session(
+    Path(session_id): Path<Uuid>,
+    State(state): State<AppState>,
+) -> Result<
+    Json<SessionDetailResponse>,
+    (StatusCode, Json<ApiError>),
+> {
+    let service = state.chat_service.lock().map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                error: "Mira sohbet servisine erişilemedi."
+                    .to_string(),
+            }),
+        )
+    })?;
+
+    let session = service.session(session_id).ok_or_else(|| {
+        (
+            StatusCode::NOT_FOUND,
+            Json(ApiError {
+                error: format!(
+                    "Mira sohbet oturumu bulunamadı: {session_id}"
+                ),
+            }),
+        )
+    })?;
+
+    Ok(Json(SessionDetailResponse {
+        session_id: session.session_id,
+        title: session.title.clone(),
+        created_at: session.created_at.to_rfc3339(),
+        updated_at: session.updated_at.to_rfc3339(),
+        message_count: session.message_count(),
+        messages: session.messages().to_vec(),
+    }))
 }
 
 /// Mevcut Mira sohbet oturumuna Müdebbir mesajı gönderir.
@@ -191,15 +229,18 @@ async fn main() {
         repository_root,
     };
 
-    let app = Router::new()
-        .route("/health", get(health))
-        .route("/sessions", post(create_session))
-        .route(
-            "/sessions/{session_id}/messages",
-            post(send_message),
-        )
-        .with_state(state);
-
+   let app = Router::new()
+    .route("/health", get(health))
+    .route("/sessions", post(create_session))
+    .route(
+        "/sessions/{session_id}",
+        get(get_session),
+    )
+    .route(
+        "/sessions/{session_id}/messages",
+        post(send_message),
+    )
+    .with_state(state);
     let address =
         SocketAddr::from(([127, 0, 0, 1], 3000));
 
@@ -215,58 +256,6 @@ async fn main() {
         .await
         .expect("Mira API server should run");
 }
-
-/// Belirtilen sohbet oturumunu ve mesaj geçmişini döndürür.
-async fn get_session(
-    Path(session_id): Path<Uuid>,
-    State(state): State<AppState>,
-) -> Result<
-    Json<SessionDetailResponse>,
-    (StatusCode, Json<ApiError>),
-> {
-    let service = state.chat_service.lock().map_err(|_| {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ApiError {
-                error: "Mira sohbet servisine erişilemedi."
-                    .to_string(),
-            }),
-        )
-    })?;
-
-    let session = service.session(session_id).ok_or_else(|| {
-        (
-            StatusCode::NOT_FOUND,
-            Json(ApiError {
-                error: format!(
-                    "Mira sohbet oturumu bulunamadı: {session_id}"
-                ),
-            }),
-        )
-    })?;
-
-    Ok(Json(SessionDetailResponse {
-        session_id: session.session_id,
-        title: session.title.clone(),
-        created_at: session.created_at.to_rfc3339(),
-        updated_at: session.updated_at.to_rfc3339(),
-        message_count: session.message_count(),
-        messages: session.messages().to_vec(),
-    }))
-}
-
-let app = Router::new()
-    .route("/health", get(health))
-    .route("/sessions", post(create_session))
-    .route(
-        "/sessions/{session_id}",
-        get(get_session),
-    )
-    .route(
-        "/sessions/{session_id}/messages",
-        post(send_message),
-    )
-    .with_state(state);
 
 #[cfg(test)]
 mod tests {
@@ -430,7 +419,7 @@ mod tests {
             Path(session_id),
             State(state),
             Json(SendMessageRequest {
-                message: "   ".to_string(),
+                message: " ".to_string(),
             }),
         )
         .await
