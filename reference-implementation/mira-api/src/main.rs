@@ -1,8 +1,13 @@
 mod auth;
-
+use auth::MudebbirAuth;
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
+    extract::{Path, Request, State},
+    http::{
+        header::AUTHORIZATION,
+        StatusCode,
+    },
+    middleware::{self, Next},
+    response::Response,
     routing::{get, post},
     Json, Router,
 };
@@ -77,6 +82,36 @@ struct SendMessageRequest {
 struct ApiError {
     error: String,
 }
+
+/// Korunan Mira API uç noktalarında Müdebbir anahtarını doğrular.
+async fn require_mudebbir(
+    State(auth): State<MudebbirAuth>,
+    request: Request,
+    next: Next,
+) -> Result<
+    Response,
+    (StatusCode, Json<ApiError>),
+> {
+    let authorization_header = request
+        .headers()
+        .get(AUTHORIZATION)
+        .and_then(|value| value.to_str().ok());
+
+    if !auth.verify_authorization_header(
+        authorization_header,
+    ) {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ApiError {
+                error: "Geçerli Müdebbir erişim anahtarı gerekli."
+                    .to_string(),
+            }),
+        ));
+    }
+
+    Ok(next.run(request).await)
+}
+
 
 /// API servisinin çalıştığını doğrular.
 async fn health() -> Json<HealthResponse> {
@@ -294,6 +329,11 @@ async fn send_message(
 async fn main() {
     tracing_subscriber::fmt::init();
 
+let auth = MudebbirAuth::from_environment()
+    .expect(
+        "MIRA_MUDEBBIR_TOKEN ortam değişkeni tanımlanmalıdır",
+    );
+  
     let repository_root = std::env::var(
         "MIRA_REPOSITORY_ROOT",
     )
@@ -310,8 +350,7 @@ async fn main() {
         repository_root,
     };
 
-let app = Router::new()
-    .route("/health", get(health))
+let protected_routes = Router::new()
     .route("/sessions", post(create_session))
     .route(
         "/sessions/{session_id}",
@@ -321,13 +360,23 @@ let app = Router::new()
         "/sessions/{session_id}/messages",
         post(send_message),
     )
-   
     .route("/tasks", get(list_tasks))
-.route(
-    "/tasks/{task_id}",
-    get(get_task),
-)
-.with_state(state);
+    .route(
+        "/tasks/{task_id}",
+        get(get_task),
+    )
+    .layer(
+        middleware::from_fn_with_state(
+            auth,
+            require_mudebbir,
+        ),
+    );
+
+let app = Router::new()
+    .route("/health", get(health))
+    .merge(protected_routes)
+    .with_state(state);
+
     
     let address =
         SocketAddr::from(([127, 0, 0, 1], 3000));
