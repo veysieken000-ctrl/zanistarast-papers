@@ -443,8 +443,9 @@ mod tests {
             )),
             repository_root,
         }
-
-        #[tokio::test]
+ }
+    
+    #[tokio::test]
 async fn protected_route_rejects_missing_token() {
     let test_root = create_test_repository();
     let state = test_state(test_root.clone());
