@@ -451,15 +451,15 @@ async fn session_detail_returns_message_history() {
         )
     };
 
-    send_message(
-        Path(session_id),
-        State(state.clone()),
-        Json(SendMessageRequest {
-            message: "durum".to_string(),
-        }),
-    )
-    .await
-    .expect("message should succeed");
+   let _ = send_message(
+    Path(session_id),
+    State(state.clone()),
+    Json(SendMessageRequest {
+        message: "durum".to_string(),
+    }),
+)
+.await
+.expect("message should succeed");
 
     let response = get_session(
         Path(session_id),
