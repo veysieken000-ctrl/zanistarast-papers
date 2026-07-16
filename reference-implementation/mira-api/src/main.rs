@@ -436,28 +436,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn unknown_session_returns_not_found() {
-        let test_root = create_test_repository();
-        let state = test_state(test_root.clone());
-
-        let error = send_message(
-            Path(Uuid::new_v4()),
-            State(state),
-            Json(SendMessageRequest {
-                message: "durum".to_string(),
-            }),
-        )
-        .await
-        .expect_err("unknown session should fail");
-
-        assert_eq!(error.0, StatusCode::NOT_FOUND);
-
-        fs::remove_dir_all(test_root)
-            .expect("test directory should be removed");
-    }
-}
-
-#[tokio::test]
 async fn session_detail_returns_message_history() {
     let test_root = create_test_repository();
     let state = test_state(test_root.clone());
@@ -526,6 +504,26 @@ async fn unknown_session_detail_returns_not_found() {
     fs::remove_dir_all(test_root)
         .expect("test directory should be removed");
 }
+    
+    #[tokio::test]
+    async fn unknown_session_returns_not_found() {
+        let test_root = create_test_repository();
+        let state = test_state(test_root.clone());
 
+        let error = send_message(
+            Path(Uuid::new_v4()),
+            State(state),
+            Json(SendMessageRequest {
+                message: "durum".to_string(),
+            }),
+        )
+        .await
+        .expect_err("unknown session should fail");
 
+        assert_eq!(error.0, StatusCode::NOT_FOUND);
+
+        fs::remove_dir_all(test_root)
+            .expect("test directory should be removed");
+    }
+}
 
