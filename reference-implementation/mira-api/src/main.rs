@@ -398,7 +398,9 @@ let app = Router::new()
 mod tests {
     use super::*;
     use std::fs;
-
+    use axum::body::Body;
+    use tower::ServiceExt;
+    
     fn create_test_repository() -> PathBuf {
         let test_root = std::env::temp_dir().join(format!(
             "zanistarast-mira-api-{}",
@@ -441,6 +443,85 @@ mod tests {
             )),
             repository_root,
         }
+
+        #[tokio::test]
+async fn protected_route_rejects_missing_token() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let auth = MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted");
+
+    let app = Router::new()
+        .route("/tasks", get(list_tasks))
+        .layer(
+            middleware::from_fn_with_state(
+                auth,
+                require_mudebbir,
+            ),
+        )
+        .with_state(state);
+
+    let request = Request::builder()
+        .uri("/tasks")
+        .body(Body::empty())
+        .expect("request should be created");
+
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("router request should complete");
+
+    assert_eq!(
+        response.status(),
+        StatusCode::UNAUTHORIZED
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+#[tokio::test]
+async fn protected_route_accepts_valid_token() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let auth = MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted");
+
+    let app = Router::new()
+        .route("/tasks", get(list_tasks))
+        .layer(
+            middleware::from_fn_with_state(
+                auth,
+                require_mudebbir,
+            ),
+        )
+        .with_state(state);
+
+    let request = Request::builder()
+        .uri("/tasks")
+        .header(
+            AUTHORIZATION,
+            "Bearer zanistarast-mudebbir-test-token-0001",
+        )
+        .body(Body::empty())
+        .expect("request should be created");
+
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("router request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
     }
 
     #[tokio::test]
