@@ -793,6 +793,65 @@ async fn unknown_task_detail_returns_not_found() {
     fs::remove_dir_all(test_root)
         .expect("test directory should be removed");
 }
+#[tokio::test]
+async fn middleware_rejects_missing_authorization_header() {
+    let auth = MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted");
+
+    let request = Request::builder()
+        .uri("/tasks")
+        .body(axum::body::Body::empty())
+        .expect("request should be created");
+
+    let result = require_mudebbir(
+        State(auth),
+        request,
+        Next::new(|request| async move {
+            Response::new(request.into_body())
+        }),
+    )
+    .await;
+
+    let error = result
+        .expect_err("missing token should be rejected");
+
+    assert_eq!(error.0, StatusCode::UNAUTHORIZED);
+    assert_eq!(
+        error.1.0.error,
+        "Geçerli Müdebbir erişim anahtarı gerekli."
+    );
+}
+
+#[tokio::test]
+async fn middleware_accepts_valid_authorization_header() {
+    let auth = MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted");
+
+    let request = Request::builder()
+        .uri("/tasks")
+        .header(
+            AUTHORIZATION,
+            "Bearer zanistarast-mudebbir-test-token-0001",
+        )
+        .body(axum::body::Body::empty())
+        .expect("request should be created");
+
+    let response = require_mudebbir(
+        State(auth),
+        request,
+        Next::new(|request| async move {
+            Response::new(request.into_body())
+        }),
+    )
+    .await
+    .expect("valid token should be accepted");
+
+    assert_eq!(response.status(), StatusCode::OK);
+}
 
 }
 
