@@ -1,5 +1,5 @@
 use axum::{
-    extract::State,
+    extract::{Path, State},
     http::StatusCode,
     routing::{get, post},
     Json, Router,
@@ -7,15 +7,20 @@ use axum::{
 use serde::{Deserialize, Serialize};
 use std::{
     net::SocketAddr,
+    path::PathBuf,
     sync::{Arc, Mutex},
 };
 use uuid::Uuid;
-use zanistarast_mira::chat_service::MiraChatService;
+use zanistarast_mira::{
+    chat_orchestrator::ChatInteractionResult,
+    chat_service::MiraChatService,
+};
 
 /// Mira API tarafından paylaşılan uygulama durumu.
 #[derive(Clone)]
 struct AppState {
     chat_service: Arc<Mutex<MiraChatService>>,
+    repository_root: PathBuf,
 }
 
 /// Sağlık kontrolü cevabı.
@@ -37,6 +42,12 @@ struct CreateSessionResponse {
     session_id: Uuid,
     title: String,
     status: &'static str,
+}
+
+/// Mira’ya gönderilecek yazılı mesaj.
+#[derive(Debug, Deserialize)]
+struct SendMessageRequest {
+    message: String,
 }
 
 /// Standart API hata cevabı.
@@ -76,7 +87,8 @@ async fn create_session(
         (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ApiError {
-                error: "Mira sohbet servisine erişilemedi.".to_string(),
+                error: "Mira sohbet servisine erişilemedi."
+                    .to_string(),
             }),
         )
     })?;
@@ -93,19 +105,89 @@ async fn create_session(
     ))
 }
 
+/// Mevcut Mira sohbet oturumuna Müdebbir mesajı gönderir.
+async fn send_message(
+    Path(session_id): Path<Uuid>,
+    State(state): State<AppState>,
+    Json(request): Json<SendMessageRequest>,
+) -> Result<
+    Json<ChatInteractionResult>,
+    (StatusCode, Json<ApiError>),
+> {
+    let message = request.message.trim();
+
+    if message.is_empty() {
+        return Err((
+            StatusCode::BAD_REQUEST,
+            Json(ApiError {
+                error: "Mesaj boş olamaz.".to_string(),
+            }),
+        ));
+    }
+
+    let mut service = state.chat_service.lock().map_err(|_| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ApiError {
+                error: "Mira sohbet servisine erişilemedi."
+                    .to_string(),
+            }),
+        )
+    })?;
+
+    let result = service
+        .send_message(
+            session_id,
+            message,
+            &state.repository_root,
+        )
+        .map_err(|error| {
+            let status = if error.kind()
+                == std::io::ErrorKind::NotFound
+            {
+                StatusCode::NOT_FOUND
+            } else {
+                StatusCode::INTERNAL_SERVER_ERROR
+            };
+
+            (
+                status,
+                Json(ApiError {
+                    error: error.to_string(),
+                }),
+            )
+        })?;
+
+    Ok(Json(result))
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
+
+    let repository_root = std::env::var(
+        "MIRA_REPOSITORY_ROOT",
+    )
+    .map(PathBuf::from)
+    .unwrap_or_else(|_| {
+        std::env::current_dir()
+            .unwrap_or_else(|_| PathBuf::from("."))
+    });
 
     let state = AppState {
         chat_service: Arc::new(Mutex::new(
             MiraChatService::new(),
         )),
+        repository_root,
     };
 
     let app = Router::new()
         .route("/health", get(health))
         .route("/sessions", post(create_session))
+        .route(
+            "/sessions/{session_id}/messages",
+            post(send_message),
+        )
         .with_state(state);
 
     let address =
@@ -127,12 +209,49 @@ async fn main() {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
 
-    fn test_state() -> AppState {
+    fn create_test_repository() -> PathBuf {
+        let test_root = std::env::temp_dir().join(format!(
+            "zanistarast-mira-api-{}",
+            Uuid::new_v4()
+        ));
+
+        let articles = test_root.join("articles");
+
+        fs::create_dir_all(&articles)
+            .expect("test directories should be created");
+
+        fs::write(
+            test_root.join("README.md"),
+            "Zanistarast test repository",
+        )
+        .expect("README should be written");
+
+        fs::write(
+            articles.join("hebun.html"),
+            r#"
+                <html>
+                    <head>
+                        <title>Hebûn Makalesi</title>
+                    </head>
+                    <body>
+                        <a href="../index.html">Ana sayfa</a>
+                    </body>
+                </html>
+            "#,
+        )
+        .expect("Hebûn page should be written");
+
+        test_root
+    }
+
+    fn test_state(repository_root: PathBuf) -> AppState {
         AppState {
             chat_service: Arc::new(Mutex::new(
                 MiraChatService::new(),
             )),
+            repository_root,
         }
     }
 
@@ -149,7 +268,8 @@ mod tests {
 
     #[tokio::test]
     async fn session_endpoint_creates_chat_session() {
-        let state = test_state();
+        let test_root = create_test_repository();
+        let state = test_state(test_root.clone());
 
         let result = create_session(
             State(state.clone()),
@@ -174,32 +294,115 @@ mod tests {
             .expect("chat service lock should succeed");
 
         assert_eq!(service.session_count(), 1);
-        assert!(
-            service
-                .session(result.1.0.session_id)
-                .is_some()
-        );
+
+        drop(service);
+
+        fs::remove_dir_all(test_root)
+            .expect("test directory should be removed");
     }
 
     #[tokio::test]
-    async fn empty_session_title_is_rejected() {
-        let state = test_state();
+    async fn message_endpoint_processes_repository_command() {
+        let test_root = create_test_repository();
+        let state = test_state(test_root.clone());
 
-        let error = create_session(
-            State(state),
-            Json(CreateSessionRequest {
-                title: " ".to_string(),
+        let session_id = {
+            let mut service = state
+                .chat_service
+                .lock()
+                .expect("chat service lock should succeed");
+
+            service.create_session(
+                "Repository incelemesi",
+            )
+        };
+
+        let result = send_message(
+            Path(session_id),
+            State(state.clone()),
+            Json(SendMessageRequest {
+                message: "depo tara".to_string(),
             }),
         )
         .await
-        .expect_err("empty title should fail");
+        .expect("message should succeed");
+
+        assert!(result.0.command_executed);
+        assert!(result.0.created_task_id.is_some());
+        assert_eq!(result.0.session_id, session_id);
+
+        let service = state
+            .chat_service
+            .lock()
+            .expect("chat service lock should succeed");
+
+        assert_eq!(service.task_count(), 1);
+
+        let session = service
+            .session(session_id)
+            .expect("session should exist");
+
+        assert_eq!(session.message_count(), 2);
+
+        drop(service);
+
+        fs::remove_dir_all(test_root)
+            .expect("test directory should be removed");
+    }
+
+    #[tokio::test]
+    async fn empty_message_is_rejected() {
+        let test_root = create_test_repository();
+        let state = test_state(test_root.clone());
+
+        let session_id = {
+            let mut service = state
+                .chat_service
+                .lock()
+                .expect("chat service lock should succeed");
+
+            service.create_session("Boş mesaj testi")
+        };
+
+        let error = send_message(
+            Path(session_id),
+            State(state),
+            Json(SendMessageRequest {
+                message: "   ".to_string(),
+            }),
+        )
+        .await
+        .expect_err("empty message should fail");
 
         assert_eq!(error.0, StatusCode::BAD_REQUEST);
         assert_eq!(
             error.1.0.error,
-            "Sohbet başlığı boş olamaz."
+            "Mesaj boş olamaz."
         );
+
+        fs::remove_dir_all(test_root)
+            .expect("test directory should be removed");
+    }
+
+    #[tokio::test]
+    async fn unknown_session_returns_not_found() {
+        let test_root = create_test_repository();
+        let state = test_state(test_root.clone());
+
+        let error = send_message(
+            Path(Uuid::new_v4()),
+            State(state),
+            Json(SendMessageRequest {
+                message: "durum".to_string(),
+            }),
+        )
+        .await
+        .expect_err("unknown session should fail");
+
+        assert_eq!(error.0, StatusCode::NOT_FOUND);
+
+        fs::remove_dir_all(test_root)
+            .expect("test directory should be removed");
     }
 }
-
 
