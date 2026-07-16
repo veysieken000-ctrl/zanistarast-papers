@@ -23,6 +23,18 @@ jobs:
     # - name: Check formatting
     # run: cargo fmt --all -- --check
 
+      - name: Verify Mudebbir secret
+        env:
+          MIRA_MUDEBBIR_TOKEN: ${{ secrets.MIRA_MUDEBBIR_TOKEN }}
+        run: |
+          if [ -z "$MIRA_MUDEBBIR_TOKEN" ]; then
+            echo "MIRA_MUDEBBIR_TOKEN is not configured."
+            exit 1
+          fi
+
+          echo "MIRA_MUDEBBIR_TOKEN is configured."
+
+
       - name: Run clippy
         run: cargo clippy --workspace --all-targets -- -D warnings
 
