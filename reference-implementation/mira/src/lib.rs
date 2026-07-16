@@ -16,6 +16,7 @@ pub mod chat_interface;
 pub mod command_router;
 pub mod chat_session;
 pub mod chat_orchestrator;
+pub mod chat_service;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
