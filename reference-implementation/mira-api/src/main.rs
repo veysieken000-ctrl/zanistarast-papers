@@ -124,6 +124,7 @@ async fn create_session(
         }),
     ))
 }
+
 /// Belirtilen sohbet oturumunu ve mesaj geçmişini döndürür.
 async fn get_session(
     Path(session_id): Path<Uuid>,
@@ -142,8 +143,6 @@ async fn get_session(
         )
     })?;
 
-/// Mira'da kayıtlı bütün görevleri salt okunur döndürür.
- 
     let session = service.session(session_id).ok_or_else(|| {
         (
             StatusCode::NOT_FOUND,
@@ -155,7 +154,18 @@ async fn get_session(
         )
     })?;
 
-  async fn list_tasks(
+    Ok(Json(SessionDetailResponse {
+        session_id: session.session_id,
+        title: session.title.clone(),
+        created_at: session.created_at.to_rfc3339(),
+        updated_at: session.updated_at.to_rfc3339(),
+        message_count: session.message_count(),
+        messages: session.messages().to_vec(),
+    }))
+}
+
+/// Mira'da kayıtlı bütün görevleri salt okunur döndürür.
+async fn list_tasks(
     State(state): State<AppState>,
 ) -> Result<
     Json<TaskListResponse>,
@@ -176,16 +186,6 @@ async fn get_session(
     Ok(Json(TaskListResponse {
         task_count: tasks.len(),
         tasks,
-    }))
-}
-    
-    Ok(Json(SessionDetailResponse {
-        session_id: session.session_id,
-        title: session.title.clone(),
-        created_at: session.created_at.to_rfc3339(),
-        updated_at: session.updated_at.to_rfc3339(),
-        message_count: session.message_count(),
-        messages: session.messages().to_vec(),
     }))
 }
 
