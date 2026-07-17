@@ -77,6 +77,25 @@ jobs:
 
           echo "Request with Mudebbir token was accepted with HTTP 200."
 
+        - name: Verify request with invalid token is rejected
+        run: |
+          status_code="$(
+            curl \
+              --silent \
+              --output /tmp/invalid-token-response.json \
+              --write-out "%{http_code}" \
+              --header "Authorization: Bearer invalid-mudebbir-token" \
+              http://127.0.0.1:3000/tasks
+          )"
+
+          if [ "$status_code" != "401" ]; then
+            echo "Expected HTTP 401 for invalid token, received HTTP $status_code."
+            cat /tmp/invalid-token-response.json
+            exit 1
+          fi
+
+          echo "Request with invalid token was correctly rejected with HTTP 401."
+
       - name: Stop Mira API
         if: always()
         run: |
