@@ -77,7 +77,7 @@ jobs:
 
           echo "Request with Mudebbir token was accepted with HTTP 200."
 
-        - name: Verify request with invalid token is rejected
+      - name: Verify request with invalid token is rejected
         run: |
           status_code="$(
             curl \
@@ -102,5 +102,7 @@ jobs:
           if [ -f /tmp/mira-api.pid ]; then
             kill "$(cat /tmp/mira-api.pid)" 2>/dev/null || true
           fi
+
+
 
 
