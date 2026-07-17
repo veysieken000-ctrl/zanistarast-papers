@@ -1,0 +1,87 @@
+name: Mira Auth Live
+
+on:
+  workflow_dispatch:
+
+jobs:
+  verify-mudebbir-auth:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: reference-implementation
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Start Mira API
+        env:
+          MIRA_MUDEBBIR_TOKEN: ${{ secrets.MIRA_MUDEBBIR_TOKEN }}
+        run: |
+          cargo run -p zanistarast-mira-api > /tmp/mira-api.log 2>&1 &
+          echo $! > /tmp/mira-api.pid
+
+          for attempt in {1..30}; do
+            if curl --silent --fail http://127.0.0.1:3000/health > /dev/null; then
+              echo "Mira API is ready."
+              exit 0
+            fi
+
+            sleep 2
+          done
+
+          echo "Mira API did not become ready."
+          cat /tmp/mira-api.log
+          exit 1
+
+      - name: Verify request without token is rejected
+        run: |
+          status_code="$(
+            curl \
+              --silent \
+              --output /tmp/unauthorized-response.json \
+              --write-out "%{http_code}" \
+              http://127.0.0.1:3000/tasks
+          )"
+
+          if [ "$status_code" != "401" ]; then
+            echo "Expected HTTP 401, received HTTP $status_code."
+            cat /tmp/unauthorized-response.json
+            exit 1
+          fi
+
+          echo "Request without token was correctly rejected with HTTP 401."
+
+      - name: Verify request with Mudebbir token is accepted
+        env:
+          MIRA_MUDEBBIR_TOKEN: ${{ secrets.MIRA_MUDEBBIR_TOKEN }}
+        run: |
+          status_code="$(
+            curl \
+              --silent \
+              --output /tmp/authorized-response.json \
+              --write-out "%{http_code}" \
+              --header "Authorization: Bearer ${MIRA_MUDEBBIR_TOKEN}" \
+              http://127.0.0.1:3000/tasks
+          )"
+
+          if [ "$status_code" != "200" ]; then
+            echo "Expected HTTP 200, received HTTP $status_code."
+            cat /tmp/authorized-response.json
+            exit 1
+          fi
+
+          echo "Request with Mudebbir token was accepted with HTTP 200."
+
+      - name: Stop Mira API
+        if: always()
+        run: |
+          if [ -f /tmp/mira-api.pid ]; then
+            kill "$(cat /tmp/mira-api.pid)" 2>/dev/null || true
+          fi
+
+
