@@ -325,7 +325,22 @@
         API bağlantısı sonraki adımda etkinleştirilecektir.
       </p>
     </form>
-  </main>
+ 
+ </main>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker
+          .register("./service-worker.js")
+          .catch((error) => {
+            console.error("Mira Service Worker kaydı başarısız:", error);
+          });
+      });
+    }
+  </script>
 </body>
 </html>
+
+
 
