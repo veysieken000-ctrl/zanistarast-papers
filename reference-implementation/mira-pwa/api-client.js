@@ -1,4 +1,7 @@
-const DEFAULT_API_BASE_URL = "http://127.0.0.1:3000";
+import { miraConfig } from "./config.js";
+
+const DEFAULT_API_BASE_URL =
+  miraConfig.apiBaseUrl || "http://127.0.0.1:3000";
 
 /**
  * Mira API ile iletişim sınırı.
