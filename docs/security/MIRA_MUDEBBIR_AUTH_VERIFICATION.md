@@ -2,7 +2,7 @@
 
 ## Durum
 
-Doğrulama başarılıdır.
+Doğrulama başarıyla tamamlanmıştır. GitHub Actions üzerinde canlı "Mira Auth Live" doğrulaması başarıyla gerçekleştirilmiş ve yetkilendirme davranışı beklenen şekilde doğrulanmıştır (401 → 200 → 401).
 
 ## Doğrulanan bileşenler
 
@@ -14,7 +14,8 @@ Doğrulama başarılıdır.
 - Tokensız korumalı istek HTTP `401 Unauthorized` ile reddedilmiştir.
 - Geçerli Müdebbir tokenı taşıyan istek HTTP `200 OK` ile kabul edilmiştir.
 - Manuel `Mira Auth Live` iş akışı başarıyla tamamlanmıştır.
-
+- Geçersiz Müdebbir tokeni ile yapılan istek HTTP "401 Unauthorized" olarak reddedilmiştir.
+  
 ## Güvenlik ilkesi
 
 Gerçek Müdebbir erişim anahtarı:
