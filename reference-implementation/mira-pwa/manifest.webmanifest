@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Mira — Zanistarast",
+  "short_name": "Mira",
+  "description": "Tek Müdebbir hesabına özel Zanistarast Mira uygulaması.",
+  "lang": "tr",
+  "dir": "ltr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0b1020",
+  "theme_color": "#111827",
+  "categories": [
+    "productivity",
+    "education"
+  ]
+}
+
+
