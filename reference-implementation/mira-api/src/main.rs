@@ -28,7 +28,6 @@ use std::{
     net::SocketAddr,
     path::PathBuf,
     sync::{Arc, Mutex},
-    time::Duration,
 };
 
 use uuid::Uuid;
@@ -109,14 +108,6 @@ struct ApiError {
 struct MudebbirLoginResponse {
     status: &'static str,
     expires_in_seconds: u64,
-}
-
-#[derive(Clone)]
-struct AppState {
-    chat_service: Arc<Mutex<MiraChatService>>,
-    repository_root: PathBuf,
-    auth: MudebbirAuth,
-    session_store: MudebbirSessionStore,
 }
 
 /// Korunan Mira API uç noktalarında Müdebbir anahtarını doğrular.
@@ -544,9 +535,10 @@ mod tests {
     )
     .expect("test token should be accepted"),
     session_store: MudebbirSessionStore::new(
-        Duration::from_secs(
-            MUDEBBIR_SESSION_TTL_SECONDS,
-        ),
+  std::time::Duration::from_secs(
+    MUDEBBIR_SESSION_TTL_SECONDS,
+),
+
     ),
 }
   }  
