@@ -527,6 +527,79 @@ mod tests {
         test_root
     }
 
+    #[tokio::test]
+async fn login_rejects_missing_mudebbir_token() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let app = Router::new()
+        .route("/auth/login", post(login_mudebbir))
+        .with_state(state);
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/auth/login")
+        .body(Body::empty())
+        .expect("request should be created");
+
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("router request should complete");
+
+    assert_eq!(
+        response.status(),
+        StatusCode::UNAUTHORIZED
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+#[tokio::test]
+async fn login_sets_secure_session_cookie() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let app = Router::new()
+        .route("/auth/login", post(login_mudebbir))
+        .with_state(state);
+
+    let request = Request::builder()
+        .method("POST")
+        .uri("/auth/login")
+        .header(
+            AUTHORIZATION,
+            "Bearer zanistarast-mudebbir-test-token-0001",
+        )
+        .body(Body::empty())
+        .expect("request should be created");
+
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("router request should complete");
+
+    assert_eq!(response.status(), StatusCode::OK);
+
+    let set_cookie = response
+        .headers()
+        .get(axum::http::header::SET_COOKIE)
+        .and_then(|value| value.to_str().ok())
+        .expect("session cookie should be returned");
+
+    assert!(set_cookie.contains(
+        "mira_mudebbir_session="
+    ));
+    assert!(set_cookie.contains("HttpOnly"));
+    assert!(set_cookie.contains("Secure"));
+    assert!(set_cookie.contains("SameSite=Strict"));
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+    
     fn test_state(repository_root: PathBuf) -> AppState {
     AppState {
     chat_service: Arc::new(Mutex::new(
