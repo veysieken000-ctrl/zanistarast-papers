@@ -34,7 +34,7 @@ use zanistarast_mira::{
 struct AppState {
     chat_service: Arc<Mutex<MiraChatService>>,
     repository_root: PathBuf,
-    session_store: MudebbirSessionStore,
+   _session_store: MudebbirSessionStore,
 }
 
 /// Sağlık kontrolü cevabı.
@@ -353,9 +353,10 @@ let auth = MudebbirAuth::from_environment()
         MiraChatService::new(),
     )),
     repository_root,
-    session_store: MudebbirSessionStore::new(
-        Duration::from_secs(30 * 60),
-    ),
+   _session_store: MudebbirSessionStore::new(
+    Duration::from_secs(30 * 60),
+),
+
 };
 
 let protected_routes = Router::new()
@@ -453,9 +454,10 @@ mod tests {
             MiraChatService::new(),
         )),
         repository_root,
-        session_store: MudebbirSessionStore::new(
-            Duration::from_secs(30 * 60),
-        ),
+       _session_store: MudebbirSessionStore::new(
+    Duration::from_secs(30 * 60),
+),
+
     }
 }
     
