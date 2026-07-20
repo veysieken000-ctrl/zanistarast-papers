@@ -410,68 +410,71 @@ async fn send_message(
 async fn main() {
     tracing_subscriber::fmt::init();
 
-let auth = MudebbirAuth::from_environment()
-    .expect(
+    let auth = MudebbirAuth::from_environment().expect(
         "MIRA_MUDEBBIR_TOKEN ortam değişkeni tanımlanmalıdır",
     );
-  
-    let repository_root = std::env::var(
-        "MIRA_REPOSITORY_ROOT",
-    )
-    .map(PathBuf::from)
-    .unwrap_or_else(|_| {
-        std::env::current_dir()
-            .unwrap_or_else(|_| PathBuf::from("."))
-    });
 
-     let session_id = state
-        .session_store
-        .create_session()
-        .map_err(|error| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(ApiError { error }),
-            )
-        })?;
-    
-let protected_routes = Router::new()
-    .route("/sessions", post(create_session))
-    .route(
-        "/sessions/{session_id}",
-        get(get_session),
-    )
-    .route(
-        "/sessions/{session_id}/messages",
-        post(send_message),
-    )
-    .route("/tasks", get(list_tasks))
-    .route(
-        "/tasks/{task_id}",
-        get(get_task),
-    )
-    .layer(
-        middleware::from_fn_with_state(
-            auth,
-            require_mudebbir,
+    let repository_root =
+        std::env::var("MIRA_REPOSITORY_ROOT")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| {
+                std::env::current_dir()
+                    .unwrap_or_else(|_| PathBuf::from("."))
+            });
+
+    let state = AppState {
+        chat_service: Arc::new(Mutex::new(
+            MiraChatService::new(),
+        )),
+        repository_root,
+        auth: auth.clone(),
+        session_store: MudebbirSessionStore::new(
+            std::time::Duration::from_secs(
+                MUDEBBIR_SESSION_TTL_SECONDS,
+            ),
         ),
-    );
+    };
 
-let app = Router::new()
-    .route("/health", get(health))
-    .route("/auth/login", post(login_mudebbir))
-    .merge(protected_routes)
-    .with_state(state);
+    let protected_routes = Router::new()
+        .route("/sessions", post(create_session))
+        .route(
+            "/sessions/{session_id}",
+            get(get_session),
+        )
+        .route(
+            "/sessions/{session_id}/messages",
+            post(send_message),
+        )
+        .route("/tasks", get(list_tasks))
+        .route(
+            "/tasks/{task_id}",
+            get(get_task),
+        )
+        .layer(
+            middleware::from_fn_with_state(
+                auth,
+                require_mudebbir,
+            ),
+        );
 
-   let port = std::env::var("PORT")
-    .ok()
-    .and_then(|value| value.parse::<u16>().ok())
-    .unwrap_or(3000);
+    let app = Router::new()
+        .route("/health", get(health))
+        .route("/auth/login", post(login_mudebbir))
+        .merge(protected_routes)
+        .with_state(state);
 
-let address = SocketAddr::from(([0, 0, 0, 0], port));
- 
-    let listener = tokio::net::TcpListener::bind(address)
-        .await
-        .expect("Mira API listener should bind");
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|value| value.parse::<u16>().ok())
+        .unwrap_or(3000);
+
+    let address =
+        SocketAddr::from(([0, 0, 0, 0], port));
+
+    let listener =
+        tokio::net::TcpListener::bind(address)
+            .await
+            .expect("Mira API listener should bind");
 
     tracing::info!(
         "Mira API listening on http://{address}"
