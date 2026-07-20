@@ -569,17 +569,12 @@ async fn protected_route_rejects_missing_token() {
     let test_root = create_test_repository();
     let state = test_state(test_root.clone());
 
-    let auth = MudebbirAuth::new(
-        "zanistarast-mudebbir-test-token-0001",
-    )
-    .expect("test token should be accepted");
-
     let app = Router::new()
         .route("/tasks", get(list_tasks))
         .layer(
-            middleware::from_fn_with_state(
-                auth,
-                require_mudebbir,
+           middleware::from_fn_with_state(
+    state.clone(),
+    require_mudebbir,
             ),
         )
         .with_state(state);
