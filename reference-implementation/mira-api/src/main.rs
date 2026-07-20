@@ -111,8 +111,10 @@ struct MudebbirLoginResponse {
 }
 
 /// Korunan Mira API uç noktalarında Müdebbir anahtarını doğrular.
+
 async fn require_mudebbir(
-    State(auth): State<MudebbirAuth>,
+    State(state): State<AppState>,
+    jar: CookieJar,
     request: Request,
     next: Next,
 ) -> Result<
@@ -124,14 +126,28 @@ async fn require_mudebbir(
         .get(AUTHORIZATION)
         .and_then(|value| value.to_str().ok());
 
-    if !auth.verify_authorization_header(
-        authorization_header,
-    ) {
+    let bearer_is_valid = state
+        .auth
+        .verify_authorization_header(
+            authorization_header,
+        );
+
+    let session_is_valid = jar
+        .get(MUDEBBIR_SESSION_COOKIE)
+        .map(|cookie| {
+            state
+                .session_store
+                .is_valid(cookie.value())
+        })
+        .unwrap_or(false);
+
+    if !bearer_is_valid && !session_is_valid {
         return Err((
             StatusCode::UNAUTHORIZED,
             Json(ApiError {
-                error: "Geçerli Müdebbir erişim anahtarı gerekli."
-                    .to_string(),
+                error:
+                    "Geçerli Müdebbir erişim anahtarı veya oturumu gerekli."
+                        .to_string(),
             }),
         ));
     }
@@ -451,12 +467,11 @@ async fn main() {
             get(get_task),
         )
         .layer(
-            middleware::from_fn_with_state(
-                auth,
-                require_mudebbir,
-            ),
-        );
-
+    middleware::from_fn_with_state(
+        state.clone(),
+        require_mudebbir,
+    ),
+);
     let app = Router::new()
         .route("/health", get(health))
         .route("/auth/login", post(login_mudebbir))
