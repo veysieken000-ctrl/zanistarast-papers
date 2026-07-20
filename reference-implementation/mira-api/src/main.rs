@@ -1,4 +1,5 @@
 mod auth;
+pub mod session;
 use auth::MudebbirAuth;
 use axum::{
     extract::{Path, Request, State},
