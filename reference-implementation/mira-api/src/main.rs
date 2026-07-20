@@ -527,7 +527,66 @@ mod tests {
         test_root
     }
 
+  
+    
+    fn test_state(repository_root: PathBuf) -> AppState {
+    AppState {
+    chat_service: Arc::new(Mutex::new(
+        MiraChatService::new(),
+    )),
+    repository_root,
+    auth: MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted"),
+    session_store: MudebbirSessionStore::new(
+  std::time::Duration::from_secs(
+    MUDEBBIR_SESSION_TTL_SECONDS,
+),
+
+    ),
+}
+  }  
     #[tokio::test]
+async fn protected_route_rejects_missing_token() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let auth = MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted");
+
+    let app = Router::new()
+        .route("/tasks", get(list_tasks))
+        .layer(
+            middleware::from_fn_with_state(
+                auth,
+                require_mudebbir,
+            ),
+        )
+        .with_state(state);
+
+    let request = Request::builder()
+        .uri("/tasks")
+        .body(Body::empty())
+        .expect("request should be created");
+
+    let response = app
+        .oneshot(request)
+        .await
+        .expect("router request should complete");
+
+    assert_eq!(
+        response.status(),
+        StatusCode::UNAUTHORIZED
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+  #[tokio::test]
 async fn login_rejects_missing_mudebbir_token() {
     let test_root = create_test_repository();
     let state = test_state(test_root.clone());
@@ -600,63 +659,6 @@ async fn login_sets_secure_session_cookie() {
 }
 
     
-    fn test_state(repository_root: PathBuf) -> AppState {
-    AppState {
-    chat_service: Arc::new(Mutex::new(
-        MiraChatService::new(),
-    )),
-    repository_root,
-    auth: MudebbirAuth::new(
-        "zanistarast-mudebbir-test-token-0001",
-    )
-    .expect("test token should be accepted"),
-    session_store: MudebbirSessionStore::new(
-  std::time::Duration::from_secs(
-    MUDEBBIR_SESSION_TTL_SECONDS,
-),
-
-    ),
-}
-  }  
-    #[tokio::test]
-async fn protected_route_rejects_missing_token() {
-    let test_root = create_test_repository();
-    let state = test_state(test_root.clone());
-
-    let auth = MudebbirAuth::new(
-        "zanistarast-mudebbir-test-token-0001",
-    )
-    .expect("test token should be accepted");
-
-    let app = Router::new()
-        .route("/tasks", get(list_tasks))
-        .layer(
-            middleware::from_fn_with_state(
-                auth,
-                require_mudebbir,
-            ),
-        )
-        .with_state(state);
-
-    let request = Request::builder()
-        .uri("/tasks")
-        .body(Body::empty())
-        .expect("request should be created");
-
-    let response = app
-        .oneshot(request)
-        .await
-        .expect("router request should complete");
-
-    assert_eq!(
-        response.status(),
-        StatusCode::UNAUTHORIZED
-    );
-
-    fs::remove_dir_all(test_root)
-        .expect("test directory should be removed");
-}
-
 #[tokio::test]
 async fn protected_route_accepts_valid_token() {
     let test_root = create_test_repository();
