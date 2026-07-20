@@ -173,7 +173,36 @@ async fn login_mudebbir(
             }),
         ));
     }
-    
+  let session_id = state
+        .session_store
+        .create_session()
+        .map_err(|error| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError { error }),
+            )
+        })?;
+
+    let cookie = Cookie::build((
+        MUDEBBIR_SESSION_COOKIE,
+        session_id,
+    ))
+    .path("/")
+    .http_only(true)
+    .secure(true)
+    .same_site(SameSite::Strict)
+    .build();
+
+    Ok((
+        jar.add(cookie),
+        Json(MudebbirLoginResponse {
+            status: "authenticated",
+            expires_in_seconds:
+                MUDEBBIR_SESSION_TTL_SECONDS,
+        }),
+    ))
+}
+  
 /// API servisinin çalıştığını doğrular.
 async fn health() -> Json<HealthResponse> {
     Json(HealthResponse {
