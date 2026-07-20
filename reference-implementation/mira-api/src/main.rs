@@ -670,6 +670,76 @@ async fn login_sets_secure_session_cookie() {
         .expect("test directory should be removed");
 }
 
+#[tokio::test]
+async fn protected_route_accepts_valid_session_cookie() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let protected_routes = Router::new()
+        .route("/tasks", get(list_tasks))
+        .layer(
+            middleware::from_fn_with_state(
+                state.clone(),
+                require_mudebbir,
+            ),
+        );
+
+    let app = Router::new()
+        .route("/auth/login", post(login_mudebbir))
+        .merge(protected_routes)
+        .with_state(state);
+
+    let login_request = Request::builder()
+        .method("POST")
+        .uri("/auth/login")
+        .header(
+            AUTHORIZATION,
+            "Bearer zanistarast-mudebbir-test-token-0001",
+        )
+        .body(Body::empty())
+        .expect("login request should be created");
+
+    let login_response = app
+        .clone()
+        .oneshot(login_request)
+        .await
+        .expect("login request should complete");
+
+    assert_eq!(
+        login_response.status(),
+        StatusCode::OK
+    );
+
+    let session_cookie = login_response
+        .headers()
+        .get(axum::http::header::SET_COOKIE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(';').next())
+        .expect("session cookie should be returned")
+        .to_string();
+
+    let protected_request = Request::builder()
+        .uri("/tasks")
+        .header(
+            axum::http::header::COOKIE,
+            session_cookie,
+        )
+        .body(Body::empty())
+        .expect("protected request should be created");
+
+    let protected_response = app
+        .oneshot(protected_request)
+        .await
+        .expect("protected request should complete");
+
+    assert_eq!(
+        protected_response.status(),
+        StatusCode::OK
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
     
 #[tokio::test]
 async fn protected_route_accepts_valid_token() {
