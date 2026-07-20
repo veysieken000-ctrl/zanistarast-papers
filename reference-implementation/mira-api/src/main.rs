@@ -520,7 +520,7 @@ mod tests {
         ),
     ),
 }
-    
+  }  
     #[tokio::test]
 async fn protected_route_rejects_missing_token() {
     let test_root = create_test_repository();
