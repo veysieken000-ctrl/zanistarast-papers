@@ -5,15 +5,24 @@ use auth::MudebbirAuth;
 use session::MudebbirSessionStore;
 use axum::{
     extract::{Path, Request, State},
-    http::{
-        header::AUTHORIZATION,
-        StatusCode,
-    },
+http::{
+    header::AUTHORIZATION,
+    HeaderMap,
+    StatusCode,
+},
+   
     middleware::{self, Next},
     response::Response,
     routing::{get, post},
     Json, Router,
 };
+
+use axum_extra::extract::cookie::{
+    Cookie,
+    CookieJar,
+    SameSite,
+};
+
 use serde::{Deserialize, Serialize};
 use std::{
     net::SocketAddr,
@@ -21,6 +30,7 @@ use std::{
     sync::{Arc, Mutex},
     time::Duration,
 };
+
 use uuid::Uuid;
 use zanistarast_mira::{
     chat_orchestrator::ChatInteractionResult,
@@ -28,13 +38,19 @@ use zanistarast_mira::{
     chat_session::ChatMessage,
     MiraTask,
 };
+const MUDEBBIR_SESSION_COOKIE: &str =
+    "mira_mudebbir_session";
+
+const MUDEBBIR_SESSION_TTL_SECONDS: u64 =
+    30 * 60;
 
 /// Mira API tarafından paylaşılan uygulama durumu.
 #[derive(Clone)]
 struct AppState {
     chat_service: Arc<Mutex<MiraChatService>>,
     repository_root: PathBuf,
-   _session_store: MudebbirSessionStore,
+    auth: MudebbirAuth,
+    session_store: MudebbirSessionStore,
 }
 
 /// Sağlık kontrolü cevabı.
@@ -88,6 +104,21 @@ struct ApiError {
     error: String,
 }
 
+/// Başarılı Müdebbir giriş cevabı.
+#[derive(Debug, Serialize)]
+struct MudebbirLoginResponse {
+    status: &'static str,
+    expires_in_seconds: u64,
+}
+
+#[derive(Clone)]
+struct AppState {
+    chat_service: Arc<Mutex<MiraChatService>>,
+    repository_root: PathBuf,
+    auth: MudebbirAuth,
+    session_store: MudebbirSessionStore,
+}
+
 /// Korunan Mira API uç noktalarında Müdebbir anahtarını doğrular.
 async fn require_mudebbir(
     State(auth): State<MudebbirAuth>,
@@ -117,7 +148,32 @@ async fn require_mudebbir(
     Ok(next.run(request).await)
 }
 
+/// Geçerli Müdebbir anahtarıyla kısa ömürlü güvenli oturum oluşturur.
+async fn login_mudebbir(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    jar: CookieJar,
+) -> Result<
+    (CookieJar, Json<MudebbirLoginResponse>),
+    (StatusCode, Json<ApiError>),
+> {
+    let authorization_header = headers
+        .get(AUTHORIZATION)
+        .and_then(|value| value.to_str().ok());
 
+    if !state
+        .auth
+        .verify_authorization_header(authorization_header)
+    {
+        return Err((
+            StatusCode::UNAUTHORIZED,
+            Json(ApiError {
+                error: "Geçerli Müdebbir erişim anahtarı gerekli."
+                    .to_string(),
+            }),
+        ));
+    }
+    
 /// API servisinin çalıştığını doğrular.
 async fn health() -> Json<HealthResponse> {
     Json(HealthResponse {
@@ -348,17 +404,16 @@ let auth = MudebbirAuth::from_environment()
             .unwrap_or_else(|_| PathBuf::from("."))
     });
 
-    let state = AppState {
-    chat_service: Arc::new(Mutex::new(
-        MiraChatService::new(),
-    )),
-    repository_root,
-   _session_store: MudebbirSessionStore::new(
-    Duration::from_secs(30 * 60),
-),
-
-};
-
+     let session_id = state
+        .session_store
+        .create_session()
+        .map_err(|error| {
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ApiError { error }),
+            )
+        })?;
+    
 let protected_routes = Router::new()
     .route("/sessions", post(create_session))
     .route(
@@ -383,6 +438,7 @@ let protected_routes = Router::new()
 
 let app = Router::new()
     .route("/health", get(health))
+    .route("/auth/login", post(login_mudebbir))
     .merge(protected_routes)
     .with_state(state);
 
@@ -450,15 +506,19 @@ mod tests {
 
     fn test_state(repository_root: PathBuf) -> AppState {
     AppState {
-        chat_service: Arc::new(Mutex::new(
-            MiraChatService::new(),
-        )),
-        repository_root,
-       _session_store: MudebbirSessionStore::new(
-    Duration::from_secs(30 * 60),
-),
-
-    }
+    chat_service: Arc::new(Mutex::new(
+        MiraChatService::new(),
+    )),
+    repository_root,
+    auth: MudebbirAuth::new(
+        "zanistarast-mudebbir-test-token-0001",
+    )
+    .expect("test token should be accepted"),
+    session_store: MudebbirSessionStore::new(
+        Duration::from_secs(
+            MUDEBBIR_SESSION_TTL_SECONDS,
+        ),
+    ),
 }
     
     #[tokio::test]
