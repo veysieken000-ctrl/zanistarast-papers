@@ -111,7 +111,6 @@ struct MudebbirLoginResponse {
 }
 
 /// Korunan Mira API uç noktalarında Müdebbir anahtarını doğrular.
-
 async fn require_mudebbir(
     State(state): State<AppState>,
     jar: CookieJar,
@@ -132,14 +131,19 @@ async fn require_mudebbir(
             authorization_header,
         );
 
-    let session_is_valid = jar
-        .get(MUDEBBIR_SESSION_COOKIE)
-        .map(|cookie| {
-            state
-                .session_store
-                .is_valid(cookie.value())
-        })
-        .unwrap_or(false);
+    let session_is_valid =
+    match jar.get(MUDEBBIR_SESSION_COOKIE) {
+        Some(cookie) => state
+            .session_store
+            .is_valid(cookie.value())
+            .map_err(|error| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError { error }),
+                )
+            })?,
+        None => false,
+    };
 
     if !bearer_is_valid && !session_is_valid {
         return Err((
@@ -542,8 +546,6 @@ mod tests {
         test_root
     }
 
-  
-    
     fn test_state(repository_root: PathBuf) -> AppState {
     AppState {
     chat_service: Arc::new(Mutex::new(
