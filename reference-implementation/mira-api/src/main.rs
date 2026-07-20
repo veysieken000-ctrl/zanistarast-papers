@@ -348,7 +348,7 @@ let auth = MudebbirAuth::from_environment()
             .unwrap_or_else(|_| PathBuf::from("."))
     });
 
-    et state = AppState {
+    let state = AppState {
     chat_service: Arc::new(Mutex::new(
         MiraChatService::new(),
     )),
