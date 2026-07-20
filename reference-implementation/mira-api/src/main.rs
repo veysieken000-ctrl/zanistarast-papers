@@ -1,6 +1,8 @@
 mod auth;
 pub mod session;
+
 use auth::MudebbirAuth;
+use session::MudebbirSessionStore;
 use axum::{
     extract::{Path, Request, State},
     http::{
@@ -17,6 +19,7 @@ use std::{
     net::SocketAddr,
     path::PathBuf,
     sync::{Arc, Mutex},
+    time::Duration,
 };
 use uuid::Uuid;
 use zanistarast_mira::{
@@ -31,6 +34,7 @@ use zanistarast_mira::{
 struct AppState {
     chat_service: Arc<Mutex<MiraChatService>>,
     repository_root: PathBuf,
+    session_store: MudebbirSessionStore,
 }
 
 /// Sağlık kontrolü cevabı.
@@ -344,12 +348,15 @@ let auth = MudebbirAuth::from_environment()
             .unwrap_or_else(|_| PathBuf::from("."))
     });
 
-    let state = AppState {
-        chat_service: Arc::new(Mutex::new(
-            MiraChatService::new(),
-        )),
-        repository_root,
-    };
+    et state = AppState {
+    chat_service: Arc::new(Mutex::new(
+        MiraChatService::new(),
+    )),
+    repository_root,
+    session_store: MudebbirSessionStore::new(
+        Duration::from_secs(30 * 60),
+    ),
+};
 
 let protected_routes = Router::new()
     .route("/sessions", post(create_session))
@@ -441,13 +448,16 @@ mod tests {
     }
 
     fn test_state(repository_root: PathBuf) -> AppState {
-        AppState {
-            chat_service: Arc::new(Mutex::new(
-                MiraChatService::new(),
-            )),
-            repository_root,
-        }
- }
+    AppState {
+        chat_service: Arc::new(Mutex::new(
+            MiraChatService::new(),
+        )),
+        repository_root,
+        session_store: MudebbirSessionStore::new(
+            Duration::from_secs(30 * 60),
+        ),
+    }
+}
     
     #[tokio::test]
 async fn protected_route_rejects_missing_token() {
