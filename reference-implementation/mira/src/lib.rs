@@ -17,6 +17,7 @@ pub mod command_router;
 pub mod chat_session;
 pub mod chat_orchestrator;
 pub mod chat_service;
+pub mod publication_priority;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
