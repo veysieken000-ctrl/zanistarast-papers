@@ -110,6 +110,12 @@ struct MudebbirLoginResponse {
     expires_in_seconds: u64,
 }
 
+/// Başarılı Müdebbir çıkış cevabı.
+#[derive(Debug, Serialize)]
+struct MudebbirLogoutResponse {
+    status: &'static str,
+}
+
 /// Korunan Mira API uç noktalarında Müdebbir anahtarını doğrular.
 async fn require_mudebbir(
     State(state): State<AppState>,
@@ -213,7 +219,45 @@ async fn login_mudebbir(
         }),
     ))
 }
-  
+
+/// Mevcut Müdebbir oturumunu iptal eder ve çerezi temizler.
+async fn logout_mudebbir(
+    State(state): State<AppState>,
+    jar: CookieJar,
+) -> Result<
+    (CookieJar, Json<MudebbirLogoutResponse>),
+    (StatusCode, Json<ApiError>),
+> {
+    if let Some(cookie) =
+        jar.get(MUDEBBIR_SESSION_COOKIE)
+    {
+        state
+            .session_store
+            .revoke_session(cookie.value())
+            .map_err(|error| {
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    Json(ApiError { error }),
+                )
+            })?;
+    }
+
+    let removal_cookie =
+        Cookie::build(MUDEBBIR_SESSION_COOKIE)
+            .path("/")
+            .http_only(true)
+            .secure(true)
+            .same_site(SameSite::Strict)
+            .build();
+
+    Ok((
+        jar.remove(removal_cookie),
+        Json(MudebbirLogoutResponse {
+            status: "logged_out",
+        }),
+    ))
+}
+
 /// API servisinin çalıştığını doğrular.
 async fn health() -> Json<HealthResponse> {
     Json(HealthResponse {
@@ -479,6 +523,7 @@ async fn main() {
     let app = Router::new()
         .route("/health", get(health))
         .route("/auth/login", post(login_mudebbir))
+        .route("/auth/logout", post(logout_mudebbir))
         .merge(protected_routes)
         .with_state(state);
 
@@ -776,6 +821,99 @@ async fn protected_route_accepts_valid_token() {
         .expect("test directory should be removed");
 }
 
+#[tokio::test]
+async fn logout_revokes_session_and_clears_cookie() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let app = Router::new()
+        .route("/auth/login", post(login_mudebbir))
+        .route("/auth/logout", post(logout_mudebbir))
+        .with_state(state.clone());
+
+    let login_request = Request::builder()
+        .method("POST")
+        .uri("/auth/login")
+        .header(
+            AUTHORIZATION,
+            "Bearer zanistarast-mudebbir-test-token-0001",
+        )
+        .body(Body::empty())
+        .expect("login request should be created");
+
+    let login_response = app
+        .clone()
+        .oneshot(login_request)
+        .await
+        .expect("login request should complete");
+
+    let session_cookie = login_response
+        .headers()
+        .get(axum::http::header::SET_COOKIE)
+        .and_then(|value| value.to_str().ok())
+        .and_then(|value| value.split(';').next())
+        .expect("session cookie should be returned")
+        .to_string();
+
+    let session_id = session_cookie
+        .split_once('=')
+        .map(|(_, value)| value)
+        .expect("session id should exist")
+        .to_string();
+
+    assert!(
+        state
+            .session_store
+            .is_valid(&session_id)
+            .expect("session should be checked")
+    );
+
+    let logout_request = Request::builder()
+        .method("POST")
+        .uri("/auth/logout")
+        .header(
+            axum::http::header::COOKIE,
+            session_cookie,
+        )
+        .body(Body::empty())
+        .expect("logout request should be created");
+
+    let logout_response = app
+        .oneshot(logout_request)
+        .await
+        .expect("logout request should complete");
+
+    assert_eq!(
+        logout_response.status(),
+        StatusCode::OK
+    );
+
+    assert!(
+        !state
+            .session_store
+            .is_valid(&session_id)
+            .expect("revoked session should be checked")
+    );
+
+    let cleared_cookie = logout_response
+        .headers()
+        .get(axum::http::header::SET_COOKIE)
+        .and_then(|value| value.to_str().ok())
+        .expect("cleared cookie should be returned");
+
+    assert!(cleared_cookie.contains(
+        "mira_mudebbir_session="
+    ));
+    assert!(
+        cleared_cookie.contains("Max-Age=0")
+            || cleared_cookie.contains("Expires=")
+    );
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
+
+    
     #[tokio::test]
     async fn health_response_reports_ok() {
         let response = health().await;
