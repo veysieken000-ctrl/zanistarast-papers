@@ -140,6 +140,25 @@ mod tests {
         );
     }
 
+   #[test]
+fn expired_session_is_rejected() {
+    let store =
+        MudebbirSessionStore::new(Duration::from_millis(1));
+
+    let session_id = store
+        .create_session()
+        .expect("session should be created");
+
+    std::thread::sleep(Duration::from_millis(5));
+
+    assert!(
+        !store
+            .is_valid(&session_id)
+            .expect("expired session should be checked")
+    );
+}
+
+    
     #[test]
     fn cloned_store_uses_shared_sessions() {
         let store =
