@@ -110,6 +110,12 @@ struct MudebbirLoginResponse {
     expires_in_seconds: u64,
 }
 
+/// Müdebbir oturum durumu cevabı.
+#[derive(Debug, Serialize)]
+struct MudebbirSessionResponse {
+    authenticated: bool,
+}
+
 /// Başarılı Müdebbir çıkış cevabı.
 #[derive(Debug, Serialize)]
 struct MudebbirLogoutResponse {
@@ -256,6 +262,33 @@ async fn logout_mudebbir(
             status: "logged_out",
         }),
     ))
+}
+
+/// Mevcut Müdebbir oturumunun geçerli olup olmadığını bildirir.
+async fn get_mudebbir_session(
+    State(state): State<AppState>,
+    jar: CookieJar,
+) -> Result<
+    Json<MudebbirSessionResponse>,
+    (StatusCode, Json<ApiError>),
+> {
+    let authenticated =
+        match jar.get(MUDEBBIR_SESSION_COOKIE) {
+            Some(cookie) => state
+                .session_store
+                .is_valid(cookie.value())
+                .map_err(|error| {
+                    (
+                        StatusCode::INTERNAL_SERVER_ERROR,
+                        Json(ApiError { error }),
+                    )
+                })?,
+            None => false,
+        };
+
+    Ok(Json(MudebbirSessionResponse {
+        authenticated,
+    }))
 }
 
 /// API servisinin çalıştığını doğrular.
@@ -520,12 +553,13 @@ async fn main() {
         require_mudebbir,
     ),
 );
+
     let app = Router::new()
-        .route("/health", get(health))
-        .route("/auth/login", post(login_mudebbir))
-        .route("/auth/logout", post(logout_mudebbir))
-        .merge(protected_routes)
-        .with_state(state);
+    .route("/health", get(health))
+    .route("/auth/login", post(login_mudebbir))
+    .route("/auth/logout", post(logout_mudebbir))
+    .route("/auth/session", get(get_mudebbir_session))
+    .merge(protected_routes)
 
     let port = std::env::var("PORT")
         .ok()
@@ -913,7 +947,45 @@ async fn logout_revokes_session_and_clears_cookie() {
         .expect("test directory should be removed");
 }
 
+#[tokio::test]
+async fn session_status_reports_authenticated_with_valid_cookie() {
+    let test_root = create_test_repository();
+    let state = test_state(test_root.clone());
+
+    let session_id = state
+        .session_store
+        .create_session()
+        .expect("session should be created");
+
+    let jar = CookieJar::new().add(
+        Cookie::build((
+            MUDEBBIR_SESSION_COOKIE,
+            session_id,
+        ))
+        .path("/")
+        .build(),
+    );
+
+    let response = get_mudebbir_session(
+        State(state),
+        jar,
+    )
+    .await
+    .expect("session status should succeed");
+
+    assert!(response.0.authenticated);
+
+    fs::remove_dir_all(test_root)
+        .expect("test directory should be removed");
+}
     
+let app = Router::new()
+    .route("/health", get(health))
+    .route("/auth/login", post(login_mudebbir))
+    .route("/auth/logout", post(logout_mudebbir))
+    .route("/auth/session", get(get_mudebbir_session))
+    .merge(protected_routes)
+ 
     #[tokio::test]
     async fn health_response_reports_ok() {
         let response = health().await;
