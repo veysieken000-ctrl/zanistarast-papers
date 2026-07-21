@@ -99,5 +99,59 @@ mod tests {
 
         assert_eq!(priority, PublicationPriority::Low);
     }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mathematical_article_with_references_and_math_is_critical() {
+        let priority = calculate_priority(
+            AcademicArticleType::Mathematical,
+            true,
+            true,
+            false,
+        );
+
+        assert_eq!(priority, PublicationPriority::Critical);
+    }
+
+    #[test]
+    fn theoretical_article_without_references_is_medium() {
+        let priority = calculate_priority(
+            AcademicArticleType::Theoretical,
+            false,
+            false,
+            false,
+        );
+
+        assert_eq!(priority, PublicationPriority::Medium);
+    }
+
+    #[test]
+    fn experimental_article_without_experiments_is_medium() {
+        let priority = calculate_priority(
+            AcademicArticleType::Experimental,
+            true,
+            false,
+            false,
+        );
+
+        assert_eq!(priority, PublicationPriority::Medium);
+    }
+
+    #[test]
+    fn unknown_article_is_low_priority() {
+        let priority = calculate_priority(
+            AcademicArticleType::Unknown,
+            false,
+            false,
+            false,
+        );
+
+        assert_eq!(priority, PublicationPriority::Low);
+    }
 }
+
+
 
