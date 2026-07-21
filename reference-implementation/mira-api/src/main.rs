@@ -560,7 +560,8 @@ async fn main() {
     .route("/auth/logout", post(logout_mudebbir))
     .route("/auth/session", get(get_mudebbir_session))
     .merge(protected_routes)
-
+    .with_state(state);
+        
     let port = std::env::var("PORT")
         .ok()
         .and_then(|value| value.parse::<u16>().ok())
@@ -978,13 +979,6 @@ async fn session_status_reports_authenticated_with_valid_cookie() {
     fs::remove_dir_all(test_root)
         .expect("test directory should be removed");
 }
-    
-let app = Router::new()
-    .route("/health", get(health))
-    .route("/auth/login", post(login_mudebbir))
-    .route("/auth/logout", post(logout_mudebbir))
-    .route("/auth/session", get(get_mudebbir_session))
-    .merge(protected_routes)
  
     #[tokio::test]
     async fn health_response_reports_ok() {
