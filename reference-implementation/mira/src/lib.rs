@@ -21,6 +21,7 @@ pub mod chat_service;
 pub mod publication_priority;
 pub mod article_templates;
 pub mod template_sections;
+pub mod template_validator;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
