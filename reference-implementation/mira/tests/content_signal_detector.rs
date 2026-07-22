@@ -119,3 +119,26 @@ Test reference.
     assert!(signals.has_experiments);
 }
 
+#[test]
+fn plain_text_has_no_academic_signals() {
+    let content = r#"
+Merhaba.
+
+Bu sadece sıradan bir metindir.
+
+Burada özet, kaynakça, matematiksel denklem,
+deney veya sonuç bölümü bulunmamaktadır.
+"#;
+
+    let signals = detect_content_signals(
+        &ArticleSourceType::Markdown,
+        content,
+    );
+
+    assert!(!signals.has_abstract);
+    assert!(!signals.has_references);
+    assert!(!signals.has_conclusion);
+    assert!(!signals.has_math);
+    assert!(!signals.has_experiments);
+}
+
