@@ -10,15 +10,14 @@ pub fn detect_content_signals(
     content: &str,
 ) -> AcademicContentSignals {
     let normalized = content.to_lowercase();
-   AcademicContentSignals {
-    has_abstract: contains_abstract(&source_type, &normalized),
-    has_references: contains_references(&source_type, &normalized),
-    has_conclusion: contains_conclusion(&source_type, &normalized),
-    has_math: contains_math(&source_type, content, &normalized),
-    has_experiments: contains_experiments(&normalized),
-}
 
-}
+  AcademicContentSignals {
+    has_abstract: contains_abstract(source_type, &normalized),
+    has_references: contains_references(source_type, &normalized),
+    has_conclusion: contains_conclusion(source_type, &normalized),
+    has_math: contains_math(source_type, content, &normalized),
+    has_experiments: contains_experiments(&normalized),
+} 
 
 fn contains_abstract(
     source_type: &ArticleSourceType,
