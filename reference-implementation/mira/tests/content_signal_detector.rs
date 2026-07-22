@@ -76,5 +76,46 @@ fn html_detects_all_basic_sections() {
     assert!(signals.has_experiments);
 }
 
+#[test]
+fn latex_detects_all_basic_sections() {
+    let content = r#"
+\documentclass{article}
 
+\begin{document}
+
+\begin{abstract}
+Some text.
+\end{abstract}
+
+\section{Conclusion}
+
+Done.
+
+\begin{equation}
+E = mc^2
+\end{equation}
+
+\section{Experiment}
+
+Benchmark results.
+
+\begin{thebibliography}{9}
+\bibitem{test}
+Test reference.
+\end{thebibliography}
+
+\end{document}
+"#;
+
+    let signals = detect_content_signals(
+        &ArticleSourceType::Latex,
+        content,
+    );
+
+    assert!(signals.has_abstract);
+    assert!(signals.has_references);
+    assert!(signals.has_conclusion);
+    assert!(signals.has_math);
+    assert!(signals.has_experiments);
+}
 
