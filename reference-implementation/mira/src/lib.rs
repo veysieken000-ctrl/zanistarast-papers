@@ -22,6 +22,7 @@ pub mod publication_priority;
 pub mod article_templates;
 pub mod template_sections;
 pub mod template_validator;
+pub mod academic_rules;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
