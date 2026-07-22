@@ -34,3 +34,50 @@ pub fn detect_reference_signals(content: &str) -> ReferenceSignals {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn detects_reference_signals() {
+        let content = r#"
+# References
+
+doi:10.1000/xyz123
+
+https://doi.org/10.1000/xyz123
+
+@article{
+example2025,
+title={Example}
+}
+"#;
+
+        let signals = detect_reference_signals(content);
+
+        assert!(signals.has_references_section);
+        assert!(signals.has_doi);
+        assert!(signals.has_url);
+        assert!(signals.has_bibtex_entry);
+    }
+
+    #[test]
+    fn detects_missing_reference_signals() {
+        let content = r#"
+This is an ordinary text.
+
+No bibliography.
+No DOI.
+No URL.
+"#;
+
+        let signals = detect_reference_signals(content);
+
+        assert!(!signals.has_references_section);
+        assert!(!signals.has_doi);
+        assert!(!signals.has_url);
+        assert!(!signals.has_bibtex_entry);
+    }
+}
+
+
