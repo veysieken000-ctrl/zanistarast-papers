@@ -26,6 +26,7 @@ pub mod academic_rules;
 pub mod academic_pipeline;
 pub mod academic_report;
 pub mod academic_runner;
+pub mod article_analysis_adapter;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
