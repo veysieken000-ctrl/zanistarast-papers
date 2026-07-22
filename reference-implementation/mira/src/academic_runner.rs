@@ -47,4 +47,57 @@ pub fn run_academic_analysis(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::publication_priority::PublicationPriority;
+
+    #[test]
+    fn complete_article_produces_publication_ready_report() {
+        let output = run_academic_analysis(AcademicRunnerInput {
+            article_type: AcademicArticleType::Mathematical,
+            has_abstract: true,
+            has_references: true,
+            has_conclusion: true,
+            has_math: true,
+            has_experiments: false,
+        });
+
+        assert_eq!(
+            output.pipeline.priority,
+            PublicationPriority::Critical
+        );
+        assert!(output.pipeline.rules.passed);
+        assert!(output.report.ready_for_publication);
+        assert!(output.report.recommendations.is_empty());
+    }
+
+    #[test]
+    fn incomplete_article_produces_academic_warnings() {
+        let output = run_academic_analysis(AcademicRunnerInput {
+            article_type: AcademicArticleType::Theoretical,
+            has_abstract: false,
+            has_references: false,
+            has_conclusion: true,
+            has_math: false,
+            has_experiments: false,
+        });
+
+        assert_eq!(
+            output.pipeline.priority,
+            PublicationPriority::Medium
+        );
+        assert!(!output.pipeline.rules.passed);
+        assert!(!output.report.ready_for_publication);
+
+        assert_eq!(
+            output.report.recommendations,
+            vec![
+                "Missing Abstract".to_string(),
+                "Missing References".to_string(),
+            ]
+        );
+    }
+}
+
 
