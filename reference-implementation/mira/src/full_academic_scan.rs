@@ -60,4 +60,80 @@ where
     })
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fs;
+    use std::path::PathBuf;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    fn temporary_repository() -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time should be valid")
+            .as_nanos();
+
+        std::env::temp_dir().join(format!(
+            "zanistarast_full_scan_{}_{}",
+            std::process::id(),
+            unique
+        ))
+    }
+
+    #[test]
+    fn full_scan_runs_end_to_end() {
+        let root = temporary_repository();
+
+        fs::create_dir_all(root.join("papers")).unwrap();
+        fs::create_dir_all(root.join("website")).unwrap();
+
+        fs::write(
+            root.join("papers/rasterast.md"),
+            r#"
+# Abstract
+
+Rasterast verification.
+
+# Conclusion
+
+Done.
+
+# References
+
+[1] Reference.
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            root.join("website/index.html"),
+            r#"
+<html>
+<head>
+<title>Zanistarast</title>
+</head>
+<body>
+<a href="papers/rasterast.md">Paper</a>
+</body>
+</html>
+"#,
+        )
+        .unwrap();
+
+        let report = run_full_academic_scan(
+            &root,
+            &root.join("website"),
+            |_| AcademicArticleType::Theoretical,
+        )
+        .expect("full scan should succeed");
+
+        assert!(report.repository_report.file_count() >= 2);
+        assert_eq!(report.website_report.page_count(), 1);
+        assert!(!report.inventory.candidates.is_empty());
+        assert!(!report.analyses.is_empty());
+
+        fs::remove_dir_all(root).unwrap();
+    }
+}
+
 
