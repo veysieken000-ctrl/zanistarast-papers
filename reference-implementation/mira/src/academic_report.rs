@@ -31,4 +31,58 @@ pub fn build_report(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::academic_pipeline::AcademicPipelineResult;
+    use crate::academic_rules::AcademicRuleReport;
+    use crate::publication_priority::PublicationPriority;
+
+    #[test]
+    fn passing_rules_produce_publication_ready_report() {
+        let pipeline_result = AcademicPipelineResult {
+            priority: PublicationPriority::High,
+            rules: AcademicRuleReport {
+                passed: true,
+                warnings: Vec::new(),
+            },
+        };
+
+        let report = build_report(&pipeline_result);
+
+        assert!(report.ready_for_publication);
+        assert_eq!(report.summary, "Academic validation passed.");
+        assert!(report.recommendations.is_empty());
+    }
+
+    #[test]
+    fn failing_rules_produce_improvement_report() {
+        let pipeline_result = AcademicPipelineResult {
+            priority: PublicationPriority::Medium,
+            rules: AcademicRuleReport {
+                passed: false,
+                warnings: vec![
+                    "Missing Abstract".to_string(),
+                    "Missing References".to_string(),
+                ],
+            },
+        };
+
+        let report = build_report(&pipeline_result);
+
+        assert!(!report.ready_for_publication);
+        assert_eq!(
+            report.summary,
+            "Academic validation requires improvements."
+        );
+        assert_eq!(
+            report.recommendations,
+            vec![
+                "Missing Abstract".to_string(),
+                "Missing References".to_string(),
+            ]
+        );
+    }
+}
+
 
