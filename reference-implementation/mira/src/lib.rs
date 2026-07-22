@@ -30,6 +30,7 @@ pub mod article_analysis_adapter;
 pub mod content_signal_detector;
 pub mod article_file_analyzer;
 pub mod article_analysis_service;
+pub mod repository_academic_scan;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
