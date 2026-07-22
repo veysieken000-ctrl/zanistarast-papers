@@ -65,7 +65,7 @@ mod tests {
         let candidate = ArticleCandidate {
             relative_path: PathBuf::from("papers/hebun.md"),
             title: Some("Hebûn".to_string()),
-            source_type: ArticleSourceType::Markdown,
+            source_type: ArticleSourceType::Markdown, 
             domains: Vec::new(),
             size_bytes: 128,
         };
