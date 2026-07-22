@@ -25,6 +25,7 @@ pub mod template_validator;
 pub mod academic_rules;
 pub mod academic_pipeline;
 pub mod academic_report;
+pub mod academic_runner;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
