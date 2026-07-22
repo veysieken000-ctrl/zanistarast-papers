@@ -123,11 +123,9 @@ Test reference.
 fn plain_text_has_no_academic_signals() {
     let content = r#"
 Merhaba.
-
-Bu sadece sıradan bir metindir.
-
-Burada özet, kaynakça, matematiksel denklem,
-deney veya sonuç bölümü bulunmamaktadır.
+        
+Bu yalnızca örnek bir yazıdır.
+Akademik içerik içermez.
 "#;
 
     let signals = detect_content_signals(
