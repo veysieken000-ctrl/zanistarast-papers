@@ -51,5 +51,69 @@ pub fn adapt_article_candidate(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::article_inventory::{
+        ArticleCandidate,
+        ArticleSourceType,
+    };
+    use std::path::PathBuf;
+
+    #[test]
+    fn adapter_preserves_path_and_title() {
+        let candidate = ArticleCandidate {
+            relative_path: PathBuf::from("papers/hebun.md"),
+            title: Some("Hebûn".to_string()),
+            source_type: ArticleSourceType::Markdown,
+            domains: Vec::new(),
+            size_bytes: 128,
+        };
+
+        let adapted = adapt_article_candidate(
+            &candidate,
+            AcademicArticleType::Theoretical,
+            AcademicContentSignals::default(),
+        );
+
+        assert_eq!(adapted.relative_path, "papers/hebun.md");
+        assert_eq!(adapted.title, Some("Hebûn".to_string()));
+    }
+
+    #[test]
+    fn adapter_transfers_content_signals_without_changes() {
+        let candidate = ArticleCandidate {
+            relative_path: PathBuf::from("papers/rasterast.md"),
+            title: Some("Rasterast".to_string()),
+            source_type: ArticleSourceType::Markdown,
+            domains: Vec::new(),
+            size_bytes: 256,
+        };
+
+        let signals = AcademicContentSignals {
+            has_abstract: true,
+            has_references: true,
+            has_conclusion: false,
+            has_math: true,
+            has_experiments: false,
+        };
+
+        let adapted = adapt_article_candidate(
+            &candidate,
+            AcademicArticleType::Methodology,
+            signals,
+        );
+
+        assert_eq!(
+            adapted.runner_input.article_type,
+            AcademicArticleType::Methodology
+        );
+        assert!(adapted.runner_input.has_abstract);
+        assert!(adapted.runner_input.has_references);
+        assert!(!adapted.runner_input.has_conclusion);
+        assert!(adapted.runner_input.has_math);
+        assert!(!adapted.runner_input.has_experiments);
+    }
+}
 
 
