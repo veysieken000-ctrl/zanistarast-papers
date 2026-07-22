@@ -17,6 +17,7 @@ pub fn detect_content_signals(
     has_conclusion: contains_conclusion(source_type, &normalized),
     has_math: contains_math(source_type, content, &normalized),
     has_experiments: contains_experiments(&normalized),
+    } 
 } 
 
 fn contains_abstract(
