@@ -6,22 +6,22 @@ use crate::article_inventory::ArticleSourceType;
 /// Bu dedektör salt okunurdur.
 /// Metni değiştirmez ve belirsiz bir özelliği doğru kabul etmez.
 pub fn detect_content_signals(
-    source_type: ArticleSourceType,
+   source_type: &ArticleSourceType,
     content: &str,
 ) -> AcademicContentSignals {
     let normalized = content.to_lowercase();
+   AcademicContentSignals {
+    has_abstract: contains_abstract(&source_type, &normalized),
+    has_references: contains_references(&source_type, &normalized),
+    has_conclusion: contains_conclusion(&source_type, &normalized),
+    has_math: contains_math(&source_type, content, &normalized),
+    has_experiments: contains_experiments(&normalized),
+}
 
-    AcademicContentSignals {
-        has_abstract: contains_abstract(source_type, &normalized),
-        has_references: contains_references(source_type, &normalized),
-        has_conclusion: contains_conclusion(source_type, &normalized),
-        has_math: contains_math(source_type, content, &normalized),
-        has_experiments: contains_experiments(&normalized),
-    }
 }
 
 fn contains_abstract(
-    source_type: ArticleSourceType,
+    source_type: &ArticleSourceType,
     normalized: &str,
 ) -> bool {
     match source_type {
@@ -45,7 +45,7 @@ fn contains_abstract(
 }
 
 fn contains_references(
-    source_type: ArticleSourceType,
+    source_type: &ArticleSourceType,
     normalized: &str,
 ) -> bool {
     match source_type {
@@ -70,7 +70,7 @@ fn contains_references(
 }
 
 fn contains_conclusion(
-    source_type: ArticleSourceType,
+    source_type: &ArticleSourceType,
     normalized: &str,
 ) -> bool {
     match source_type {
@@ -95,7 +95,7 @@ fn contains_conclusion(
 }
 
 fn contains_math(
-    source_type: ArticleSourceType,
+    source_type: &ArticleSourceType,
     content: &str,
     normalized: &str,
 ) -> bool {
