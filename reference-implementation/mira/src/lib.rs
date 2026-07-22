@@ -23,6 +23,7 @@ pub mod article_templates;
 pub mod template_sections;
 pub mod template_validator;
 pub mod academic_rules;
+pub mod academic_pipeline;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
