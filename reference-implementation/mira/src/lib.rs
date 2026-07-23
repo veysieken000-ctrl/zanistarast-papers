@@ -36,6 +36,7 @@ pub mod full_academic_scan;
 pub mod reference_signal_detector;
 pub mod doi_validator;
 pub mod url_validator;
+pub mod bibtex_parser;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
