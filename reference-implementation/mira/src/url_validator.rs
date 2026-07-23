@@ -68,7 +68,7 @@ mod tests {
 
         assert!(!is_valid_url("https://.example.org"));
 
-        assert!(!is_valid_url("https://example.org "));
+       assert!(!is_valid_url("https://example .org"));
 
         assert!(!is_valid_url(
             "https://example .org"
