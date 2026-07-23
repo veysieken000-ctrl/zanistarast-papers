@@ -35,6 +35,7 @@ pub mod inventory_academic_runner;
 pub mod full_academic_scan;
 pub mod reference_signal_detector;
 pub mod doi_validator;
+pub mod url_validator;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
