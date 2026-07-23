@@ -67,5 +67,45 @@ pub fn is_valid_doi(candidate: &str) -> bool {
     })
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_valid_doi_formats() {
+        assert!(is_valid_doi("10.1000/xyz123"));
+
+        assert!(is_valid_doi(
+            "doi:10.1000/xyz123"
+        ));
+
+        assert!(is_valid_doi(
+            "https://doi.org/10.1000/xyz123"
+        ));
+
+        assert!(is_valid_doi(
+            "http://doi.org/10.1234/example-2025"
+        ));
+    }
+
+    #[test]
+    fn rejects_invalid_doi_formats() {
+        assert!(!is_valid_doi(""));
+
+        assert!(!is_valid_doi("10.100"));
+
+        assert!(!is_valid_doi("10.1000"));
+
+        assert!(!is_valid_doi("doi:"));
+
+        assert!(!is_valid_doi(
+            "https://example.com/10.1000/xyz"
+        ));
+
+        assert!(!is_valid_doi(
+            "10.1000/white space"
+        ));
+    }
+}
 
 
