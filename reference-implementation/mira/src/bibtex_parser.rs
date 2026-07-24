@@ -137,7 +137,7 @@ mod tests {
     #[test]
     fn rejects_invalid_bibtex_entries() {
         assert_eq!(
-            parse_bibtex_entry("article{key, title={Example}}"),
+            parse_bibtex_entry("@article{key, title={Example}}"),
             Err(BibtexParseError::MissingCitationKey)
         );
 
