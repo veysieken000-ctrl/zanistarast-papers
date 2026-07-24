@@ -220,6 +220,43 @@ mod tests {
             Err(BibtexParseError::InvalidField)
         );
     }
+
+#[test]
+fn parses_fields_with_commas_and_nested_braces() {
+    let content = r#"
+@article{eken2025,
+    title={Rasterast, Verification and {Deterministic} Analysis},
+    author={Eken, Veysi},
+    note="Ontology, validation, and AI",
+    year={2025}
+}
+"#;
+
+    let entry = parse_bibtex_entry(content)
+        .expect("advanced BibTeX entry should be parsed");
+
+    assert_eq!(entry.citation_key, "eken2025");
+
+    assert_eq!(
+        entry.fields.get("title").map(String::as_str),
+        Some("Rasterast, Verification and {Deterministic} Analysis")
+    );
+
+    assert_eq!(
+        entry.fields.get("author").map(String::as_str),
+        Some("Eken, Veysi")
+    );
+
+    assert_eq!(
+        entry.fields.get("note").map(String::as_str),
+        Some("Ontology, validation, and AI")
+    );
+
+    assert_eq!(
+        entry.fields.get("year").map(String::as_str),
+        Some("2025")
+    );
+}
 }
 
 
