@@ -48,12 +48,6 @@ pub fn generate_latex_article(article: &LatexArticle) -> String {
     )
 }
 
-title,
-author,
-abstract_text,
-article.body,
-
-}
 
 #[cfg(test)]
 mod tests {
