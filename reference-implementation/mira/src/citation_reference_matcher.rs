@@ -130,7 +130,7 @@ Bu çalışmada yalnızca [1] kullanılmıştır.
     assert_eq!(report.missing_references.len(), 0);
     assert_eq!(report.unused_references, vec![2]);
     assert!(!report.is_fully_matched());
+   }
+
 }
-
-
 
