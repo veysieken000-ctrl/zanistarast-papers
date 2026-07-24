@@ -17,9 +17,10 @@ fn escape_latex(value: &str) -> String {
         .replace('}', "\\}")
 }
 pub fn generate_latex_article(article: &LatexArticle) -> String {
-let title = escape_latex(&article.title);
-let author = escape_latex(&article.author);
-let abstract_text = escape_latex(&article.abstract_text);
+    let title = escape_latex(&article.title);
+    let author = escape_latex(&article.author);
+    let abstract_text = escape_latex(&article.abstract_text);
+
     format!(
         concat!(
             "\\documentclass{{article}}\n",
@@ -40,10 +41,18 @@ let abstract_text = escape_latex(&article.abstract_text);
             "\n",
             "\\end{{document}}\n"
         ),
-        article.title,
-        article.author,
-        article.abstract_text,
+        title,
+        author,
+        abstract_text,
         article.body,
+    )
+}
+
+title,
+author,
+abstract_text,
+article.body,
+
     )
 }
 
