@@ -7,6 +7,7 @@ use crate::academic_report::{
     AcademicReport,
 };
 use crate::article_classifier::AcademicArticleType;
+use crate::source_verification_report::SourceVerificationReport;
 
 /// Bir makalenin akademik analizinde kullanılacak girdiler.
 #[derive(Debug, Clone)]
@@ -46,7 +47,19 @@ pub fn run_academic_analysis(
         report,
     }
 }
+/// Akademik analiz ile kaynak doğrulamasının birleşik sonucu.
+#[derive(Debug, Clone)]
+pub struct VerifiedAcademicRunnerOutput {
+    pub academic: AcademicRunnerOutput,
+    pub source_verification: SourceVerificationReport,
+}
 
+impl VerifiedAcademicRunnerOutput {
+    pub fn is_ready_for_publication(&self) -> bool {
+        self.academic.report.ready_for_publication
+            && self.source_verification.is_verified()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -82,7 +95,18 @@ mod tests {
             has_math: false,
             has_experiments: false,
         });
+/// Akademik analizi ve kaynak doğrulama sonucunu tek çıktıda birleştirir.
+pub fn run_verified_academic_analysis(
+    input: AcademicRunnerInput,
+    source_verification: SourceVerificationReport,
+) -> VerifiedAcademicRunnerOutput {
+    let academic = run_academic_analysis(input);
 
+    VerifiedAcademicRunnerOutput {
+        academic,
+        source_verification,
+    }
+}
         assert_eq!(
             output.pipeline.priority,
             PublicationPriority::Medium
