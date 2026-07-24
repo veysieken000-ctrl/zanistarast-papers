@@ -92,5 +92,76 @@ pub fn parse_bibtex_entry(
     })
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn parses_simple_bibtex_entry() {
+        let content = r#"
+@article{eken2025,
+    title={Rasterast Verification},
+    author={Veysi Eken},
+    year={2025},
+    doi={10.1000/rasterast}
+}
+"#;
+
+        let entry = parse_bibtex_entry(content)
+            .expect("BibTeX entry should be parsed");
+
+        assert_eq!(entry.entry_type, "article");
+        assert_eq!(entry.citation_key, "eken2025");
+
+        assert_eq!(
+            entry.fields.get("title").map(String::as_str),
+            Some("Rasterast Verification")
+        );
+
+        assert_eq!(
+            entry.fields.get("author").map(String::as_str),
+            Some("Veysi Eken")
+        );
+
+        assert_eq!(
+            entry.fields.get("year").map(String::as_str),
+            Some("2025")
+        );
+
+        assert_eq!(
+            entry.fields.get("doi").map(String::as_str),
+            Some("10.1000/rasterast")
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_bibtex_entries() {
+        assert_eq!(
+            parse_bibtex_entry("article{key, title={Example}}"),
+            Err(BibtexParseError::MissingEntryPrefix)
+        );
+
+        assert_eq!(
+            parse_bibtex_entry("@article key, title={Example}}"),
+            Err(BibtexParseError::MissingOpeningBrace)
+        );
+
+        assert_eq!(
+            parse_bibtex_entry("@article{key, title={Example}"),
+            Err(BibtexParseError::MissingClosingBrace)
+        );
+
+        assert_eq!(
+            parse_bibtex_entry("@article{, title={Example}}"),
+            Err(BibtexParseError::MissingCitationKey)
+        );
+
+        assert_eq!(
+            parse_bibtex_entry("@article{key, invalid-field}"),
+            Err(BibtexParseError::InvalidField)
+        );
+    }
+}
+
 
 
