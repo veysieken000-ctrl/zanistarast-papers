@@ -23,6 +23,37 @@ impl SourceVerificationReport {
             && self.unused_references.is_empty()
     }
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
+    #[test]
+    fn verification_state_depends_on_validation_results() {
+        let report = SourceVerificationReport {
+            doi_count: 2,
+            valid_doi_count: 2,
+            invalid_doi_count: 0,
+
+            url_count: 1,
+            valid_url_count: 1,
+            invalid_url_count: 0,
+
+            citation_count: 3,
+            reference_count: 3,
+
+            missing_references: Vec::new(),
+            unused_references: Vec::new(),
+        };
+
+        assert!(report.is_verified());
+
+        let report = SourceVerificationReport {
+            invalid_doi_count: 1,
+            ..report
+        };
+
+        assert!(!report.is_verified());
+    }
+}
 
 
