@@ -56,8 +56,8 @@ pub fn parse_bibtex_entry(
 
     let mut fields = BTreeMap::new();
 
-    for raw_field in fields_content.split(',') {
-        let raw_field = raw_field.trim();
+    for raw_field in split_bibtex_fields(fields_content)? {
+       let raw_field = raw_field.trim();
 
         if raw_field.is_empty() {
             continue;
@@ -90,6 +90,63 @@ pub fn parse_bibtex_entry(
         citation_key: citation_key.to_string(),
         fields,
     })
+}
+
+fn split_bibtex_fields(
+    content: &str,
+) -> Result<Vec<&str>, BibtexParseError> {
+    let mut fields = Vec::new();
+    let mut start = 0;
+    let mut brace_depth = 0usize;
+    let mut inside_quotes = false;
+    let mut escaped = false;
+
+    for (index, character) in content.char_indices() {
+        if escaped {
+            escaped = false;
+            continue;
+        }
+
+        if character == '\\' {
+            escaped = true;
+            continue;
+        }
+
+        if character == '"' && brace_depth == 0 {
+            inside_quotes = !inside_quotes;
+            continue;
+        }
+
+        if inside_quotes {
+            continue;
+        }
+
+        match character {
+            '{' => {
+                brace_depth += 1;
+            }
+            '}' => {
+                if brace_depth == 0 {
+                    return Err(BibtexParseError::InvalidField);
+                }
+
+                brace_depth -= 1;
+            }
+            ',' if brace_depth == 0 => {
+                fields.push(&content[start..index]);
+                start = index + character.len_utf8();
+            }
+            _ => {}
+        }
+    }
+
+    if brace_depth != 0 || inside_quotes {
+        return Err(BibtexParseError::InvalidField);
+    }
+
+    fields.push(&content[start..]);
+
+    Ok(fields)
 }
 
 #[cfg(test)]
