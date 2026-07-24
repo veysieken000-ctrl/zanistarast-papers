@@ -53,7 +53,6 @@ author,
 abstract_text,
 article.body,
 
-    )
 }
 
 #[cfg(test)]
