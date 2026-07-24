@@ -75,3 +75,23 @@ mod tests {
             has_math: false,
             has_experiments: false,
         });
+  assert_eq!(
+            output.pipeline.priority,
+            PublicationPriority::Medium
+        );
+
+        assert!(!output.pipeline.rules.passed);
+        assert!(!output.report.ready_for_publication);
+
+        assert_eq!(
+            output.report.recommendations,
+            vec![
+                "Missing Abstract".to_string(),
+                "Missing References".to_string(),
+            ]
+        );
+    }
+}
+
+
+
