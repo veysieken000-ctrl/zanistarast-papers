@@ -22,7 +22,6 @@ impl SourceVerificationReport {
             && self.missing_references.is_empty()
             && self.unused_references.is_empty()
     }
-}
 pub fn from_candidates(
     doi_candidates: &[&str],
     url_candidates: &[&str],
@@ -45,6 +44,9 @@ pub fn from_candidates(
         valid_url_count,
         citation_report,
     )
+}
+
+
 }
 
 use crate::citation_reference_matcher::CitationReferenceMatchReport;
