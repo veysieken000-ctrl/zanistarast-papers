@@ -23,6 +23,31 @@ impl SourceVerificationReport {
             && self.unused_references.is_empty()
     }
 }
+
+use crate::citation_reference_matcher::CitationReferenceMatchReport;
+
+impl SourceVerificationReport {
+    pub fn from_citation_report(
+        report: &CitationReferenceMatchReport,
+    ) -> Self {
+        Self {
+            doi_count: 0,
+            valid_doi_count: 0,
+            invalid_doi_count: 0,
+
+            url_count: 0,
+            valid_url_count: 0,
+            invalid_url_count: 0,
+
+            citation_count: report.citation_numbers.len(),
+            reference_count: report.reference_numbers.len(),
+
+            missing_references: report.missing_references.clone(),
+            unused_references: report.unused_references.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -100,5 +125,27 @@ fn creates_report_from_citation_report() {
     assert_eq!(report.missing_references, vec![2]);
     assert!(!report.is_verified());
 }
+
+#[test]
+fn creates_report_from_citation_report() {
+    use crate::citation_reference_matcher::CitationReferenceMatchReport;
+
+    let citation_report = CitationReferenceMatchReport {
+        citation_numbers: vec![1, 2],
+        reference_numbers: vec![1],
+        missing_references: vec![2],
+        unused_references: Vec::new(),
+    };
+
+    let report =
+        SourceVerificationReport::from_citation_report(&citation_report);
+
+    assert_eq!(report.citation_count, 2);
+    assert_eq!(report.reference_count, 1);
+    assert_eq!(report.missing_references, vec![2]);
+    assert!(!report.is_verified());
+}
+
+
 
 
