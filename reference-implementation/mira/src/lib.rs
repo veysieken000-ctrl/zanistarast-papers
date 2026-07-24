@@ -40,6 +40,7 @@ pub mod bibtex_parser;
 pub mod citation_reference_matcher;
 pub mod source_verification_report;
 pub mod bibtex_generator;
+pub mod latex_generator;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
