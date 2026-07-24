@@ -91,5 +91,46 @@ fn extract_bracketed_numbers(content: &str) -> Vec<u32> {
     numbers
 }
 
+#[test]
+fn matches_numbered_citations_and_references() {
+    let content = r#"
+Rasterast modeli [1] ile doğrulanmıştır.
+Daha sonra başka bir çalışma [2] eklenmiştir.
+
+# References
+
+[1] Veysi yê MALA SAF. Rasterast Verification.
+[2] Veysi yê MALA SAF. Zanistarast Scientific Synthesis.
+"#;
+
+    let report = match_citations_and_references(content);
+
+    assert!(report.is_fully_matched());
+    assert_eq!(report.citation_numbers, vec![1, 2]);
+    assert_eq!(report.reference_numbers, vec![1, 2]);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+#[test]
+fn detects_missing_and_unused_references() {
+    let content = r#"
+Bu çalışmada yalnızca [1] kullanılmıştır.
+
+# References
+
+[1] Veysi yê MALA SAF.
+[2] Kullanılmayan Kaynak.
+"#;
+
+    let report = match_citations_and_references(content);
+
+    assert_eq!(report.missing_references.len(), 0);
+    assert_eq!(report.unused_references, vec![2]);
+    assert!(!report.is_fully_matched());
+}
+
 
 
