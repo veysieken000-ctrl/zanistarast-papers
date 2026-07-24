@@ -148,9 +148,9 @@ mod tests {
 );
 
         assert_eq!(
-            parse_bibtex_entry("@article{key, title={Example}"),
-            Err(BibtexParseError::MissingClosingBrace)
-        );
+    parse_bibtex_entry("@article{key, title=\"Example\""),
+    Err(BibtexParseError::MissingClosingBrace)
+);
 
         assert_eq!(
             parse_bibtex_entry("@article{, title={Example}}"),
