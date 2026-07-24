@@ -31,14 +31,14 @@ mod tests {
 
         let generated = generate_bibtex_article(&article);
 
-        let expected = r#"@article{veysi2025,
-    author = {Veysi yê MALA SAF},
-    title = {Rasterast Verification},
-    year = {2025}
-}"#;
+        let expected = concat!(
+            "@article{veysi2025,\n",
+            " author = {Veysi yê MALA SAF},\n",
+            " title = {Rasterast Verification},\n",
+            " year = {2025}\n",
+            "}"
+        );
 
         assert_eq!(generated, expected);
     }
 }
-
-
