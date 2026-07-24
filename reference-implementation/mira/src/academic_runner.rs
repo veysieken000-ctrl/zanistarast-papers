@@ -27,26 +27,6 @@ pub struct AcademicRunnerOutput {
     pub report: AcademicReport,
 }
 
-/// Akademik değerlendirme modüllerini tek akışta çalıştırır.
-pub fn run_academic_analysis(
-    input: AcademicRunnerInput,
-) -> AcademicRunnerOutput {
-    let pipeline = run_pipeline(
-        input.article_type,
-        input.has_abstract,
-        input.has_references,
-        input.has_conclusion,
-        input.has_math,
-        input.has_experiments,
-    );
-
-    let report = build_report(&pipeline);
-
-    AcademicRunnerOutput {
-        pipeline,
-        report,
-    }
-}
 /// Akademik analiz ile kaynak doğrulamasının birleşik sonucu.
 #[derive(Debug, Clone)]
 pub struct VerifiedAcademicRunnerOutput {
@@ -95,33 +75,3 @@ mod tests {
             has_math: false,
             has_experiments: false,
         });
-/// Akademik analizi ve kaynak doğrulama sonucunu tek çıktıda birleştirir.
-pub fn run_verified_academic_analysis(
-    input: AcademicRunnerInput,
-    source_verification: SourceVerificationReport,
-) -> VerifiedAcademicRunnerOutput {
-    let academic = run_academic_analysis(input);
-
-    VerifiedAcademicRunnerOutput {
-        academic,
-        source_verification,
-    }
-}
-        assert_eq!(
-            output.pipeline.priority,
-            PublicationPriority::Medium
-        );
-        assert!(!output.pipeline.rules.passed);
-        assert!(!output.report.ready_for_publication);
-
-        assert_eq!(
-            output.report.recommendations,
-            vec![
-                "Missing Abstract".to_string(),
-                "Missing References".to_string(),
-            ]
-        );
-    }
-}
-
-
