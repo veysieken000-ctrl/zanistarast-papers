@@ -23,6 +23,29 @@ impl SourceVerificationReport {
             && self.unused_references.is_empty()
     }
 }
+pub fn from_candidates(
+    doi_candidates: &[&str],
+    url_candidates: &[&str],
+    citation_report: &CitationReferenceMatchReport,
+) -> Self {
+    let valid_doi_count = doi_candidates
+        .iter()
+        .filter(|candidate| is_valid_doi(candidate))
+        .count();
+
+    let valid_url_count = url_candidates
+        .iter()
+        .filter(|candidate| is_valid_url(candidate))
+        .count();
+
+    Self::from_validation_results(
+        doi_candidates.len(),
+        valid_doi_count,
+        url_candidates.len(),
+        valid_url_count,
+        citation_report,
+    )
+}
 
 use crate::citation_reference_matcher::CitationReferenceMatchReport;
 use crate::doi_validator::is_valid_doi;
