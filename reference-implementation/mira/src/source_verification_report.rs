@@ -25,6 +25,8 @@ impl SourceVerificationReport {
 }
 
 use crate::citation_reference_matcher::CitationReferenceMatchReport;
+use crate::doi_validator::is_valid_doi;
+use crate::url_validator::is_valid_url;
 
 impl SourceVerificationReport {
     pub fn from_citation_report(
