@@ -5,8 +5,21 @@ pub struct LatexArticle {
     pub abstract_text: String,
     pub body: String,
 }
-
+fn escape_latex(value: &str) -> String {
+    value
+        .replace('\\', "\\textbackslash{}")
+        .replace('&', "\\&")
+        .replace('%', "\\%")
+        .replace('$', "\\$")
+        .replace('#', "\\#")
+        .replace('_', "\\_")
+        .replace('{', "\\{")
+        .replace('}', "\\}")
+}
 pub fn generate_latex_article(article: &LatexArticle) -> String {
+let title = escape_latex(title);
+let author = escape_latex(author);
+let abstract_text = escape_latex(abstract_text);
     format!(
         concat!(
             "\\documentclass{{article}}\n",
@@ -37,7 +50,22 @@ pub fn generate_latex_article(article: &LatexArticle) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+#[test]
+fn escapes_special_latex_characters() {
+    let article = LatexArticle {
+        title: "Rasterast_100%".to_string(),
+        author: "Veysi yê MALA SAF & Team".to_string(),
+        abstract_text: "Cost is $100 #verified".to_string(),
+        body: String::new(),
+    };
 
+    let generated = generate_latex_article(&article);
+
+    assert!(generated.contains("\\title{Rasterast\\_100\\%}"));
+    assert!(generated.contains("\\author{Veysi yê MALA SAF \\& Team}"));
+    assert!(generated.contains("Cost is \\$100 \\#verified"));
+}
+    
     #[test]
     fn generates_basic_latex_article() {
         let article = LatexArticle {
