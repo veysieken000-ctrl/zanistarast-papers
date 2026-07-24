@@ -119,5 +119,52 @@ fn escapes_braces_in_bibtex_values() {
     ));
 }
 
+#[test]
+fn generated_entry_can_be_parsed_again() {
+    use crate::bibtex_parser::parse_bibtex_entry;
+
+    let article = BibtexArticle {
+        citation_key: "veysi2025".to_string(),
+        author: "Veysi yê MALA SAF".to_string(),
+        title: "Rasterast Verification".to_string(),
+        year: 2025,
+        doi: Some("10.1000/zanistarast".to_string()),
+        url: Some(
+            "https://example.org/zanistarast".to_string(),
+        ),
+    };
+
+    let generated = generate_bibtex_article(&article);
+
+    let parsed = parse_bibtex_entry(&generated)
+        .expect("generated BibTeX should be parsed");
+
+    assert_eq!(parsed.citation_key, "veysi2025");
+
+    assert_eq!(
+        parsed.fields.get("author").map(String::as_str),
+        Some("Veysi yê MALA SAF")
+    );
+
+    assert_eq!(
+        parsed.fields.get("title").map(String::as_str),
+        Some("Rasterast Verification")
+    );
+
+    assert_eq!(
+        parsed.fields.get("year").map(String::as_str),
+        Some("2025")
+    );
+
+    assert_eq!(
+        parsed.fields.get("doi").map(String::as_str),
+        Some("10.1000/zanistarast")
+    );
+
+    assert_eq!(
+        parsed.fields.get("url").map(String::as_str),
+        Some("https://example.org/zanistarast")
+    );
+}
 
 
