@@ -103,6 +103,41 @@ mod tests {
         assert!(output.report.recommendations.is_empty());
     }
 
+#[test]
+fn incomplete_academic_structure_prevents_publication_readiness() {
+    let citation_report = CitationReferenceMatchReport {
+        citation_numbers: vec![1],
+        reference_numbers: vec![1],
+        missing_references: Vec::new(),
+        unused_references: Vec::new(),
+    };
+
+    let source_verification =
+        SourceVerificationReport::from_validation_results(
+            1,
+            1,
+            1,
+            1,
+            &citation_report,
+        );
+
+    let output = run_verified_academic_analysis(
+        AcademicRunnerInput {
+            article_type: AcademicArticleType::Theoretical,
+            has_abstract: false,
+            has_references: true,
+            has_conclusion: true,
+            has_math: false,
+            has_experiments: false,
+        },
+        source_verification,
+    );
+
+    assert!(!output.academic.report.ready_for_publication);
+    assert!(output.source_verification.is_verified());
+    assert!(!output.is_ready_for_publication());
+}
+  
     #[test]
     fn incomplete_article_produces_academic_warnings() {
         let output = run_academic_analysis(AcademicRunnerInput {
