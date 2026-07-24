@@ -7,7 +7,6 @@ use crate::academic_report::{
     AcademicReport,
 };
 use crate::article_classifier::AcademicArticleType;
-use crate::source_verification_report::SourceVerificationReport;
 
 /// Bir makalenin akademik analizinde kullanılacak girdiler.
 #[derive(Debug, Clone)]
@@ -27,19 +26,27 @@ pub struct AcademicRunnerOutput {
     pub report: AcademicReport,
 }
 
-/// Akademik analiz ile kaynak doğrulamasının birleşik sonucu.
-#[derive(Debug, Clone)]
-pub struct VerifiedAcademicRunnerOutput {
-    pub academic: AcademicRunnerOutput,
-    pub source_verification: SourceVerificationReport,
-}
+/// Akademik değerlendirme modüllerini tek akışta çalıştırır.
+pub fn run_academic_analysis(
+    input: AcademicRunnerInput,
+) -> AcademicRunnerOutput {
+    let pipeline = run_pipeline(
+        input.article_type,
+        input.has_abstract,
+        input.has_references,
+        input.has_conclusion,
+        input.has_math,
+        input.has_experiments,
+    );
 
-impl VerifiedAcademicRunnerOutput {
-    pub fn is_ready_for_publication(&self) -> bool {
-        self.academic.report.ready_for_publication
-            && self.source_verification.is_verified()
+    let report = build_report(&pipeline);
+
+    AcademicRunnerOutput {
+        pipeline,
+        report,
     }
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,6 +67,7 @@ mod tests {
             output.pipeline.priority,
             PublicationPriority::Critical
         );
+
         assert!(output.pipeline.rules.passed);
         assert!(output.report.ready_for_publication);
         assert!(output.report.recommendations.is_empty());
@@ -75,7 +83,8 @@ mod tests {
             has_math: false,
             has_experiments: false,
         });
-  assert_eq!(
+
+        assert_eq!(
             output.pipeline.priority,
             PublicationPriority::Medium
         );
@@ -92,6 +101,3 @@ mod tests {
         );
     }
 }
-
-
-
