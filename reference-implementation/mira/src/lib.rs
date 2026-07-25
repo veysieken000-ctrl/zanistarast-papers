@@ -42,6 +42,7 @@ pub mod source_verification_report;
 pub mod bibtex_generator;
 pub mod latex_generator;
 pub mod pdf_generator;
+pub mod academic_output;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
