@@ -151,7 +151,7 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
     assert!(!output.academic.report.ready_for_publication);
     assert!(output.source_verification.is_verified());
     assert!(!output.is_ready_for_publication());
-    assert!(output.output.is_valid);
+    assert!(output.academic.output.is_valid);
 
 }
   
@@ -217,7 +217,7 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
         assert!(output.academic.report.ready_for_publication);
         assert!(output.source_verification.is_verified());
         assert!(output.is_ready_for_publication());
-        assert!(output.output.is_valid);
+        assert!(output.academic.output.is_valid);
     }
 
     #[test]
@@ -253,6 +253,6 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
         assert!(output.academic.report.ready_for_publication);
         assert!(!output.source_verification.is_verified());
         assert!(!output.is_ready_for_publication());
-        assert!(output.output.is_valid);
+        assert!(output.academic.output.is_valid);
     }
 }
