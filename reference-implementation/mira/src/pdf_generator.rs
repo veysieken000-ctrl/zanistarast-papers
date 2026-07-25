@@ -33,7 +33,21 @@ impl PdfCompiler {
 pub fn build_working_directory(job_name: &str) -> String {
     format!("target/mira/pdf/{job_name}")
 }
+pub fn write_latex_source(
+    working_directory: &str,
+    job_name: &str,
+    latex_source: &str,
+) -> std::io::Result<std::path::PathBuf> {
+    let directory = std::path::Path::new(working_directory);
 
+    std::fs::create_dir_all(directory)?;
+
+    let tex_file = directory.join(format!("{job_name}.tex"));
+
+    std::fs::write(&tex_file, latex_source)?;
+
+    Ok(tex_file)
+}
 
 #[cfg(test)]
 mod tests {
@@ -93,6 +107,38 @@ fn different_jobs_have_different_directories() {
         build_working_directory("paper_b"),
     );
 }
+#[test]
+fn writes_latex_source_to_tex_file() {
+    let working_directory = std::env::temp_dir()
+        .join(format!("mira-pdf-test-{}", std::process::id()));
+
+    let working_directory_text = working_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let latex_source = "\\documentclass{article}\n";
+
+    let tex_file = write_latex_source(
+        working_directory_text,
+        "article",
+        latex_source,
+    )
+    .expect("LaTeX source should be written");
+
+    assert_eq!(
+        tex_file.file_name().and_then(|name| name.to_str()),
+        Some("article.tex")
+    );
+
+    let written_content = std::fs::read_to_string(&tex_file)
+        .expect("written LaTeX source should be readable");
+
+    assert_eq!(written_content, latex_source);
+
+    std::fs::remove_dir_all(&working_directory)
+        .expect("temporary directory should be removed");
+}
+
 
 
 
