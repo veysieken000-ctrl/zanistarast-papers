@@ -30,6 +30,9 @@ impl PdfCompiler {
         }
     }
 }
+pub fn build_working_directory(job_name: &str) -> String {
+    format!("target/mira/pdf/{job_name}")
+}
 
 
 #[cfg(test)]
