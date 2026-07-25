@@ -48,7 +48,29 @@ pub fn write_latex_source(
 
     Ok(tex_file)
 }
+#[derive(Debug)]
+pub struct PdfCompileOutput {
+    pub success: bool,
+    pub stdout: String,
+    pub stderr: String,
+}
 
+pub fn run_pdf_compiler(
+    compiler: PdfCompiler,
+    working_directory: &str,
+    input_file: &str,
+) -> std::io::Result<PdfCompileOutput> {
+    let output = std::process::Command::new(compiler.program())
+        .args(compiler.arguments(input_file))
+        .current_dir(working_directory)
+        .output()?;
+
+    Ok(PdfCompileOutput {
+        success: output.status.success(),
+        stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
+        stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
+    })
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -139,6 +161,14 @@ fn writes_latex_source_to_tex_file() {
         .expect("temporary directory should be removed");
 }
 
+#[test]
+fn reports_error_when_pdf_compiler_is_unavailable() {
+    let result = std::process::Command::new(
+        "mira-nonexistent-pdf-compiler"
+    )
+    .output();
 
+    assert!(result.is_err());
+}
 
 
