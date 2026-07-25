@@ -145,6 +145,59 @@ fn generates_bibliography_link() {
         "See \\cite{veysi2025}."
     ));
 }
+#[test]
+fn preserves_latex_document_structure() {
+    let article = LatexArticle {
+        title: "Rasterast Verification".to_string(),
+        author: "Veysi yê MALA SAF".to_string(),
+        abstract_text: "Deterministic verification.".to_string(),
+        body: "\\section{Introduction}\nZanistarast."
+            .to_string(),
+        bibliography: Some("references".to_string()),
+    };
+
+    let generated = generate_latex_article(&article);
+
+    let document_start = generated
+        .find("\\begin{document}")
+        .expect("document should start");
+
+    let title_position = generated
+        .find("\\maketitle")
+        .expect("title should exist");
+
+    let abstract_position = generated
+        .find("\\begin{abstract}")
+        .expect("abstract should exist");
+
+    let body_position = generated
+        .find("\\section{Introduction}")
+        .expect("body should exist");
+
+    let bibliography_position = generated
+        .find("\\bibliography{references}")
+        .expect("bibliography should exist");
+
+    let document_end = generated
+        .find("\\end{document}")
+        .expect("document should end");
+
+    assert!(document_start < title_position);
+    assert!(title_position < abstract_position);
+    assert!(abstract_position < body_position);
+    assert!(body_position < bibliography_position);
+    assert!(bibliography_position < document_end);
+
+    assert_eq!(
+        generated.matches("\\begin{document}").count(),
+        1
+    );
+
+    assert_eq!(
+        generated.matches("\\end{document}").count(),
+        1
+    );
+}
 
 
 
