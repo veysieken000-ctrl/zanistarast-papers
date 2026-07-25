@@ -30,6 +30,20 @@ impl PdfCompiler {
         }
     }
 }
+#[test]
+fn builds_deterministic_working_directory() {
+    let path = build_working_directory("article");
+
+    assert_eq!(path, "target/mira/pdf/article");
+}
+
+#[test]
+fn different_jobs_have_different_directories() {
+    assert_ne!(
+        build_working_directory("paper_a"),
+        build_working_directory("paper_b"),
+    );
+}
 
 #[cfg(test)]
 mod tests {
