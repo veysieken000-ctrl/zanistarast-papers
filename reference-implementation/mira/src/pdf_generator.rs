@@ -101,6 +101,11 @@ pub fn read_generated_pdf(
 
     std::fs::read(pdf_path)
 }
+
+pub fn has_valid_pdf_signature(pdf: &[u8]) -> bool {
+    pdf.starts_with(b"%PDF-")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -281,6 +286,24 @@ fn reports_error_when_generated_pdf_is_missing() {
         .expect("temporary directory should be removed");
 }
 
+#[test]
+fn accepts_valid_pdf_signature() {
+    let pdf = b"%PDF-1.7\n";
+
+    assert!(has_valid_pdf_signature(pdf));
+}
+
+#[test]
+fn rejects_invalid_pdf_signature() {
+    let invalid = b"not a pdf";
+
+    assert!(!has_valid_pdf_signature(invalid));
+}
+
+#[test]
+fn rejects_empty_pdf_content() {
+    assert!(!has_valid_pdf_signature(&[]));
+}
 
 
 
