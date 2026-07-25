@@ -71,6 +71,28 @@ pub fn run_pdf_compiler(
         stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
     })
 }
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PdfCompileErrorReport {
+    pub message: String,
+    pub stdout: String,
+    pub stderr: String,
+}
+
+pub fn build_compile_error_report(
+    output: &PdfCompileOutput,
+) -> Option<PdfCompileErrorReport> {
+    if output.success {
+        return None;
+    }
+
+    Some(PdfCompileErrorReport {
+        message: "PDF compilation failed".to_string(),
+        stdout: output.stdout.clone(),
+        stderr: output.stderr.clone(),
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -170,5 +192,34 @@ fn reports_error_when_pdf_compiler_is_unavailable() {
 
     assert!(result.is_err());
 }
+
+#[test]
+fn creates_error_report_for_failed_compilation() {
+    let output = PdfCompileOutput {
+        success: false,
+        stdout: "compiler output".to_string(),
+        stderr: "fatal LaTeX error".to_string(),
+    };
+
+    let report = build_compile_error_report(&output)
+        .expect("failed compilation should create a report");
+
+    assert_eq!(report.message, "PDF compilation failed");
+    assert_eq!(report.stdout, "compiler output");
+    assert_eq!(report.stderr, "fatal LaTeX error");
+}
+
+#[test]
+fn does_not_create_error_report_for_successful_compilation() {
+    let output = PdfCompileOutput {
+        success: true,
+        stdout: "success".to_string(),
+        stderr: String::new(),
+    };
+
+    assert!(build_compile_error_report(&output).is_none());
+}
+
+
 
 
