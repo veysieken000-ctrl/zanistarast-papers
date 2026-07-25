@@ -4,7 +4,9 @@ pub struct LatexArticle {
     pub author: String,
     pub abstract_text: String,
     pub body: String,
+    pub bibliography: Option<String>,
 }
+
 fn escape_latex(value: &str) -> String {
     value
         .replace('\\', "\\textbackslash{}")
@@ -20,6 +22,17 @@ pub fn generate_latex_article(article: &LatexArticle) -> String {
     let title = escape_latex(&article.title);
     let author = escape_latex(&article.author);
     let abstract_text = escape_latex(&article.abstract_text);
+
+    let bibliography = article
+        .bibliography
+        .as_ref()
+        .map(|name| {
+            format!(
+                "\n\\bibliographystyle{{plain}}\n\\bibliography{{{}}}\n",
+                escape_latex(name)
+            )
+        })
+        .unwrap_or_default();
 
     format!(
         concat!(
@@ -38,6 +51,7 @@ pub fn generate_latex_article(article: &LatexArticle) -> String {
             "\\end{{abstract}}\n",
             "\n",
             "{}\n",
+            "{}",
             "\n",
             "\\end{{document}}\n"
         ),
@@ -45,6 +59,7 @@ pub fn generate_latex_article(article: &LatexArticle) -> String {
         author,
         abstract_text,
         article.body,
+        bibliography,
     )
 }
 
@@ -59,6 +74,7 @@ fn escapes_special_latex_characters() {
         author: "Veysi yê MALA SAF & Team".to_string(),
         abstract_text: "Cost is $100 #verified".to_string(),
         body: String::new(),
+        bibliography: None,
     };
 
     let generated = generate_latex_article(&article);
@@ -78,6 +94,7 @@ fn escapes_special_latex_characters() {
                     .to_string(),
             body: "\\section{Introduction}\nZanistarast scientific synthesis."
                 .to_string(),
+            bibliography: None,
         };
 
         let generated = generate_latex_article(&article);
@@ -107,7 +124,27 @@ fn escapes_special_latex_characters() {
     }
 }
 
+#[test]
+fn generates_bibliography_link() {
+    let article = LatexArticle {
+        title: "Rasterast Verification".to_string(),
+        author: "Veysi yê MALA SAF".to_string(),
+        abstract_text: "Deterministic verification.".to_string(),
+        body: "\\section{Sources}\nSee \\cite{veysi2025}."
+            .to_string(),
+        bibliography: Some("references".to_string()),
+    };
 
+    let generated = generate_latex_article(&article);
+
+    assert!(generated.contains(
+        "\\bibliographystyle{plain}\n\\bibliography{references}"
+    ));
+
+    assert!(generated.contains(
+        "See \\cite{veysi2025}."
+    ));
+}
 
 
 
