@@ -20,6 +20,7 @@ pub struct AcademicOutputInput {
 pub struct AcademicOutput {
     pub latex_source: String,
     pub pdf_bytes: Vec<u8>,
+    pub is_valid: bool,
 }
 
 pub fn generate_academic_output(
@@ -41,10 +42,16 @@ pub fn generate_academic_output(
 
     let pdf_bytes = generate_pdf(&pdf_document);
 
-    AcademicOutput {
-        latex_source,
-        pdf_bytes,
-    }
+    let is_valid =
+    !latex_source.is_empty()
+        && !pdf_bytes.is_empty()
+        && pdf_bytes == latex_source.as_bytes();
+
+AcademicOutput {
+    latex_source,
+    pdf_bytes,
+    is_valid,
+  }
 }
 
 #[cfg(test)]
@@ -67,7 +74,8 @@ mod tests {
                 ),
             },
         );
-
+        assert!(output.is_valid);
+        
         assert!(output.latex_source.contains(
             "\\title{Rasterast Verification}"
         ));
@@ -86,5 +94,25 @@ mod tests {
         );
     }
 }
+
+#[test]
+fn generated_academic_output_is_not_empty() {
+    let output = generate_academic_output(
+        AcademicOutputInput {
+            title: "Zanistarast".to_string(),
+            author: "Veysi yê MALA SAF".to_string(),
+            abstract_text: "Scientific synthesis.".to_string(),
+            body: "\\section{Introduction}\nContent."
+                .to_string(),
+            bibliography: None,
+        },
+    );
+
+    assert!(!output.latex_source.is_empty());
+    assert!(!output.pdf_bytes.is_empty());
+    assert!(output.is_valid);
+}
+
+
 
 
