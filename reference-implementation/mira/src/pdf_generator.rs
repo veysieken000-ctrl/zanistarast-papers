@@ -92,7 +92,15 @@ pub fn build_compile_error_report(
         stderr: output.stderr.clone(),
     })
 }
+pub fn read_generated_pdf(
+    working_directory: &str,
+    job_name: &str,
+) -> std::io::Result<Vec<u8>> {
+    let pdf_path = std::path::Path::new(working_directory)
+        .join(format!("{job_name}.pdf"));
 
+    std::fs::read(pdf_path)
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -219,6 +227,60 @@ fn does_not_create_error_report_for_successful_compilation() {
 
     assert!(build_compile_error_report(&output).is_none());
 }
+
+#[test]
+fn reads_generated_pdf_file() {
+    let working_directory = std::env::temp_dir()
+        .join(format!("mira-pdf-read-test-{}", std::process::id()));
+
+    std::fs::create_dir_all(&working_directory)
+        .expect("temporary directory should be created");
+
+    let pdf_path = working_directory.join("article.pdf");
+    let expected = b"%PDF-1.4\nMira\n";
+
+    std::fs::write(&pdf_path, expected)
+        .expect("test PDF should be written");
+
+    let working_directory_text = working_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let generated = read_generated_pdf(
+        working_directory_text,
+        "article",
+    )
+    .expect("generated PDF should be readable");
+
+    assert_eq!(generated, expected);
+
+    std::fs::remove_dir_all(&working_directory)
+        .expect("temporary directory should be removed");
+}
+
+#[test]
+fn reports_error_when_generated_pdf_is_missing() {
+    let working_directory = std::env::temp_dir()
+        .join(format!("mira-pdf-missing-test-{}", std::process::id()));
+
+    std::fs::create_dir_all(&working_directory)
+        .expect("temporary directory should be created");
+
+    let working_directory_text = working_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let result = read_generated_pdf(
+        working_directory_text,
+        "missing",
+    );
+
+    assert!(result.is_err());
+
+    std::fs::remove_dir_all(&working_directory)
+        .expect("temporary directory should be removed");
+}
+
 
 
 
