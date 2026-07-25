@@ -8,6 +8,28 @@ pub fn generate_pdf(document: &PdfDocument) -> Vec<u8> {
     // Gerçek PDF derleyicisi daha sonraki adımda eklenecek.
     document.latex_source.as_bytes().to_vec()
 }
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PdfCompiler {
+    PdfLatex,
+}
+
+impl PdfCompiler {
+    pub fn program(self) -> &'static str {
+        match self {
+            Self::PdfLatex => "pdflatex",
+        }
+    }
+
+    pub fn arguments(self, input_file: &str) -> Vec<String> {
+        match self {
+            Self::PdfLatex => vec![
+                "-interaction=nonstopmode".to_string(),
+                "-halt-on-error".to_string(),
+                input_file.to_string(),
+            ],
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -36,6 +58,24 @@ mod tests {
         assert_eq!(first, second);
     }
 }
+
+#[test]
+fn prepares_deterministic_pdflatex_command() {
+    let compiler = PdfCompiler::PdfLatex;
+
+    assert_eq!(compiler.program(), "pdflatex");
+
+    assert_eq!(
+        compiler.arguments("article.tex"),
+        vec![
+            "-interaction=nonstopmode".to_string(),
+            "-halt-on-error".to_string(),
+            "article.tex".to_string(),
+        ]
+    );
+}
+
+
 
 
 
