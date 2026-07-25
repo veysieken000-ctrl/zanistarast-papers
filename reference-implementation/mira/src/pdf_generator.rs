@@ -305,6 +305,56 @@ fn rejects_empty_pdf_content() {
     assert!(!has_valid_pdf_signature(&[]));
 }
 
+#[test]
+fn end_to_end_academic_output_pipeline() {
+    let latex = "\\documentclass{article}\n\\begin{document}\nHello\n\\end{document}\n";
+
+    let document = PdfDocument {
+        latex_source: latex.to_string(),
+    };
+
+    let placeholder_pdf = generate_pdf(&document);
+
+    assert!(!placeholder_pdf.is_empty());
+
+    let working_directory = std::env::temp_dir()
+        .join(format!("mira-e2e-{}", std::process::id()));
+
+    std::fs::create_dir_all(&working_directory)
+        .expect("temporary directory should be created");
+
+    let working_directory_text = working_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let tex_file = write_latex_source(
+        working_directory_text,
+        "article",
+        latex,
+    )
+    .expect("LaTeX source should be written");
+
+    assert!(tex_file.exists());
+
+    let pdf_path = working_directory.join("article.pdf");
+
+    std::fs::write(&pdf_path, b"%PDF-1.7\nPlaceholder\n")
+        .expect("placeholder PDF should be written");
+
+    let pdf = read_generated_pdf(
+        working_directory_text,
+        "article",
+    )
+    .expect("generated PDF should be readable");
+
+    assert!(has_valid_pdf_signature(&pdf));
+
+    std::fs::remove_dir_all(&working_directory)
+        .expect("temporary directory should be removed");
+}
+
+
+
 
 
 
