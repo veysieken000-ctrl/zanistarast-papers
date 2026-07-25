@@ -6,6 +6,12 @@ use crate::academic_report::{
     build_report,
     AcademicReport,
 };
+use crate::academic_output::{
+    generate_academic_output,
+    AcademicOutput,
+    AcademicOutputInput,
+};
+
 use crate::article_classifier::AcademicArticleType;
 use crate::source_verification_report::SourceVerificationReport;
 
@@ -25,6 +31,7 @@ pub struct AcademicRunnerInput {
 pub struct AcademicRunnerOutput {
     pub pipeline: AcademicPipelineResult,
     pub report: AcademicReport,
+    pub output: AcademicOutput,
 }
 
 /// Akademik analiz ile kaynak doğrulamasının birleşik sonucu.
@@ -56,11 +63,18 @@ pub fn run_academic_analysis(
     );
 
     let report = build_report(&pipeline);
-
-    AcademicRunnerOutput {
-        pipeline,
-        report,
-    }
+let output = generate_academic_output(AcademicOutputInput {
+    title: format!("{:?}", input.article_type),
+    author: "Unknown".to_string(),
+    abstract_text: String::new(),
+    body: String::new(),
+    bibliography: None,
+});
+   AcademicRunnerOutput {
+    pipeline,
+    report,
+    output,
+  }
 }
 
 /// Akademik analiz ile kaynak doğrulamasını tek çıktıda birleştirir.
@@ -101,6 +115,7 @@ mod tests {
         assert!(output.pipeline.rules.passed);
         assert!(output.report.ready_for_publication);
         assert!(output.report.recommendations.is_empty());
+        assert!(output.output.is_valid);
     }
 
 #[test]
@@ -136,6 +151,8 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
     assert!(!output.academic.report.ready_for_publication);
     assert!(output.source_verification.is_verified());
     assert!(!output.is_ready_for_publication());
+    assert!(output.output.is_valid);
+
 }
   
     #[test]
@@ -156,7 +173,8 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
 
         assert!(!output.pipeline.rules.passed);
         assert!(!output.report.ready_for_publication);
-
+        assert!(output.output.is_valid);
+        
         assert_eq!(
             output.report.recommendations,
             vec![
@@ -199,6 +217,7 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
         assert!(output.academic.report.ready_for_publication);
         assert!(output.source_verification.is_verified());
         assert!(output.is_ready_for_publication());
+        assert!(output.output.is_valid);
     }
 
     #[test]
@@ -234,5 +253,6 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
         assert!(output.academic.report.ready_for_publication);
         assert!(!output.source_verification.is_verified());
         assert!(!output.is_ready_for_publication());
+        assert!(output.output.is_valid);
     }
 }
