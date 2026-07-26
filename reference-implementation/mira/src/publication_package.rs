@@ -377,6 +377,67 @@ fn sanitizes_publication_file_name() {
     );
 }
 
+#[test]
+fn exports_files_with_sanitized_base_name() {
+    let package = PublicationPackage {
+        title: "Rasterast Verification".to_string(),
+        latex_source:
+            "\\documentclass{article}\n".to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: Some(
+            "@article{rasterast2026}".to_string(),
+        ),
+    };
+
+    let output_directory = std::env::temp_dir().join(
+        format!(
+            "mira-publication-sanitized-{}",
+            std::process::id()
+        ),
+    );
+
+    let output_directory_text = output_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let written_files = export_publication_package(
+        &package,
+        output_directory_text,
+        "Rasterast Verification/2026",
+    )
+    .expect("publication package should be exported");
+
+    assert_eq!(written_files.len(), 3);
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.tex")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.pdf")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.bib")
+            .exists()
+    );
+
+    assert!(
+        !output_directory
+            .join("Rasterast Verification")
+            .exists()
+    );
+
+    std::fs::remove_dir_all(&output_directory)
+        .expect("temporary directory should be removed");
+}
+
+
 
 
 
