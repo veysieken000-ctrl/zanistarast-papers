@@ -493,6 +493,77 @@ fn builds_final_publication_package() {
     assert!(package.is_ready_for_publication());
 }
 
+#[test]
+fn builds_and_exports_final_publication_package() {
+    use crate::academic_output::{
+        generate_academic_output,
+        AcademicOutputInput,
+    };
+
+    let academic_output = generate_academic_output(
+        AcademicOutputInput {
+            title: "Rasterast Verification".to_string(),
+            author: "Veysi yê MALA SAF".to_string(),
+            abstract_text:
+                "Deterministic verification.".to_string(),
+            body:
+                "\\section{Introduction}\nZanistarast."
+                    .to_string(),
+            bibliography: Some("references".to_string()),
+        },
+    );
+
+    let package = build_publication_package(
+        "Rasterast Verification",
+        &academic_output,
+        Some("@article{rasterast2026}".to_string()),
+    );
+
+    assert!(package.is_ready_for_publication());
+
+    let output_directory = std::env::temp_dir().join(
+        format!(
+            "mira-final-publication-package-{}",
+            std::process::id()
+        ),
+    );
+
+    let output_directory_text = output_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let written_files = export_publication_package(
+        &package,
+        output_directory_text,
+        "Rasterast Verification/2026",
+    )
+    .expect("final publication package should be exported");
+
+    assert_eq!(written_files.len(), 3);
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.tex")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.pdf")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.bib")
+            .exists()
+    );
+
+    std::fs::remove_dir_all(&output_directory)
+        .expect("temporary directory should be removed");
+}
+
+
 
 
 
