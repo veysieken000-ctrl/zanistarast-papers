@@ -21,6 +21,13 @@ impl PublicationPackage {
             bibtex_source,
         }
     }
+pub fn with_bibtex(
+    mut self,
+    bibtex: impl Into<String>,
+) -> Self {
+    self.bibtex_source = Some(bibtex.into());
+    self
+}
 
     pub fn is_complete(&self) -> bool {
         !self.title.trim().is_empty()
@@ -115,6 +122,39 @@ mod tests {
         assert!(package.is_complete());
     }
 }
+
+#[test]
+fn can_attach_bibtex_after_creation() {
+    use crate::academic_output::{
+        generate_academic_output,
+        AcademicOutputInput,
+    };
+
+    let output = generate_academic_output(
+        AcademicOutputInput {
+            title: "Rasterast".to_string(),
+            author: "Veysi yê MALA SAF".to_string(),
+            abstract_text: String::new(),
+            body: String::new(),
+            bibliography: None,
+        },
+    );
+
+    let package = PublicationPackage::from_academic_output(
+        "Rasterast",
+        &output,
+        None,
+    )
+    .with_bibtex("@article{rasterast2026}");
+
+    assert!(package.has_bibliography());
+
+    assert_eq!(
+        package.bibtex_source.as_deref(),
+        Some("@article{rasterast2026}")
+    );
+}
+
 
 
 
