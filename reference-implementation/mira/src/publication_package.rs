@@ -9,6 +9,19 @@ pub struct PublicationPackage {
 }
 
 impl PublicationPackage {
+    pub fn from_academic_output(
+        title: impl Into<String>,
+        output: &AcademicOutput,
+        bibtex_source: Option<String>,
+    ) -> Self {
+        Self {
+            title: title.into(),
+            latex_source: output.latex_source.clone(),
+            pdf_bytes: output.pdf_bytes.clone(),
+            bibtex_source,
+        }
+    }
+
     pub fn is_complete(&self) -> bool {
         !self.title.trim().is_empty()
             && !self.latex_source.trim().is_empty()
@@ -21,19 +34,6 @@ impl PublicationPackage {
             .is_some_and(|value| !value.trim().is_empty())
     }
 }
-pub fn from_academic_output(
-    title: impl Into<String>,
-    output: &AcademicOutput,
-    bibtex_source: Option<String>,
-) -> Self {
-    Self {
-        title: title.into(),
-        latex_source: output.latex_source.clone(),
-        pdf_bytes: output.pdf_bytes.clone(),
-        bibtex_source,
-    }
-}
-
 
 #[cfg(test)]
 mod tests {
@@ -82,36 +82,38 @@ mod tests {
 
         assert!(!package.is_complete());
     }
-}
 
-#[test]
-fn builds_package_from_academic_output() {
-    use crate::academic_output::{
-        generate_academic_output,
-        AcademicOutputInput,
-    };
+    #[test]
+    fn builds_package_from_academic_output() {
+        use crate::academic_output::{
+            generate_academic_output,
+            AcademicOutputInput,
+        };
 
-    let output = generate_academic_output(
-        AcademicOutputInput {
-            title: "Rasterast".to_string(),
-            author: "Veysi yê MALA SAF".to_string(),
-            abstract_text: "Deterministic verification.".to_string(),
-            body: "\\section{Intro}\nContent.".to_string(),
-            bibliography: None,
-        },
-    );
+        let output = generate_academic_output(
+            AcademicOutputInput {
+                title: "Rasterast".to_string(),
+                author: "Veysi yê MALA SAF".to_string(),
+                abstract_text:
+                    "Deterministic verification.".to_string(),
+                body:
+                    "\\section{Intro}\nContent.".to_string(),
+                bibliography: None,
+            },
+        );
 
-    let package = PublicationPackage::from_academic_output(
-        "Rasterast",
-        &output,
-        Some("@article{rasterast2026}".to_string()),
-    );
+        let package = PublicationPackage::from_academic_output(
+            "Rasterast",
+            &output,
+            Some("@article{rasterast2026}".to_string()),
+        );
 
-    assert_eq!(package.title, "Rasterast");
-    assert_eq!(package.latex_source, output.latex_source);
-    assert_eq!(package.pdf_bytes, output.pdf_bytes);
-    assert!(package.has_bibliography());
-    assert!(package.is_complete());
+        assert_eq!(package.title, "Rasterast");
+        assert_eq!(package.latex_source, output.latex_source);
+        assert_eq!(package.pdf_bytes, output.pdf_bytes);
+        assert!(package.has_bibliography());
+        assert!(package.is_complete());
+    }
 }
 
 
