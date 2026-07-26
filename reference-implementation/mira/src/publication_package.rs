@@ -41,6 +41,9 @@ pub fn with_bibtex(
             .is_some_and(|value| !value.trim().is_empty())
     }
 }
+pub fn is_ready_for_publication(&self) -> bool {
+    self.is_complete() && self.has_bibliography()
+}
 
 #[cfg(test)]
 mod tests {
@@ -154,6 +157,40 @@ fn can_attach_bibtex_after_creation() {
         Some("@article{rasterast2026}")
     );
 }
+
+#[test]
+fn publication_package_requires_bibliography_for_publication() {
+    use crate::academic_output::{
+        generate_academic_output,
+        AcademicOutputInput,
+    };
+
+    let output = generate_academic_output(
+        AcademicOutputInput {
+            title: "Rasterast".to_string(),
+            author: "Veysi yê MALA SAF".to_string(),
+            abstract_text: String::new(),
+            body: String::new(),
+            bibliography: None,
+        },
+    );
+
+    let package = PublicationPackage::from_academic_output(
+        "Rasterast",
+        &output,
+        None,
+    );
+
+    assert!(package.is_complete());
+    assert!(!package.has_bibliography());
+    assert!(!package.is_ready_for_publication());
+
+    let package = package.with_bibtex("@article{rasterast2026}");
+
+    assert!(package.has_bibliography());
+    assert!(package.is_ready_for_publication());
+}
+
 
 
 
