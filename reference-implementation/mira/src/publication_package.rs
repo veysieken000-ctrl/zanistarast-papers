@@ -46,6 +46,36 @@ impl PublicationPackage {
         self.is_complete() && self.has_bibliography()
     }
 }
+
+pub fn export_publication_package(
+    package: &PublicationPackage,
+    output_directory: &str,
+    base_name: &str,
+) -> std::io::Result<Vec<std::path::PathBuf>> {
+    let directory = std::path::Path::new(output_directory);
+
+    std::fs::create_dir_all(directory)?;
+
+    let tex_path = directory.join(format!("{base_name}.tex"));
+    let pdf_path = directory.join(format!("{base_name}.pdf"));
+
+    std::fs::write(&tex_path, &package.latex_source)?;
+    std::fs::write(&pdf_path, &package.pdf_bytes)?;
+
+    let mut written_files = vec![tex_path, pdf_path];
+
+    if let Some(bibtex_source) = &package.bibtex_source {
+        let bib_path = directory.join(format!("{base_name}.bib"));
+
+        std::fs::write(&bib_path, bibtex_source)?;
+
+        written_files.push(bib_path);
+    }
+
+    Ok(written_files)
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -191,6 +221,68 @@ fn publication_package_requires_bibliography_for_publication() {
     assert!(package.has_bibliography());
     assert!(package.is_ready_for_publication());
 }
+
+#[test]
+fn exports_publication_package_files() {
+    let package = PublicationPackage {
+        title: "Rasterast Verification".to_string(),
+        latex_source:
+            "\\documentclass{article}\n".to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: Some(
+            "@article{rasterast2026}".to_string(),
+        ),
+    };
+
+    let output_directory = std::env::temp_dir().join(
+        format!(
+            "mira-publication-package-{}",
+            std::process::id()
+        ),
+    );
+
+    let output_directory_text = output_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let written_files = export_publication_package(
+        &package,
+        output_directory_text,
+        "rasterast",
+    )
+    .expect("publication package should be exported");
+
+    assert_eq!(written_files.len(), 3);
+
+    assert_eq!(
+        std::fs::read_to_string(
+            output_directory.join("rasterast.tex")
+        )
+        .expect("LaTeX file should be readable"),
+        package.latex_source
+    );
+
+    assert_eq!(
+        std::fs::read(
+            output_directory.join("rasterast.pdf")
+        )
+        .expect("PDF file should be readable"),
+        package.pdf_bytes
+    );
+
+    assert_eq!(
+        std::fs::read_to_string(
+            output_directory.join("rasterast.bib")
+        )
+        .expect("BibTeX file should be readable"),
+        "@article{rasterast2026}"
+    );
+
+    std::fs::remove_dir_all(&output_directory)
+        .expect("temporary directory should be removed");
+}
+
+
 
 
 
