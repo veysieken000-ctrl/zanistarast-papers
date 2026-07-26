@@ -52,8 +52,8 @@ impl VerifiedAcademicRunnerOutput {
 pub fn run_academic_analysis(
     input: AcademicRunnerInput,
 ) -> AcademicRunnerOutput {
-    let article_type = input.article_type.clone();
-
+    let article_type = input.article_type;
+    
     let pipeline = run_pipeline(
         input.article_type,
         input.has_abstract,
