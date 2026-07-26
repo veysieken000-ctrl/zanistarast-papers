@@ -13,7 +13,10 @@ use crate::academic_report::{
 };
 use crate::article_classifier::AcademicArticleType;
 use crate::source_verification_report::SourceVerificationReport;
-
+use crate::publication_package::{
+    build_publication_package,
+    PublicationPackage,
+};
 /// Bir makalenin akademik analizinde kullanılacak girdiler.
 #[derive(Debug, Clone)]
 pub struct AcademicRunnerInput {
@@ -31,6 +34,7 @@ pub struct AcademicRunnerOutput {
     pub pipeline: AcademicPipelineResult,
     pub report: AcademicReport,
     pub output: AcademicOutput,
+    pub publication_package: PublicationPackage,
 }
 
 /// Akademik analiz ile kaynak doğrulamasının birleşik sonucu.
@@ -74,12 +78,18 @@ pub fn run_academic_analysis(
             bibliography: None,
         },
     );
+let publication_package = build_publication_package(
+    format!("{article_type:?}"),
+    &output,
+    None,
+);
 
-    AcademicRunnerOutput {
-        pipeline,
-        report,
-        output,
-    }
+   AcademicRunnerOutput {
+    pipeline,
+    report,
+    output,
+    publication_package,
+  }
 }
 
 /// Akademik analiz ile kaynak doğrulamasını tek çıktıda birleştirir.
@@ -123,6 +133,10 @@ mod tests {
         assert!(output.report.ready_for_publication);
         assert!(output.report.recommendations.is_empty());
         assert!(output.output.is_valid);
+        assert!(output.publication_package.is_complete());
+        assert!(!output.publication_package.has_bibliography());
+        assert!(!output.publication_package.is_ready_for_publication());
+        
     }
 
     #[test]
