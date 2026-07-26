@@ -8,6 +8,30 @@ pub struct PublicationPackage {
     pub bibtex_source: Option<String>,
 }
 
+pub fn sanitize_base_name(value: &str) -> String {
+    let sanitized: String = value
+        .chars()
+        .map(|character| {
+            if character.is_ascii_alphanumeric()
+                || character == '-'
+                || character == '_'
+            {
+                character
+            } else {
+                '_'
+            }
+        })
+        .collect();
+
+    let sanitized = sanitized.trim_matches('_');
+
+    if sanitized.is_empty() {
+        "publication".to_string()
+    } else {
+        sanitized.to_string()
+    }
+}
+
 impl PublicationPackage {
     pub fn from_academic_output(
         title: impl Into<String>,
@@ -53,6 +77,7 @@ pub fn export_publication_package(
     base_name: &str,
 ) -> std::io::Result<Vec<std::path::PathBuf>> {
     let directory = std::path::Path::new(output_directory);
+    let base_name = sanitize_base_name(base_name);
 
     std::fs::create_dir_all(directory)?;
 
@@ -332,6 +357,24 @@ fn exports_package_without_bibtex_as_two_files() {
 
     std::fs::remove_dir_all(&output_directory)
         .expect("temporary directory should be removed");
+}
+
+#[test]
+fn sanitizes_publication_file_name() {
+    assert_eq!(
+        sanitize_base_name("Rasterast Verification/2026"),
+        "Rasterast_Verification_2026"
+    );
+
+    assert_eq!(
+        sanitize_base_name("zanistarast-paper_v1"),
+        "zanistarast-paper_v1"
+    );
+
+    assert_eq!(
+        sanitize_base_name("///"),
+        "publication"
+    );
 }
 
 
