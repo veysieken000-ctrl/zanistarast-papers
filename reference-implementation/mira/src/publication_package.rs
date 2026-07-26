@@ -282,6 +282,59 @@ fn exports_publication_package_files() {
         .expect("temporary directory should be removed");
 }
 
+#[test]
+fn exports_package_without_bibtex_as_two_files() {
+    let package = PublicationPackage {
+        title: "Zanistarast".to_string(),
+        latex_source:
+            "\\documentclass{article}\n".to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: None,
+    };
+
+    let output_directory = std::env::temp_dir().join(
+        format!(
+            "mira-publication-package-no-bib-{}",
+            std::process::id()
+        ),
+    );
+
+    let output_directory_text = output_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let written_files = export_publication_package(
+        &package,
+        output_directory_text,
+        "zanistarast",
+    )
+    .expect("publication package should be exported");
+
+    assert_eq!(written_files.len(), 2);
+
+    assert!(
+        output_directory
+            .join("zanistarast.tex")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("zanistarast.pdf")
+            .exists()
+    );
+
+    assert!(
+        !output_directory
+            .join("zanistarast.bib")
+            .exists()
+    );
+
+    std::fs::remove_dir_all(&output_directory)
+        .expect("temporary directory should be removed");
+}
+
+
 
 
 
