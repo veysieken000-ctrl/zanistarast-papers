@@ -31,7 +31,17 @@ pub fn sanitize_base_name(value: &str) -> String {
         sanitized.to_string()
     }
 }
-
+pub fn build_publication_package(
+    title: impl Into<String>,
+    academic_output: &AcademicOutput,
+    bibtex_source: Option<String>,
+) -> PublicationPackage {
+    PublicationPackage::from_academic_output(
+        title,
+        academic_output,
+        bibtex_source,
+    )
+}
 impl PublicationPackage {
     pub fn from_academic_output(
         title: impl Into<String>,
@@ -435,6 +445,52 @@ fn exports_files_with_sanitized_base_name() {
 
     std::fs::remove_dir_all(&output_directory)
         .expect("temporary directory should be removed");
+}
+
+#[test]
+fn builds_final_publication_package() {
+    use crate::academic_output::{
+        generate_academic_output,
+        AcademicOutputInput,
+    };
+
+    let academic_output = generate_academic_output(
+        AcademicOutputInput {
+            title: "Rasterast Verification".to_string(),
+            author: "Veysi yê MALA SAF".to_string(),
+            abstract_text:
+                "Deterministic verification.".to_string(),
+            body:
+                "\\section{Introduction}\nZanistarast."
+                    .to_string(),
+            bibliography: Some("references".to_string()),
+        },
+    );
+
+    let package = build_publication_package(
+        "Rasterast Verification",
+        &academic_output,
+        Some("@article{rasterast2026}".to_string()),
+    );
+
+    assert_eq!(
+        package.title,
+        "Rasterast Verification"
+    );
+
+    assert_eq!(
+        package.latex_source,
+        academic_output.latex_source
+    );
+
+    assert_eq!(
+        package.pdf_bytes,
+        academic_output.pdf_bytes
+    );
+
+    assert!(package.has_bibliography());
+    assert!(package.is_complete());
+    assert!(package.is_ready_for_publication());
 }
 
 
