@@ -21,13 +21,14 @@ impl PublicationPackage {
             bibtex_source,
         }
     }
-pub fn with_bibtex(
-    mut self,
-    bibtex: impl Into<String>,
-) -> Self {
-    self.bibtex_source = Some(bibtex.into());
-    self
-}
+
+    pub fn with_bibtex(
+        mut self,
+        bibtex: impl Into<String>,
+    ) -> Self {
+        self.bibtex_source = Some(bibtex.into());
+        self
+    }
 
     pub fn is_complete(&self) -> bool {
         !self.title.trim().is_empty()
@@ -40,11 +41,11 @@ pub fn with_bibtex(
             .as_ref()
             .is_some_and(|value| !value.trim().is_empty())
     }
-}
-pub fn is_ready_for_publication(&self) -> bool {
-    self.is_complete() && self.has_bibliography()
-}
 
+    pub fn is_ready_for_publication(&self) -> bool {
+        self.is_complete() && self.has_bibliography()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
