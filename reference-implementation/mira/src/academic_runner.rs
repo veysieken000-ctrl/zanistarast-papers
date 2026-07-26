@@ -256,3 +256,55 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
         assert!(output.academic.output.is_valid);
     }
 }
+#[test]
+fn complete_verified_pipeline_ generates_valid_academic_ output() {
+    let citation_report = CitationReferenceMatchReport {
+        alıntı_numaraları: vec![1],
+        referans_numaraları: vec![1],
+        eksik_referanslar: Vec::new(),
+        kullanılmayan_referanslar: Vec::new(),
+    };
+
+    let source_verification =
+        SourceVerificationReport:: from_validation_results(
+            1,
+            1,
+            1,
+            1,
+            &atıf_raporu,
+        );
+
+    let output = run_verified_academic_analysis (
+        AkademikKoşucuGirişi {
+            makale_türü: AkademikMakaleTürü:: Matematiksel,
+            özeti var: doğru,
+            Referanslara sahip: doğru,
+            sonuç var: doğru,
+            matematik içeriyor: doğru,
+            Deneyler var: yanlış,
+        },
+        kaynak_doğrulama,
+    );
+
+    assert!(output.academic.pipeline.rules.passed );
+    assert!(output.academic.report.ready_for_publication );
+    doğrula!(çıktı.kaynak_doğrulaması.doğrulandı mı?);
+    doğrula!(çıktı.akademik.çıktı.geçerli mi);
+    assert!(output.is_ready_for_publication ());
+
+    doğrula!(çıktı)
+        .akademik
+        .çıktı
+        .latex_kaynak
+        .contains("\\begin{document}") );
+
+    doğrula!(çıktı)
+        .akademik
+        .çıktı
+        .latex_kaynak
+        .contains("\\end{document}"));
+
+    assert!(!output.academic.output.pdf_bytes.is_empty ());
+}
+
+
