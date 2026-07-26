@@ -1,3 +1,8 @@
+use crate::academic_output::{
+    generate_academic_output,
+    AcademicOutput,
+    AcademicOutputInput,
+};
 use crate::academic_pipeline::{
     run_pipeline,
     AcademicPipelineResult,
@@ -6,12 +11,6 @@ use crate::academic_report::{
     build_report,
     AcademicReport,
 };
-use crate::academic_output::{
-    generate_academic_output,
-    AcademicOutput,
-    AcademicOutputInput,
-};
-
 use crate::article_classifier::AcademicArticleType;
 use crate::source_verification_report::SourceVerificationReport;
 
@@ -53,6 +52,8 @@ impl VerifiedAcademicRunnerOutput {
 pub fn run_academic_analysis(
     input: AcademicRunnerInput,
 ) -> AcademicRunnerOutput {
+    let article_type = input.article_type.clone();
+
     let pipeline = run_pipeline(
         input.article_type,
         input.has_abstract,
@@ -63,18 +64,22 @@ pub fn run_academic_analysis(
     );
 
     let report = build_report(&pipeline);
-let output = generate_academic_output(AcademicOutputInput {
-    title: format!("{:?}", input.article_type),
-    author: "Unknown".to_string(),
-    abstract_text: String::new(),
-    body: String::new(),
-    bibliography: None,
-});
-   AcademicRunnerOutput {
-    pipeline,
-    report,
-    output,
-  }
+
+    let output = generate_academic_output(
+        AcademicOutputInput {
+            title: format!("{article_type:?}"),
+            author: "Veysi yê MALA SAF".to_string(),
+            abstract_text: String::new(),
+            body: String::new(),
+            bibliography: None,
+        },
+    );
+
+    AcademicRunnerOutput {
+        pipeline,
+        report,
+        output,
+    }
 }
 
 /// Akademik analiz ile kaynak doğrulamasını tek çıktıda birleştirir.
@@ -98,14 +103,16 @@ mod tests {
 
     #[test]
     fn complete_article_produces_publication_ready_report() {
-        let output = run_academic_analysis(AcademicRunnerInput {
-            article_type: AcademicArticleType::Mathematical,
-            has_abstract: true,
-            has_references: true,
-            has_conclusion: true,
-            has_math: true,
-            has_experiments: false,
-        });
+        let output = run_academic_analysis(
+            AcademicRunnerInput {
+                article_type: AcademicArticleType::Mathematical,
+                has_abstract: true,
+                has_references: true,
+                has_conclusion: true,
+                has_math: true,
+                has_experiments: false,
+            },
+        );
 
         assert_eq!(
             output.pipeline.priority,
@@ -118,53 +125,54 @@ mod tests {
         assert!(output.output.is_valid);
     }
 
-#[test]
-fn incomplete_academic_structure_prevents_publication_readiness() {
-    let citation_report = CitationReferenceMatchReport {
-        citation_numbers: vec![1],
-        reference_numbers: vec![1],
-        missing_references: Vec::new(),
-        unused_references: Vec::new(),
-    };
+    #[test]
+    fn incomplete_academic_structure_prevents_publication_readiness() {
+        let citation_report = CitationReferenceMatchReport {
+            citation_numbers: vec![1],
+            reference_numbers: vec![1],
+            missing_references: Vec::new(),
+            unused_references: Vec::new(),
+        };
 
-    let source_verification =
-        SourceVerificationReport::from_validation_results(
-            1,
-            1,
-            1,
-            1,
-            &citation_report,
+        let source_verification =
+            SourceVerificationReport::from_validation_results(
+                1,
+                1,
+                1,
+                1,
+                &citation_report,
+            );
+
+        let output = run_verified_academic_analysis(
+            AcademicRunnerInput {
+                article_type: AcademicArticleType::Theoretical,
+                has_abstract: false,
+                has_references: true,
+                has_conclusion: true,
+                has_math: false,
+                has_experiments: false,
+            },
+            source_verification,
         );
 
-    let output = run_verified_academic_analysis(
-        AcademicRunnerInput {
-            article_type: AcademicArticleType::Theoretical,
-            has_abstract: false,
-            has_references: true,
-            has_conclusion: true,
-            has_math: false,
-            has_experiments: false,
-        },
-        source_verification,
-    );
+        assert!(!output.academic.report.ready_for_publication);
+        assert!(output.source_verification.is_verified());
+        assert!(output.academic.output.is_valid);
+        assert!(!output.is_ready_for_publication());
+    }
 
-    assert!(!output.academic.report.ready_for_publication);
-    assert!(output.source_verification.is_verified());
-    assert!(!output.is_ready_for_publication());
-    assert!(output.academic.output.is_valid);
-
-}
-  
     #[test]
     fn incomplete_article_produces_academic_warnings() {
-        let output = run_academic_analysis(AcademicRunnerInput {
-            article_type: AcademicArticleType::Theoretical,
-            has_abstract: false,
-            has_references: false,
-            has_conclusion: true,
-            has_math: false,
-            has_experiments: false,
-        });
+        let output = run_academic_analysis(
+            AcademicRunnerInput {
+                article_type: AcademicArticleType::Theoretical,
+                has_abstract: false,
+                has_references: false,
+                has_conclusion: true,
+                has_math: false,
+                has_experiments: false,
+            },
+        );
 
         assert_eq!(
             output.pipeline.priority,
@@ -173,8 +181,7 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
 
         assert!(!output.pipeline.rules.passed);
         assert!(!output.report.ready_for_publication);
-        assert!(output.output.is_valid);
-        
+
         assert_eq!(
             output.report.recommendations,
             vec![
@@ -182,6 +189,8 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
                 "Missing References".to_string(),
             ]
         );
+
+        assert!(output.output.is_valid);
     }
 
     #[test]
@@ -216,8 +225,8 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
 
         assert!(output.academic.report.ready_for_publication);
         assert!(output.source_verification.is_verified());
-        assert!(output.is_ready_for_publication());
         assert!(output.academic.output.is_valid);
+        assert!(output.is_ready_for_publication());
     }
 
     #[test]
@@ -252,62 +261,64 @@ fn incomplete_academic_structure_prevents_publication_readiness() {
 
         assert!(output.academic.report.ready_for_publication);
         assert!(!output.source_verification.is_verified());
-        assert!(!output.is_ready_for_publication());
         assert!(output.academic.output.is_valid);
+        assert!(!output.is_ready_for_publication());
     }
-}
-#[test]
-fn complete_verified_pipeline_ generates_valid_academic_ output() {
-    let citation_report = CitationReferenceMatchReport {
-        alıntı_numaraları: vec![1],
-        referans_numaraları: vec![1],
-        eksik_referanslar: Vec::new(),
-        kullanılmayan_referanslar: Vec::new(),
-    };
 
-    let source_verification =
-        SourceVerificationReport:: from_validation_results(
-            1,
-            1,
-            1,
-            1,
-            &atıf_raporu,
+    #[test]
+    fn complete_verified_pipeline_generates_valid_academic_output() {
+        let citation_report = CitationReferenceMatchReport {
+            citation_numbers: vec![1],
+            reference_numbers: vec![1],
+            missing_references: Vec::new(),
+            unused_references: Vec::new(),
+        };
+
+        let source_verification =
+            SourceVerificationReport::from_validation_results(
+                1,
+                1,
+                1,
+                1,
+                &citation_report,
+            );
+
+        let output = run_verified_academic_analysis(
+            AcademicRunnerInput {
+                article_type: AcademicArticleType::Mathematical,
+                has_abstract: true,
+                has_references: true,
+                has_conclusion: true,
+                has_math: true,
+                has_experiments: false,
+            },
+            source_verification,
         );
 
-    let output = run_verified_academic_analysis (
-        AkademikKoşucuGirişi {
-            makale_türü: AkademikMakaleTürü:: Matematiksel,
-            özeti var: doğru,
-            Referanslara sahip: doğru,
-            sonuç var: doğru,
-            matematik içeriyor: doğru,
-            Deneyler var: yanlış,
-        },
-        kaynak_doğrulama,
-    );
+        assert!(output.academic.pipeline.rules.passed);
+        assert!(output.academic.report.ready_for_publication);
+        assert!(output.source_verification.is_verified());
+        assert!(output.academic.output.is_valid);
+        assert!(output.is_ready_for_publication());
 
-    assert!(output.academic.pipeline.rules.passed );
-    assert!(output.academic.report.ready_for_publication );
-    doğrula!(çıktı.kaynak_doğrulaması.doğrulandı mı?);
-    doğrula!(çıktı.akademik.çıktı.geçerli mi);
-    assert!(output.is_ready_for_publication ());
+        assert!(
+            output
+                .academic
+                .output
+                .latex_source
+                .contains("\\begin{document}")
+        );
 
-    iddia et!(
-        çıktı
-            .akademik
-            .çıktı
-            .latex_kaynak
-            .contains("\\begin{document}")
-    );
+        assert!(
+            output
+                .academic
+                .output
+                .latex_source
+                .contains("\\end{document}")
+        );
 
-    iddia et!(
-        çıktı
-            .akademik
-            .çıktı
-            .latex_kaynak
-            .contains("\\end{document}")
-    );
-
-    assert!(!output.academic.output.pdf_bytes.is_empty ());
+        assert!(!output.academic.output.pdf_bytes.is_empty());
+    }
 }
+
 
