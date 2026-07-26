@@ -292,19 +292,22 @@ fn complete_verified_pipeline_ generates_valid_academic_ output() {
     doğrula!(çıktı.akademik.çıktı.geçerli mi);
     assert!(output.is_ready_for_publication ());
 
-    doğrula!(çıktı)
-        .akademik
-        .çıktı
-        .latex_kaynak
-        .contains("\\begin{document}") );
+    iddia et!(
+        çıktı
+            .akademik
+            .çıktı
+            .latex_kaynak
+            .contains("\\begin{document}")
+    );
 
-    doğrula!(çıktı)
-        .akademik
-        .çıktı
-        .latex_kaynak
-        .contains("\\end{document}"));
+    iddia et!(
+        çıktı
+            .akademik
+            .çıktı
+            .latex_kaynak
+            .contains("\\end{document}")
+    );
 
     assert!(!output.academic.output.pdf_bytes.is_empty ());
 }
-
 
