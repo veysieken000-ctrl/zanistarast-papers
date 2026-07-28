@@ -51,6 +51,27 @@ impl PublicationTarget {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicationRequest {
+    pub target: PublicationTarget,
+    pub package: PublicationPackage,
+}
+
+impl PublicationRequest {
+    pub fn new(
+        target: PublicationTarget,
+        package: PublicationPackage,
+    ) -> Self {
+        Self {
+            target,
+            package,
+        }
+    }
+
+    pub fn is_ready(&self) -> bool {
+        self.package.is_ready_for_publication()
+    }
+}
 
 pub fn build_publication_package(
     title: impl Into<String>,
@@ -599,8 +620,36 @@ fn publication_targets_have_stable_names() {
     );
 }
 
+#[test]
+fn publication_request_reports_package_readiness() {
+    let ready_package = PublicationPackage {
+        title: "Rasterast Verification".to_string(),
+        latex_source:
+            "\\documentclass{article}\n\\begin{document}\nZanistarast.\n\\end{document}"
+                .to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: Some(
+            "@article{rasterast2026}".to_string(),
+        ),
+    };
 
+    let request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        ready_package,
+    );
 
+    assert_eq!(
+        request.target,
+        PublicationTarget::Zenodo
+    );
+
+    assert_eq!(
+        request.target.name(),
+        "Zenodo"
+    );
+
+    assert!(request.is_ready());
+}
 
 
 
