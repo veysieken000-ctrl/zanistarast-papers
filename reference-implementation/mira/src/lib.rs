@@ -200,7 +200,19 @@ pub fn register_academic_task(
 
     self.register_task(task)
 }
+/// Oluşturulmuş bir görevi planlama aşamasına geçirir.
+pub fn start_planning(&mut self, task_id: Uuid) -> bool {
+    let Some(task) = self.find_task_mut(task_id) else {
+        return false;
+    };
 
+    if task.status != MiraTaskStatus::Created {
+        return false;
+    }
+
+    task.update_status(MiraTaskStatus::Planning);
+    true
+}
     /// Kayıtlı görevleri salt okunur olarak döndürür.
     pub fn tasks(&self) -> &[MiraTask] {
         &self.tasks
@@ -280,6 +292,25 @@ fn mira_registers_academic_task_with_mudebbir_approval() {
     assert!(task.requires_mudebbir_approval);
     assert!(!task.may_execute_autonomously());
 }
+
+#[test]
+fn mira_moves_created_academic_task_to_planning() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+
+    let task = mira
+        .find_task(task_id)
+        .expect("Akademik görev kayıtlı olmalıdır.");
+
+    assert_eq!(task.status, MiraTaskStatus::Planning);
+}
+
 
 
 
