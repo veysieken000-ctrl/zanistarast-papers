@@ -863,7 +863,7 @@ fn approved_task_can_start_academic_pipeline() {
 }
 
 #[test]
-fn approved_task_runs_and_stores_verified_academic_analysis() {
+fn hebun_academic_task_completes_end_to_end() {
     let mut mira = MiraCore::new();
 
     let task_id = mira.register_academic_task(
@@ -969,6 +969,27 @@ let task = mira
     .expect("Akademik görev Mira içinde kayıtlı olmalıdır.");
 
 assert_eq!(task.status, MiraTaskStatus::Completed);
+let recommendation = mira
+    .recommendation_for_task(task_id)
+    .expect("Hebûn görevi için Mira önerisi bulunmalıdır.");
+
+assert_eq!(recommendation.task_id, task_id);
+assert!(recommendation.rasterast_report.is_some());
+assert!(recommendation.requires_mudebbir_approval);
+
+let decision = mira
+    .mudebbir_decision_for_task(task_id)
+    .expect("Hebûn görevi için Müdebbir karar kaydı bulunmalıdır.");
+
+assert_eq!(decision.task_id, task_id);
+assert_eq!(decision.decision, MudebbirDecision::Approved);
+
+let academic_output = mira
+    .academic_output_for_task(task_id)
+    .expect("Hebûn görevine bağlı akademik çıktı bulunmalıdır.");
+
+assert!(academic_output.is_ready_for_publication());
+
 }
 
 #[test]
