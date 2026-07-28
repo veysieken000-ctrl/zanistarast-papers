@@ -50,7 +50,6 @@ impl VerifiedAcademicRunnerOutput {
         self.academic.report.ready_for_publication
             && self.source_verification.is_verified()
     }
-}
 
 pub fn publication_package_with_bibtex(
     &self,
@@ -60,6 +59,7 @@ pub fn publication_package_with_bibtex(
         .publication_package
         .clone()
         .with_bibtex(bibtex)
+   }
 }
 
 /// Akademik değerlendirme modüllerini tek akışta çalıştırır.
