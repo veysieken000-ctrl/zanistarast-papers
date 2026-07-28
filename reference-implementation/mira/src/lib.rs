@@ -1,3 +1,4 @@
+pub mod task;
 pub mod task_engine;
 pub mod repository_scanner;
 pub mod website_scanner;
@@ -44,6 +45,8 @@ pub mod latex_generator;
 pub mod pdf_generator;
 pub mod academic_output;
 pub mod publication_package;
+
+pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
