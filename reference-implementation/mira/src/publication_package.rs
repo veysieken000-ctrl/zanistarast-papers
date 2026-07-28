@@ -67,7 +67,13 @@ impl PublicationRequest {
             package,
         }
     }
+   }
+
+    pub fn is_ready(&self) -> bool {
+        self.package.is_ready_for_publication()
+    }
 }
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
     pub target: PublicationTarget,
@@ -82,10 +88,6 @@ pub trait PublicationService {
     ) -> PublicationResult;
 }
     
-    pub fn is_ready(&self) -> bool {
-        self.package.is_ready_for_publication()
-    }
-}
 
 pub fn build_publication_package(
     title: impl Into<String>,
