@@ -343,7 +343,6 @@ mod tests {
 
         assert!(!output.academic.output.pdf_bytes.is_empty());
     }
-}
 
 #[test]
 fn verified_analysis_can_build_publishable_package() {
