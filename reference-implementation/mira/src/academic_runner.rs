@@ -52,6 +52,16 @@ impl VerifiedAcademicRunnerOutput {
     }
 }
 
+pub fn publication_package_with_bibtex(
+    &self,
+    bibtex: impl Into<String>,
+) -> PublicationPackage {
+    self.academic
+        .publication_package
+        .clone()
+        .with_bibtex(bibtex)
+}
+
 /// Akademik değerlendirme modüllerini tek akışta çalıştırır.
 pub fn run_academic_analysis(
     input: AcademicRunnerInput,
@@ -334,5 +344,45 @@ mod tests {
         assert!(!output.academic.output.pdf_bytes.is_empty());
     }
 }
+
+#[test]
+fn verified_analysis_can_build_publishable_package() {
+    let citation_report = CitationReferenceMatchReport {
+        citation_numbers: vec![1],
+        reference_numbers: vec![1],
+        missing_references: Vec::new(),
+        unused_references: Vec::new(),
+    };
+
+    let source_verification =
+        SourceVerificationReport::from_validation_results(
+            1,
+            1,
+            1,
+            1,
+            &citation_report,
+        );
+
+    let output = run_verified_academic_analysis(
+        AcademicRunnerInput {
+            article_type: AcademicArticleType::Mathematical,
+            has_abstract: true,
+            has_references: true,
+            has_conclusion: true,
+            has_math: true,
+            has_experiments: false,
+        },
+        source_verification,
+    );
+
+    let package = output.publication_package_with_bibtex(
+        "@article{rasterast2026}",
+    );
+
+    assert!(package.has_bibliography());
+    assert!(package.is_complete());
+    assert!(package.is_ready_for_publication());
+}
+
 
 
