@@ -381,7 +381,7 @@ fn verified_analysis_can_build_publishable_package() {
     assert!(package.has_bibliography());
     assert!(package.is_complete());
     assert!(package.is_ready_for_publication());
+    }
+
 }
-
-
 
