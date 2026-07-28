@@ -330,8 +330,8 @@ pub fn has_academic_output(&self) -> bool {
     !self.academic_outputs.is_empty()
 }
 
-  /// Yalnızca Müdebbir tarafından onaylanmış görev için
-/// doğrulanmış akademik üretim hattını çalıştırır.
+ /// Müdebbir tarafından onaylanmış görev için akademik üretim hattını
+/// çalıştırır, çıktıyı saklar ve görevi tamamlanmış duruma geçirir.
 pub fn run_verified_analysis(
     &mut self,
     task_id: Uuid,
@@ -346,8 +346,14 @@ pub fn run_verified_analysis(
         run_verified_academic_analysis(input, source_verification);
 
     self.store_academic_output(output);
+
+    let Some(task) = self.find_task_mut(task_id) else {
+        return false;
+    };
+
+    task.update_status(MiraTaskStatus::Completed);
     true
-} 
+}
  
 /// Müdebbir onayını bekleyen görevi reddedilmiş duruma geçirir.
 pub fn reject_task(&mut self, task_id: Uuid) -> bool {
