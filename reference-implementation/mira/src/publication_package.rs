@@ -100,24 +100,26 @@ impl PublicationMetadata {
 pub struct PublicationRequest {
     pub target: PublicationTarget,
     pub package: PublicationPackage,
+    pub metadata: PublicationMetadata,
 }
 
 impl PublicationRequest {
-    pub fn new(
-        target: PublicationTarget,
-        package: PublicationPackage,
-    ) -> Self {
-        Self {
-            target,
-            package,
-        }
-    }
-
-    pub fn is_ready(&self) -> bool {
-        self.package.is_ready_for_publication()
+   pub fn new(
+    target: PublicationTarget,
+    package: PublicationPackage,
+    metadata: PublicationMetadata,
+) -> Self {
+    Self {
+        target,
+        package,
+        metadata,
     }
 }
 
+   pub fn is_ready(&self) -> bool {
+    self.package.is_ready_for_publication()
+        && self.metadata.is_complete()
+}
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
@@ -791,10 +793,21 @@ fn publication_request_reports_package_readiness() {
     };
 
     let request = PublicationRequest::new(
-        PublicationTarget::Zenodo,
-        ready_package,
-    );
-
+    PublicationTarget::Zenodo,
+    ready_package,
+    PublicationMetadata::new(
+        "Rasterast Verification",
+        vec!["Veysi yê MALA SAF".to_string()],
+        "Deterministic verification for academic publication.",
+        vec![
+            "Rasterast".to_string(),
+            "Zanistarast".to_string(),
+        ],
+        "tr",
+        "CC-BY-4.0",
+        "1.0.0",
+    ),
+);
     assert_eq!(
         request.target,
         PublicationTarget::Zenodo
@@ -822,7 +835,23 @@ fn publication_request_rejects_incomplete_package() {
     let request = PublicationRequest::new(
         PublicationTarget::Zenodo,
         incomplete_package,
-    );
+    let request = PublicationRequest::new(
+    PublicationTarget::Zenodo,
+    ready_package,
+    PublicationMetadata::new(
+        "Rasterast Verification",
+        vec!["Veysi yê MALA SAF".to_string()],
+        "Deterministic verification for academic publication.",
+        vec![
+            "Rasterast".to_string(),
+            "Zanistarast".to_string(),
+        ],
+        "tr",
+        "CC-BY-4.0",
+        "1.0.0",
+    ),
+);
+ 
 
     assert!(!request.is_ready());
 }
