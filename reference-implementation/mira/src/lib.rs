@@ -314,6 +314,17 @@ pub fn reject_task(&mut self, task_id: Uuid) -> bool {
     true
 }
 
+    /// Onaylanan akademik görevin akademik üretim hattını başlatmaya uygun olup olmadığını bildirir.
+pub fn can_start_academic_pipeline(
+    &self,
+    task_id: Uuid,
+) -> bool {
+    let Some(task) = self.find_task(task_id) else {
+        return false;
+    };
+
+    task.status == MiraTaskStatus::Approved
+}
     
     /// Kayıtlı görevleri salt okunur olarak döndürür.
     pub fn tasks(&self) -> &[MiraTask] {
@@ -582,6 +593,39 @@ fn mudebbir_rejects_awaiting_academic_task() {
 
     assert_eq!(task.status, MiraTaskStatus::Rejected);
 }
+
+#[test]
+fn approved_task_can_start_academic_pipeline() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+    assert!(mira.await_rasterast(task_id));
+
+    let report = RasterastReport {
+        task_id,
+        verified: true,
+        verified_items: vec!["Doğrulandı.".to_string()],
+        unverified_items: Vec::new(),
+        contradictions: Vec::new(),
+        risks: Vec::new(),
+        requires_mudebbir_decision: true,
+        created_at: Utc::now(),
+    };
+
+    assert!(mira.attach_rasterast_report(report));
+    assert!(mira.await_mudebbir(task_id));
+    assert!(mira.approve_task(task_id));
+
+    assert!(mira.can_start_academic_pipeline(task_id));
+}
+
+
 
 
 
