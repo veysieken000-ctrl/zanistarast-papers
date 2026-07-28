@@ -228,7 +228,21 @@ pub fn start_running(&mut self, task_id: Uuid) -> bool {
     task.update_status(MiraTaskStatus::Running);
     true
 }
-   
+
+/// Çalışan görevi Rasterast doğrulaması bekleme aşamasına geçirir.
+pub fn await_rasterast(&mut self, task_id: Uuid) -> bool {
+    let Some(task) = self.find_task_mut(task_id) else {
+        return false;
+    };
+
+    if task.status != MiraTaskStatus::Running {
+        return false;
+    }
+
+    task.update_status(MiraTaskStatus::AwaitingRasterast);
+    true
+}
+    
     /// Kayıtlı görevleri salt okunur olarak döndürür.
     pub fn tasks(&self) -> &[MiraTask] {
         &self.tasks
@@ -343,6 +357,27 @@ fn mira_moves_planning_task_to_running() {
 
     assert_eq!(task.status, MiraTaskStatus::Running);
 }
+
+#[test]
+fn mira_moves_running_task_to_awaiting_rasterast() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+    assert!(mira.await_rasterast(task_id));
+
+    let task = mira
+        .find_task(task_id)
+        .expect("Akademik görev kayıtlı olmalıdır.");
+
+    assert_eq!(task.status, MiraTaskStatus::AwaitingRasterast);
+}
+
 
 
 
