@@ -890,6 +890,21 @@ fn publication_metadata_reports_complete_state() {
     );
 }
 
+#[test]
+fn publication_metadata_rejects_missing_required_fields() {
+    let metadata = PublicationMetadata::new(
+        "",
+        Vec::new(),
+        "",
+        Vec::new(),
+        "",
+        "",
+        "",
+    );
+
+    assert!(!metadata.is_complete());
+}
+
 
 
 
