@@ -320,6 +320,10 @@ pub fn store_academic_output(
 pub fn academic_output_count(&self) -> usize {
     self.academic_outputs.len()
 }
+
+pub fn has_academic_output(&self) -> bool {
+    !self.academic_outputs.is_empty()
+}
     
 /// Müdebbir onayını bekleyen görevi reddedilmiş duruma geçirir.
 pub fn reject_task(&mut self, task_id: Uuid) -> bool {
