@@ -651,6 +651,24 @@ fn publication_request_reports_package_readiness() {
     assert!(request.is_ready());
 }
 
+#[test]
+fn publication_request_rejects_incomplete_package() {
+    let incomplete_package = PublicationPackage {
+        title: "Rasterast Verification".to_string(),
+        latex_source:
+            "\\documentclass{article}\n\\begin{document}\nZanistarast.\n\\end{document}"
+                .to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: None,
+    };
+
+    let request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        incomplete_package,
+    );
+
+    assert!(!request.is_ready());
+}
 
 
 
