@@ -119,6 +119,7 @@ pub fn run_verified_academic_analysis(
 mod tests {
     use super::*;
     use crate::citation_reference_matcher::CitationReferenceMatchReport;
+    use crate::publication_package::export_publication_package;
     use crate::publication_priority::PublicationPriority;
 
     #[test]
@@ -382,6 +383,84 @@ fn verified_analysis_can_build_publishable_package() {
     assert!(package.is_complete());
     assert!(package.is_ready_for_publication());
     }
+
+    #[test]
+fn verified_analysis_exports_complete_publication_package() {
+    let citation_report = CitationReferenceMatchReport {
+        citation_numbers: vec![1],
+        reference_numbers: vec![1],
+        missing_references: Vec::new(),
+        unused_references: Vec::new(),
+    };
+
+    let source_verification =
+        SourceVerificationReport::from_validation_results(
+            1,
+            1,
+            1,
+            1,
+            &citation_report,
+        );
+
+    let output = run_verified_academic_analysis(
+        AcademicRunnerInput {
+            article_type: AcademicArticleType::Mathematical,
+            has_abstract: true,
+            has_references: true,
+            has_conclusion: true,
+            has_math: true,
+            has_experiments: false,
+        },
+        source_verification,
+    );
+
+    assert!(output.is_ready_for_publication());
+
+    let package = output.publication_package_with_bibtex(
+        "@article{rasterast2026}",
+    );
+
+    let output_directory = std::env::temp_dir().join(
+        format!(
+            "mira-verified-publication-flow-{}",
+            std::process::id()
+        ),
+    );
+
+    let output_directory_text = output_directory
+        .to_str()
+        .expect("temporary directory should be valid UTF-8");
+
+    let written_files = export_publication_package(
+        &package,
+        output_directory_text,
+        "Rasterast Verification 2026",
+    )
+    .expect("verified publication package should be exported");
+
+    assert_eq!(written_files.len(), 3);
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.tex")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.pdf")
+            .exists()
+    );
+
+    assert!(
+        output_directory
+            .join("Rasterast_Verification_2026.bib")
+            .exists()
+    );
+
+    std::fs::remove_dir_all(&output_directory)
+        .expect("temporary directory should be removed");
+     }
 
 }
 
