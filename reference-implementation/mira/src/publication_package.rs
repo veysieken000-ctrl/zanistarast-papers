@@ -189,7 +189,12 @@ pub fn export_publication_package(
     Ok(written_files)
 }
 
-struct MockPublicationService;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockPublicationService;
 
 impl PublicationService for MockPublicationService {
     fn publish(
@@ -206,10 +211,6 @@ impl PublicationService for MockPublicationService {
         }
     }
 }
-#[cfg(test)]
-mod tests {
-    use super::*;
-
     #[test]
     fn complete_publication_package_is_valid() {
         let package = PublicationPackage {
