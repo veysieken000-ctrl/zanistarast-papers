@@ -835,24 +835,7 @@ fn publication_request_rejects_incomplete_package() {
     let request = PublicationRequest::new(
         PublicationTarget::Zenodo,
         incomplete_package,
-    let request = PublicationRequest::new(
-    PublicationTarget::Zenodo,
-    ready_package,
-    PublicationMetadata::new(
-        "Rasterast Verification",
-        vec!["Veysi yê MALA SAF".to_string()],
-        "Deterministic verification for academic publication.",
-        vec![
-            "Rasterast".to_string(),
-            "Zanistarast".to_string(),
-        ],
-        "tr",
-        "CC-BY-4.0",
-        "1.0.0",
-    ),
-);
  
-
     assert!(!request.is_ready());
 }
 
