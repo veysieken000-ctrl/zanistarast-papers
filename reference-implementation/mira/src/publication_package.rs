@@ -113,8 +113,8 @@ impl PublicationRequest {
         target,
         package,
         metadata,
-    }
-       
+     }
+   }     
 
    pub fn is_ready(&self) -> bool {
     self.package.is_ready_for_publication()
