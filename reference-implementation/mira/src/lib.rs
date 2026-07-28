@@ -781,12 +781,6 @@ let task_output = mira
 
 assert!(task_output.is_ready_for_publication());
 
-let task = mira
-    .find_task(task_id)
-    .expect("Akademik görev Mira içinde kayıtlı olmalıdır.");
-
-assert_eq!(task.status, MiraTaskStatus::Completed);
-Testin son kısmı böyle görünmeli:
 assert_eq!(mira.academic_output_count(), 1);
 assert!(mira.has_academic_output());
 
@@ -809,7 +803,7 @@ let task = mira
     .expect("Akademik görev Mira içinde kayıtlı olmalıdır.");
 
 assert_eq!(task.status, MiraTaskStatus::Completed);
-
+}
 
 
 
