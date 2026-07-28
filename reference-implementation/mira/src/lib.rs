@@ -329,7 +329,15 @@ pub fn academic_output_count(&self) -> usize {
 pub fn has_academic_output(&self) -> bool {
     !self.academic_outputs.is_empty()
 }
-    
+
+    pub fn run_verified_analysis(
+    &mut self,
+    input: AcademicRunnerInput,
+    source_verification: SourceVerificationReport,
+) {
+    let output = run_verified_academic_analysis(input, source_verification);
+    self.store_academic_output(output);
+}   
 /// Müdebbir onayını bekleyen görevi reddedilmiş duruma geçirir.
 pub fn reject_task(&mut self, task_id: Uuid) -> bool {
     let Some(task) = self.find_task_mut(task_id) else {
