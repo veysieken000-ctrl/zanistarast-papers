@@ -185,6 +185,22 @@ impl MiraCore {
         task_id
     }
 
+    /// Müdebbir onayı gerektiren yüksek riskli bir akademik görev oluşturur ve kaydeder.
+pub fn register_academic_task(
+    &mut self,
+    title: impl Into<String>,
+    instruction: impl Into<String>,
+) -> Uuid {
+    let task = MiraTask::new(
+        title,
+        instruction,
+        MiraRiskLevel::High,
+        true,
+    );
+
+    self.register_task(task)
+}
+
     /// Kayıtlı görevleri salt okunur olarak döndürür.
     pub fn tasks(&self) -> &[MiraTask] {
         &self.tasks
@@ -199,21 +215,6 @@ impl MiraCore {
     pub fn find_task_mut(&mut self, task_id: Uuid) -> Option<&mut MiraTask> {
         self.tasks.iter_mut().find(|task| task.id == task_id)
     }
-}
-/// Müdebbir onayı gerektiren yüksek riskli bir akademik görev oluşturur ve kaydeder.
-pub fn register_academic_task(
-    &mut self,
-    title: impl Into<String>,
-    instruction: impl Into<String>,
-) -> Uuid {
-    let task = MiraTask::new(
-        title,
-        instruction,
-        MiraRiskLevel::High,
-        true,
-    );
-
-    self.register_task(task)
 }
 
 #[cfg(test)]
