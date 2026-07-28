@@ -1,4 +1,5 @@
 pub mod task;
+pub mod rasterast;
 pub mod task_engine;
 pub mod repository_scanner;
 pub mod website_scanner;
@@ -47,6 +48,7 @@ pub mod academic_output;
 pub mod publication_package;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
+pub use rasterast::RasterastReport;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -66,19 +68,6 @@ pub struct AgentContribution {
     pub summary: String,
     pub evidence: Vec<String>,
     pub uncertainties: Vec<String>,
-    pub created_at: DateTime<Utc>,
-}
-
-/// Rasterast doğrulama sonucu.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct RasterastReport {
-    pub task_id: Uuid,
-    pub verified: bool,
-    pub verified_items: Vec<String>,
-    pub unverified_items: Vec<String>,
-    pub contradictions: Vec<String>,
-    pub risks: Vec<String>,
-    pub requires_mudebbir_decision: bool,
     pub created_at: DateTime<Utc>,
 }
 
