@@ -52,6 +52,51 @@ impl PublicationTarget {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicationMetadata {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub abstract_text: String,
+    pub keywords: Vec<String>,
+    pub language: String,
+    pub license: String,
+    pub version: String,
+}
+impl PublicationMetadata {
+    pub fn new(
+        title: impl Into<String>,
+        authors: Vec<String>,
+        abstract_text: impl Into<String>,
+        keywords: Vec<String>,
+        language: impl Into<String>,
+        license: impl Into<String>,
+        version: impl Into<String>,
+    ) -> Self {
+        Self {
+            title: title.into(),
+            authors,
+            abstract_text: abstract_text.into(),
+            keywords,
+            language: language.into(),
+            license: license.into(),
+            version: version.into(),
+        }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.abstract_text.trim().is_empty()
+            && !self.language.trim().is_empty()
+            && !self.license.trim().is_empty()
+            && !self.version.trim().is_empty()
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationRequest {
     pub target: PublicationTarget,
     pub package: PublicationPackage,
@@ -817,6 +862,33 @@ fn publication_result_can_represent_failure() {
     assert_eq!(result.identifier, None);
 }
 
+#[test]
+fn publication_metadata_reports_complete_state() {
+    let metadata = PublicationMetadata::new(
+        "Rasterast Verification",
+        vec!["Veysi yê MALA SAF".to_string()],
+        "Deterministic verification for academic publication.",
+        vec![
+            "Rasterast".to_string(),
+            "Zanistarast".to_string(),
+        ],
+        "tr",
+        "CC-BY-4.0",
+        "1.0.0",
+    );
+
+    assert!(metadata.is_complete());
+
+    assert_eq!(
+        metadata.title,
+        "Rasterast Verification"
+    );
+
+    assert_eq!(
+        metadata.authors,
+        vec!["Veysi yê MALA SAF".to_string()]
+    );
+}
 
 
 
