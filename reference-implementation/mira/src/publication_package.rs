@@ -67,7 +67,7 @@ impl PublicationRequest {
             package,
         }
     }
-
+}
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
     pub target: PublicationTarget,
