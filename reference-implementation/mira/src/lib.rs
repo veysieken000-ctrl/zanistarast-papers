@@ -1,5 +1,6 @@
 pub mod task;
 pub mod rasterast;
+pub mod recommendation;
 pub mod task_engine;
 pub mod repository_scanner;
 pub mod website_scanner;
@@ -49,6 +50,7 @@ pub mod publication_package;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
+pub use recommendation::MiraRecommendation;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -69,19 +71,6 @@ pub struct AgentContribution {
     pub evidence: Vec<String>,
     pub uncertainties: Vec<String>,
     pub created_at: DateTime<Utc>,
-}
-
-/// Mira’nın Müdebbire sunduğu nihai öneri paketi.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct MiraRecommendation {
-    pub task_id: Uuid,
-    pub rationale: String,
-    pub benefits: Vec<String>,
-    pub risks: Vec<String>,
-    pub alternatives: Vec<String>,
-    pub rasterast_report: Option<RasterastReport>,
-    pub proposed_next_step: String,
-    pub requires_mudebbir_approval: bool,
 }
 
 /// Müdebbirin açık karar kaydı.
