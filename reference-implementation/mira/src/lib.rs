@@ -340,11 +340,6 @@ pub fn can_start_academic_pipeline(
     pub fn tasks(&self) -> &[MiraTask] {
         &self.tasks
     }
-
-/// Mira tarafından saklanan doğrulanmış akademik çıktıları döndürür.
-pub fn academic_outputs(&self) -> &[VerifiedAcademicRunnerOutput] {
-    &self.academic_outputs
-}
   
     /// Kimliğine göre görevi bulur.
     pub fn find_task(&self, task_id: Uuid) -> Option<&MiraTask> {
