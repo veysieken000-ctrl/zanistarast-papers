@@ -209,6 +209,11 @@ pub fn register_academic_task(
     self.register_task(task)
 }
 
+/// Mira tarafından saklanan doğrulanmış akademik çıktıları döndürür.
+pub fn academic_outputs(&self) -> &[VerifiedAcademicRunnerOutput] {
+    &self.academic_outputs
+}
+    
    /// Oluşturulmuş bir görevi planlama aşamasına geçirir.
 pub fn start_planning(&mut self, task_id: Uuid) -> bool {
     let Some(task) = self.find_task_mut(task_id) else {
@@ -336,6 +341,11 @@ pub fn can_start_academic_pipeline(
         &self.tasks
     }
 
+/// Mira tarafından saklanan doğrulanmış akademik çıktıları döndürür.
+pub fn academic_outputs(&self) -> &[VerifiedAcademicRunnerOutput] {
+    &self.academic_outputs
+}
+  
     /// Kimliğine göre görevi bulur.
     pub fn find_task(&self, task_id: Uuid) -> Option<&MiraTask> {
         self.tasks.iter().find(|task| task.id == task_id)
