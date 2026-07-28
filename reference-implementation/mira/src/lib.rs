@@ -262,6 +262,30 @@ pub fn attach_rasterast_report(
     self.rasterast_reports.push(report);
     true
 }
+
+/// Rasterast raporu bulunan görevi Müdebbir kararı bekleme aşamasına geçirir.
+pub fn await_mudebbir(&mut self, task_id: Uuid) -> bool {
+    let has_rasterast_report = self
+        .rasterast_reports
+        .iter()
+        .any(|report| report.task_id == task_id);
+
+    if !has_rasterast_report {
+        return false;
+    }
+
+    let Some(task) = self.find_task_mut(task_id) else {
+        return false;
+    };
+
+    if task.status != MiraTaskStatus::AwaitingRasterast {
+        return false;
+    }
+
+    task.update_status(MiraTaskStatus::AwaitingMudebbir);
+    true
+}
+
     
     /// Kayıtlı görevleri salt okunur olarak döndürür.
     pub fn tasks(&self) -> &[MiraTask] {
@@ -427,6 +451,39 @@ fn mira_attaches_rasterast_report_to_awaiting_task() {
     assert_eq!(mira.rasterast_reports[0].task_id, task_id);
 }
 
+#[test]
+fn mira_moves_verified_task_to_awaiting_mudebbir() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+    assert!(mira.await_rasterast(task_id));
+
+    let report = RasterastReport {
+        task_id,
+        verified: true,
+        verified_items: vec!["Akademik görev doğrulandı.".to_string()],
+        unverified_items: Vec::new(),
+        contradictions: Vec::new(),
+        risks: Vec::new(),
+        requires_mudebbir_decision: true,
+        created_at: Utc::now(),
+    };
+
+    assert!(mira.attach_rasterast_report(report));
+    assert!(mira.await_mudebbir(task_id));
+
+    let task = mira
+        .find_task(task_id)
+        .expect("Akademik görev kayıtlı olmalıdır.");
+
+    assert_eq!(task.status, MiraTaskStatus::AwaitingMudebbir);
+}
 
 
 
