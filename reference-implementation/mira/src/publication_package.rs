@@ -114,13 +114,13 @@ impl PublicationRequest {
         package,
         metadata,
     }
-}
+       
 
    pub fn is_ready(&self) -> bool {
     self.package.is_ready_for_publication()
         && self.metadata.is_complete()
+    }
 }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
     pub target: PublicationTarget,
