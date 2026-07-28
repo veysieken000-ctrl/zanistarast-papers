@@ -200,6 +200,21 @@ impl MiraCore {
         self.tasks.iter_mut().find(|task| task.id == task_id)
     }
 }
+/// Müdebbir onayı gerektiren yüksek riskli bir akademik görev oluşturur ve kaydeder.
+pub fn register_academic_task(
+    &mut self,
+    title: impl Into<String>,
+    instruction: impl Into<String>,
+) -> Uuid {
+    let task = MiraTask::new(
+        title,
+        instruction,
+        MiraRiskLevel::High,
+        true,
+    );
+
+    self.register_task(task)
+}
 
 #[cfg(test)]
 mod tests {
@@ -246,5 +261,25 @@ mod tests {
         assert_eq!(mira.tasks().len(), 1);
     }
 }
+#[test]
+fn mira_registers_academic_task_with_mudebbir_approval() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    let task = mira
+        .find_task(task_id)
+        .expect("Akademik görev kayıtlı olmalıdır.");
+
+    assert_eq!(task.status, MiraTaskStatus::Created);
+    assert_eq!(task.risk_level, MiraRiskLevel::High);
+    assert!(task.requires_mudebbir_approval);
+    assert!(!task.may_execute_autonomously());
+}
+
+
 
 
