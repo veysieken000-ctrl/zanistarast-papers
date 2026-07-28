@@ -75,6 +75,13 @@ pub struct AgentContribution {
     pub created_at: DateTime<Utc>,
 }
 
+/// Bir akademik çıktıyı onu üreten Mira göreviyle ilişkilendirir.
+#[derive(Debug, Clone)]
+pub struct TaskAcademicOutput {
+    pub task_id: Uuid,
+    pub output: VerifiedAcademicRunnerOutput,
+}
+
 /// Mira’nın temel yönetim çekirdeği.
 #[derive(Debug, Default)]
 pub struct MiraCore {
