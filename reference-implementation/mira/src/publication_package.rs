@@ -31,6 +31,27 @@ pub fn sanitize_base_name(value: &str) -> String {
         sanitized.to_string()
     }
 }
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PublicationTarget {
+    Zenodo,
+    Arxiv,
+    HuggingFace,
+    PapersWithCode,
+}
+
+impl PublicationTarget {
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Zenodo => "Zenodo",
+            Self::Arxiv => "arXiv",
+            Self::HuggingFace => "Hugging Face",
+            Self::PapersWithCode => "Papers With Code",
+        }
+    }
+}
+
+
 pub fn build_publication_package(
     title: impl Into<String>,
     academic_output: &AcademicOutput,
@@ -42,6 +63,7 @@ pub fn build_publication_package(
         bibtex_source,
     )
 }
+
 impl PublicationPackage {
     pub fn from_academic_output(
         title: impl Into<String>,
@@ -562,6 +584,21 @@ fn builds_and_exports_final_publication_package() {
     std::fs::remove_dir_all(&output_directory)
         .expect("temporary directory should be removed");
 }
+
+#[test]
+fn publication_targets_have_stable_names() {
+    assert_eq!(PublicationTarget::Zenodo.name(), "Zenodo");
+    assert_eq!(PublicationTarget::Arxiv.name(), "arXiv");
+    assert_eq!(
+        PublicationTarget::HuggingFace.name(),
+        "Hugging Face"
+    );
+    assert_eq!(
+        PublicationTarget::PapersWithCode.name(),
+        "Papers With Code"
+    );
+}
+
 
 
 
