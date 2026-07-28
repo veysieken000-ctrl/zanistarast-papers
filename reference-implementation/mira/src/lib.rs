@@ -173,6 +173,14 @@ pub enum MudebbirDecision {
     RevisionRequested,
 }
 
+/// Müdebbirin bir Mira görevi için verdiği kalıcı karar kaydı.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MudebbirDecisionRecord {
+    pub task_id: Uuid,
+    pub decision: MudebbirDecision,
+    pub decided_at: DateTime<Utc>,
+}
+
 /// Bir akademik çıktıyı onu üreten Mira göreviyle ilişkilendirir.
 #[derive(Debug, Clone)]
 pub struct TaskAcademicOutput {
@@ -187,6 +195,7 @@ pub struct MiraCore {
     rasterast_reports: Vec<RasterastReport>,
     academic_outputs: Vec<TaskAcademicOutput>,
     recommendations: Vec<MiraRecommendation>,
+    mudebbir_decisions: Vec<MudebbirDecisionRecord>,
 }
 
 impl MiraCore {
@@ -196,6 +205,7 @@ impl MiraCore {
         rasterast_reports: Vec::new(),
         academic_outputs: Vec::new(),
         recommendations: Vec::new(),
+        mudebbir_decisions: Vec::new(),
     }
 }
 
@@ -376,19 +386,29 @@ pub fn await_mudebbir(&mut self, task_id: Uuid) -> bool {
     true
 }
 
-    /// Müdebbir onayını bekleyen görevi onaylanmış duruma geçirir.
+   /// Müdebbir onayını bekleyen görevi onaylar ve kararı kalıcı olarak kaydeder.
 pub fn approve_task(&mut self, task_id: Uuid) -> bool {
-    let Some(task) = self.find_task_mut(task_id) else {
-        return false;
-    };
+    {
+        let Some(task) = self.find_task_mut(task_id) else {
+            return false;
+        };
 
-    if task.status != MiraTaskStatus::AwaitingMudebbir {
-        return false;
+        if task.status != MiraTaskStatus::AwaitingMudebbir {
+            return false;
+        }
+
+        task.update_status(MiraTaskStatus::Approved);
     }
 
-    task.update_status(MiraTaskStatus::Approved);
+    self.mudebbir_decisions.push(MudebbirDecisionRecord {
+        task_id,
+        decision: MudebbirDecision::Approved,
+        decided_at: Utc::now(),
+    });
+
     true
 }
+
 
 /// Akademik çıktıyı onu üreten görev kimliğiyle birlikte saklar.
 pub fn store_academic_output(
@@ -446,20 +466,45 @@ pub fn run_verified_analysis(
     true
 }
  
-/// Müdebbir onayını bekleyen görevi reddedilmiş duruma geçirir.
+/// Müdebbir onayını bekleyen görevi reddeder ve kararı kalıcı olarak kaydeder.
 pub fn reject_task(&mut self, task_id: Uuid) -> bool {
-    let Some(task) = self.find_task_mut(task_id) else {
-        return false;
-    };
+    {
+        let Some(task) = self.find_task_mut(task_id) else {
+            return false;
+        };
 
-    if task.status != MiraTaskStatus::AwaitingMudebbir {
-        return false;
+        if task.status != MiraTaskStatus::AwaitingMudebbir {
+            return false;
+        }
+
+        task.update_status(MiraTaskStatus::Rejected);
     }
 
-    task.update_status(MiraTaskStatus::Rejected);
+    self.mudebbir_decisions.push(MudebbirDecisionRecord {
+        task_id,
+        decision: MudebbirDecision::Rejected,
+        decided_at: Utc::now(),
+    });
+
     true
 }
 
+    /// Müdebbirin verdiği bütün karar kayıtlarını salt okunur döndürür.
+pub fn mudebbir_decisions(&self) -> &[MudebbirDecisionRecord] {
+    &self.mudebbir_decisions
+}
+
+/// Belirtilen göreve ait en son Müdebbir kararını bulur.
+pub fn mudebbir_decision_for_task(
+    &self,
+    task_id: Uuid,
+) -> Option<&MudebbirDecisionRecord> {
+    self.mudebbir_decisions
+        .iter()
+        .rev()
+        .find(|record| record.task_id == task_id)
+}
+  
     /// Onaylanan akademik görevin akademik üretim hattını başlatmaya uygun olup olmadığını bildirir.
 pub fn can_start_academic_pipeline(
     &self,
@@ -718,6 +763,14 @@ fn mudebbir_approves_awaiting_academic_task() {
 
     assert_eq!(task.status, MiraTaskStatus::Approved);
 }
+assert_eq!(mira.mudebbir_decisions().len(), 1);
+
+let decision = mira
+    .mudebbir_decision_for_task(task_id)
+    .expect("Göreve ait Müdebbir onay kaydı bulunmalıdır.");
+
+assert_eq!(decision.task_id, task_id);
+assert_eq!(decision.decision, MudebbirDecision::Approved);
 
 #[test]
 fn mudebbir_rejects_awaiting_academic_task() {
@@ -760,6 +813,14 @@ fn mudebbir_rejects_awaiting_academic_task() {
 
     assert_eq!(task.status, MiraTaskStatus::Rejected);
 }
+assert_eq!(mira.mudebbir_decisions().len(), 1);
+
+let decision = mira
+    .mudebbir_decision_for_task(task_id)
+    .expect("Göreve ait Müdebbir ret kaydı bulunmalıdır.");
+
+assert_eq!(decision.task_id, task_id);
+assert_eq!(decision.decision, MudebbirDecision::Rejected);
 
 #[test]
 fn approved_task_can_start_academic_pipeline() {
