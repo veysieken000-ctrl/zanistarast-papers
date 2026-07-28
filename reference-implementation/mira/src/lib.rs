@@ -3,6 +3,7 @@ pub mod rasterast;
 pub mod recommendation;
 pub mod decision;
 pub mod task_academic_output;
+pub mod agent_contribution;
 pub mod task_engine;
 pub mod repository_scanner;
 pub mod website_scanner;
@@ -55,6 +56,7 @@ pub use rasterast::RasterastReport;
 pub use recommendation::MiraRecommendation;
 pub use decision::{MudebbirDecision, MudebbirDecisionRecord};
 pub use task_academic_output::TaskAcademicOutput;
+pub use agent_contribution::AgentContribution;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -65,17 +67,6 @@ use crate::academic_runner::{
     VerifiedAcademicRunnerOutput,
 };
 use crate::source_verification_report::SourceVerificationReport;
-
-/// Uzman ajanın Mira’ya sunduğu çalışma sonucu.
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct AgentContribution {
-    pub agent_id: String,
-    pub task_id: Uuid,
-    pub summary: String,
-    pub evidence: Vec<String>,
-    pub uncertainties: Vec<String>,
-    pub created_at: DateTime<Utc>,
-}
 
 /// Mira’nın temel yönetim çekirdeği.
 #[derive(Debug, Default)]
