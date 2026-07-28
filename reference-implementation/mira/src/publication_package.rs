@@ -312,10 +312,23 @@ fn mock_publication_service_rejects_incomplete_package() {
         bibtex_source: None,
     };
 
-    let request = PublicationRequest::new(
-        PublicationTarget::Zenodo,
-        package,
-    );
+   let request = PublicationRequest::new(
+    PublicationTarget::Zenodo,
+    package,
+    PublicationMetadata::new(
+        "Rasterast Verification",
+        vec!["Veysi yê MALA SAF".to_string()],
+        "Deterministic verification for academic publication.",
+        vec![
+            "Rasterast".to_string(),
+            "Zanistarast".to_string(),
+        ],
+        "tr",
+        "CC-BY-4.0",
+        "1.0.0",
+    ),
+);
+
 
     let service = MockPublicationService;
     let result = service.publish(&request);
