@@ -173,13 +173,19 @@ pub enum MudebbirDecision {
     RevisionRequested,
 }
 
+/// Bir akademik çıktıyı onu üreten Mira göreviyle ilişkilendirir.
+#[derive(Debug, Clone)]
+pub struct TaskAcademicOutput {
+    pub task_id: Uuid,
+    pub output: VerifiedAcademicRunnerOutput,
+}
+
 /// Mira’nın temel yönetim çekirdeği.
 #[derive(Debug, Default)]
 pub struct MiraCore {
     tasks: Vec<MiraTask>,
     rasterast_reports: Vec<RasterastReport>,
-    academic_outputs: Vec<VerifiedAcademicRunnerOutput>,
-
+    academic_outputs: Vec<TaskAcademicOutput>,
 }
 
 impl MiraCore {
@@ -214,8 +220,9 @@ pub fn register_academic_task(
     self.register_task(task)
 }
 
-/// Mira tarafından saklanan doğrulanmış akademik çıktıları döndürür.
-pub fn academic_outputs(&self) -> &[VerifiedAcademicRunnerOutput] {
+/// Mira tarafından saklanan ve görevlerle ilişkilendirilmiş
+/// akademik çıktıları salt okunur olarak döndürür.
+pub fn academic_outputs(&self) -> &[TaskAcademicOutput] {
     &self.academic_outputs
 }
     
@@ -315,13 +322,29 @@ pub fn approve_task(&mut self, task_id: Uuid) -> bool {
     true
 }
 
+/// Akademik çıktıyı onu üreten görev kimliğiyle birlikte saklar.
 pub fn store_academic_output(
     &mut self,
+    task_id: Uuid,
     output: VerifiedAcademicRunnerOutput,
 ) {
-    self.academic_outputs.push(output);
+    self.academic_outputs.push(TaskAcademicOutput {
+        task_id,
+        output,
+    });
 }
 
+   /// Belirtilen Mira görevine ait akademik çıktıyı bulur.
+pub fn academic_output_for_task(
+    &self,
+    task_id: Uuid,
+) -> Option<&VerifiedAcademicRunnerOutput> {
+    self.academic_outputs
+        .iter()
+        .find(|stored| stored.task_id == task_id)
+        .map(|stored| &stored.output)
+}
+    
 pub fn academic_output_count(&self) -> usize {
     self.academic_outputs.len()
 }
@@ -345,7 +368,7 @@ pub fn run_verified_analysis(
     let output =
         run_verified_academic_analysis(input, source_verification);
 
-    self.store_academic_output(output);
+    self.store_academic_output(task_id, output);
 
     let Some(task) = self.find_task_mut(task_id) else {
         return false;
@@ -744,14 +767,48 @@ fn approved_task_runs_and_stores_verified_academic_analysis() {
     assert_eq!(mira.academic_output_count(), 1);
     assert!(mira.has_academic_output());
 
-    let output = mira
-        .academic_outputs()
-        .last()
-        .expect("Mira akademik çıktıyı saklamalıdır.");
+    let stored_output = mira
+    .academic_outputs()
+    .last()
+    .expect("Mira akademik çıktıyı görevle birlikte saklamalıdır.");
 
-    assert!(output.is_ready_for_publication());
-}
+assert_eq!(stored_output.task_id, task_id);
+assert!(stored_output.output.is_ready_for_publication());
 
+let task_output = mira
+    .academic_output_for_task(task_id)
+    .expect("Göreve ait akademik çıktı bulunmalıdır.");
+
+assert!(task_output.is_ready_for_publication());
+
+let task = mira
+    .find_task(task_id)
+    .expect("Akademik görev Mira içinde kayıtlı olmalıdır.");
+
+assert_eq!(task.status, MiraTaskStatus::Completed);
+Testin son kısmı böyle görünmeli:
+assert_eq!(mira.academic_output_count(), 1);
+assert!(mira.has_academic_output());
+
+let stored_output = mira
+    .academic_outputs()
+    .last()
+    .expect("Mira akademik çıktıyı görevle birlikte saklamalıdır.");
+
+assert_eq!(stored_output.task_id, task_id);
+assert!(stored_output.output.is_ready_for_publication());
+
+let task_output = mira
+    .academic_output_for_task(task_id)
+    .expect("Göreve ait akademik çıktı bulunmalıdır.");
+
+assert!(task_output.is_ready_for_publication());
+
+let task = mira
+    .find_task(task_id)
+    .expect("Akademik görev Mira içinde kayıtlı olmalıdır.");
+
+assert_eq!(task.status, MiraTaskStatus::Completed);
 
 
 
