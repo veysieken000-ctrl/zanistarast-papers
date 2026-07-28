@@ -189,7 +189,23 @@ pub fn export_publication_package(
     Ok(written_files)
 }
 
+struct MockPublicationService;
 
+impl PublicationService for MockPublicationService {
+    fn publish(
+        &self,
+        request: &PublicationRequest,
+    ) -> PublicationResult {
+        if request.is_ready() {
+            PublicationResult::success(
+                request.target,
+                "mock-publication-id",
+            )
+        } else {
+            PublicationResult::failure(request.target)
+        }
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -739,6 +755,38 @@ fn publication_result_can_represent_failure() {
         PublicationTarget::Zenodo
     );
     assert_eq!(result.identifier, None);
+}
+
+#[test]
+fn mock_publication_service_publishes_ready_package() {
+    let package = PublicationPackage {
+        title: "Rasterast Verification".to_string(),
+        latex_source:
+            "\\documentclass{article}\n\\begin{document}\nZanistarast.\n\\end{document}"
+                .to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: Some(
+            "@article{rasterast2026}".to_string(),
+        ),
+    };
+
+    let request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        package,
+    );
+
+    let service = MockPublicationService;
+    let result = service.publish(&request);
+
+    assert!(result.success);
+    assert_eq!(
+        result.target,
+        PublicationTarget::Zenodo
+    );
+    assert_eq!(
+        result.identifier.as_deref(),
+        Some("mock-publication-id")
+    );
 }
 
 
