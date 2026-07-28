@@ -68,6 +68,20 @@ impl PublicationRequest {
         }
     }
 
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct PublicationResult {
+    pub target: PublicationTarget,
+    pub success: bool,
+    pub identifier: Option<String>,
+}
+
+pub trait PublicationService {
+    fn publish(
+        &self,
+        request: &PublicationRequest,
+    ) -> PublicationResult;
+}
+    
     pub fn is_ready(&self) -> bool {
         self.package.is_ready_for_publication()
     }
@@ -670,6 +684,26 @@ fn publication_request_rejects_incomplete_package() {
     assert!(!request.is_ready());
 }
 
+#[test]
+fn publication_result_can_represent_success() {
+    let result = PublicationResult {
+        target: PublicationTarget::Zenodo,
+        success: true,
+        identifier: Some(
+            "10.5281/zenodo.1234567".to_string(),
+        ),
+    };
+
+    assert!(result.success);
+    assert_eq!(
+        result.target,
+        PublicationTarget::Zenodo
+    );
+    assert_eq!(
+        result.identifier.as_deref(),
+        Some("10.5281/zenodo.1234567")
+    );
+}
 
 
 
