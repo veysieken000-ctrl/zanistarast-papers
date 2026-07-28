@@ -762,7 +762,7 @@ fn mudebbir_approves_awaiting_academic_task() {
         .expect("Akademik görev kayıtlı olmalıdır.");
 
     assert_eq!(task.status, MiraTaskStatus::Approved);
-}
+
 assert_eq!(mira.mudebbir_decisions().len(), 1);
 
 let decision = mira
@@ -771,6 +771,7 @@ let decision = mira
 
 assert_eq!(decision.task_id, task_id);
 assert_eq!(decision.decision, MudebbirDecision::Approved);
+}
 
 #[test]
 fn mudebbir_rejects_awaiting_academic_task() {
