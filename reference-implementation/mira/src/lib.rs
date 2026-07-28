@@ -310,6 +310,13 @@ pub fn approve_task(&mut self, task_id: Uuid) -> bool {
     true
 }
 
+pub fn store_academic_output(
+    &mut self,
+    output: VerifiedAcademicRunnerOutput,
+) {
+    self.academic_outputs.push(output);
+}
+  
 /// Müdebbir onayını bekleyen görevi reddedilmiş duruma geçirir.
 pub fn reject_task(&mut self, task_id: Uuid) -> bool {
     let Some(task) = self.find_task_mut(task_id) else {
