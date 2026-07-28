@@ -48,6 +48,7 @@ pub mod publication_package;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use crate::academic_runner::VerifiedAcademicRunnerOutput;
 
 /// Mira sisteminde görevin mevcut durumunu gösterir.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
