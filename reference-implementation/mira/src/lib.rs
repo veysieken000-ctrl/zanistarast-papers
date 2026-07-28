@@ -2,6 +2,7 @@ pub mod task;
 pub mod rasterast;
 pub mod recommendation;
 pub mod decision;
+pub mod task_academic_output;
 pub mod task_engine;
 pub mod repository_scanner;
 pub mod website_scanner;
@@ -53,6 +54,7 @@ pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
 pub use recommendation::MiraRecommendation;
 pub use decision::{MudebbirDecision, MudebbirDecisionRecord};
+pub use task_academic_output::TaskAcademicOutput;
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -73,13 +75,6 @@ pub struct AgentContribution {
     pub evidence: Vec<String>,
     pub uncertainties: Vec<String>,
     pub created_at: DateTime<Utc>,
-}
-
-/// Bir akademik çıktıyı onu üreten Mira göreviyle ilişkilendirir.
-#[derive(Debug, Clone)]
-pub struct TaskAcademicOutput {
-    pub task_id: Uuid,
-    pub output: VerifiedAcademicRunnerOutput,
 }
 
 /// Mira’nın temel yönetim çekirdeği.
