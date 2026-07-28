@@ -343,7 +343,8 @@ pub fn recommendation_for_task(
         .find(|recommendation| recommendation.task_id == task_id)
 }
    
-/// Rasterast raporu bulunan görevi Müdebbir kararı bekleme aşamasına geçirir.
+/// Rasterast raporu ve Mira önerisi bulunan görevi
+/// Müdebbir kararı bekleme aşamasına geçirir.
 pub fn await_mudebbir(&mut self, task_id: Uuid) -> bool {
     let has_rasterast_report = self
         .rasterast_reports
@@ -351,6 +352,15 @@ pub fn await_mudebbir(&mut self, task_id: Uuid) -> bool {
         .any(|report| report.task_id == task_id);
 
     if !has_rasterast_report {
+        return false;
+    }
+
+    let has_recommendation = self
+        .recommendations
+        .iter()
+        .any(|recommendation| recommendation.task_id == task_id);
+
+    if !has_recommendation {
         return false;
     }
 
@@ -651,6 +661,13 @@ fn mira_moves_verified_task_to_awaiting_mudebbir() {
     };
 
     assert!(mira.attach_rasterast_report(report));
+    assert!(mira.create_recommendation(
+    task_id,
+    "Görev Rasterast doğrulamasından geçti.",
+    vec!["Akademik üretim için uygun bulundu.".to_string()],
+    vec!["Taslak üretimle sınırlı tutulabilir.".to_string()],
+    "Müdebbir kararına sun.",
+));
     assert!(mira.await_mudebbir(task_id));
 
     let task = mira
@@ -685,6 +702,13 @@ fn mudebbir_approves_awaiting_academic_task() {
     };
 
     assert!(mira.attach_rasterast_report(report));
+    assert!(mira.create_recommendation(
+    task_id,
+    "Görev Rasterast doğrulamasından geçti.",
+    vec!["Akademik üretim için uygun bulundu.".to_string()],
+    vec!["Taslak üretimle sınırlı tutulabilir.".to_string()],
+    "Müdebbir kararına sun.",
+));
     assert!(mira.await_mudebbir(task_id));
     assert!(mira.approve_task(task_id));
 
@@ -720,6 +744,13 @@ fn mudebbir_rejects_awaiting_academic_task() {
     };
 
     assert!(mira.attach_rasterast_report(report));
+    assert!(mira.create_recommendation(
+    task_id,
+    "Görev Rasterast doğrulamasından geçti.",
+    vec!["Akademik üretim için uygun bulundu.".to_string()],
+    vec!["Taslak üretimle sınırlı tutulabilir.".to_string()],
+    "Müdebbir kararına sun.",
+));
     assert!(mira.await_mudebbir(task_id));
     assert!(mira.reject_task(task_id));
 
@@ -755,6 +786,13 @@ fn approved_task_can_start_academic_pipeline() {
     };
 
     assert!(mira.attach_rasterast_report(report));
+    assert!(mira.create_recommendation(
+    task_id,
+    "Görev Rasterast doğrulamasından geçti.",
+    vec!["Akademik üretim için uygun bulundu.".to_string()],
+    vec!["Taslak üretimle sınırlı tutulabilir.".to_string()],
+    "Müdebbir kararına sun.",
+));
     assert!(mira.await_mudebbir(task_id));
     assert!(mira.approve_task(task_id));
 
@@ -788,6 +826,13 @@ fn approved_task_runs_and_stores_verified_academic_analysis() {
     };
 
     assert!(mira.attach_rasterast_report(rasterast_report));
+    assert!(mira.create_recommendation(
+    task_id,
+    "Görev Rasterast doğrulamasından geçti.",
+    vec!["Akademik üretim için uygun bulundu.".to_string()],
+    vec!["Taslak üretimle sınırlı tutulabilir.".to_string()],
+    "Müdebbir kararına sun.",
+));
     assert!(mira.await_mudebbir(task_id));
     assert!(mira.approve_task(task_id));
 
@@ -919,6 +964,44 @@ fn mira_creates_recommendation_from_rasterast_report() {
     assert!(recommendation.requires_mudebbir_approval);
     assert_eq!(recommendation.risks.len(), 1);
 }
+
+#[test]
+fn task_cannot_await_mudebbir_without_recommendation() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+    assert!(mira.await_rasterast(task_id));
+
+    let report = RasterastReport {
+        task_id,
+        verified: true,
+        verified_items: vec![
+            "Akademik görev doğrulandı.".to_string(),
+        ],
+        unverified_items: Vec::new(),
+        contradictions: Vec::new(),
+        risks: Vec::new(),
+        requires_mudebbir_decision: true,
+        created_at: Utc::now(),
+    };
+
+    assert!(mira.attach_rasterast_report(report));
+
+    assert!(!mira.await_mudebbir(task_id));
+
+    let task = mira
+        .find_task(task_id)
+        .expect("Akademik görev kayıtlı olmalıdır.");
+
+    assert_eq!(task.status, MiraTaskStatus::AwaitingRasterast);
+}
+
 
 
 
