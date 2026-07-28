@@ -330,14 +330,25 @@ pub fn has_academic_output(&self) -> bool {
     !self.academic_outputs.is_empty()
 }
 
-    pub fn run_verified_analysis(
+  /// Yalnızca Müdebbir tarafından onaylanmış görev için
+/// doğrulanmış akademik üretim hattını çalıştırır.
+pub fn run_verified_analysis(
     &mut self,
+    task_id: Uuid,
     input: AcademicRunnerInput,
     source_verification: SourceVerificationReport,
-) {
-    let output = run_verified_academic_analysis(input, source_verification);
+) -> bool {
+    if !self.can_start_academic_pipeline(task_id) {
+        return false;
+    }
+
+    let output =
+        run_verified_academic_analysis(input, source_verification);
+
     self.store_academic_output(output);
-}   
+    true
+} 
+ 
 /// Müdebbir onayını bekleyen görevi reddedilmiş duruma geçirir.
 pub fn reject_task(&mut self, task_id: Uuid) -> bool {
     let Some(task) = self.find_task_mut(task_id) else {
@@ -661,6 +672,78 @@ fn approved_task_can_start_academic_pipeline() {
     assert!(mira.approve_task(task_id));
 
     assert!(mira.can_start_academic_pipeline(task_id));
+}
+
+#[test]
+fn approved_task_runs_and_stores_verified_academic_analysis() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+    assert!(mira.await_rasterast(task_id));
+
+    let rasterast_report = RasterastReport {
+        task_id,
+        verified: true,
+        verified_items: vec![
+            "Akademik görev doğrulandı.".to_string(),
+        ],
+        unverified_items: Vec::new(),
+        contradictions: Vec::new(),
+        risks: Vec::new(),
+        requires_mudebbir_decision: true,
+        created_at: Utc::now(),
+    };
+
+    assert!(mira.attach_rasterast_report(rasterast_report));
+    assert!(mira.await_mudebbir(task_id));
+    assert!(mira.approve_task(task_id));
+
+    let input = AcademicRunnerInput {
+        article_type:
+            crate::article_classifier::AcademicArticleType::Mathematical,
+        has_abstract: true,
+        has_references: true,
+        has_conclusion: true,
+        has_math: true,
+        has_experiments: false,
+    };
+
+    let source_verification = SourceVerificationReport {
+        doi_count: 0,
+        valid_doi_count: 0,
+        invalid_doi_count: 0,
+        url_count: 0,
+        valid_url_count: 0,
+        invalid_url_count: 0,
+        citation_count: 0,
+        reference_count: 0,
+        missing_references: Vec::new(),
+        unused_references: Vec::new(),
+    };
+
+    assert_eq!(mira.academic_output_count(), 0);
+
+    assert!(mira.run_verified_analysis(
+        task_id,
+        input,
+        source_verification,
+    ));
+
+    assert_eq!(mira.academic_output_count(), 1);
+    assert!(mira.has_academic_output());
+
+    let output = mira
+        .academic_outputs()
+        .last()
+        .expect("Mira akademik çıktıyı saklamalıdır.");
+
+    assert!(output.is_ready_for_publication());
 }
 
 
