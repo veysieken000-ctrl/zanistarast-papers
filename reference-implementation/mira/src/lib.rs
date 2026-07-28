@@ -200,7 +200,8 @@ pub fn register_academic_task(
 
     self.register_task(task)
 }
-/// Oluşturulmuş bir görevi planlama aşamasına geçirir.
+
+   /// Oluşturulmuş bir görevi planlama aşamasına geçirir.
 pub fn start_planning(&mut self, task_id: Uuid) -> bool {
     let Some(task) = self.find_task_mut(task_id) else {
         return false;
@@ -213,6 +214,21 @@ pub fn start_planning(&mut self, task_id: Uuid) -> bool {
     task.update_status(MiraTaskStatus::Planning);
     true
 }
+   
+   /// Planlanan görevi çalıştırma aşamasına geçirir.
+pub fn start_running(&mut self, task_id: Uuid) -> bool {
+    let Some(task) = self.find_task_mut(task_id) else {
+        return false;
+    };
+
+    if task.status != MiraTaskStatus::Planning {
+        return false;
+    }
+
+    task.update_status(MiraTaskStatus::Running);
+    true
+}
+   
     /// Kayıtlı görevleri salt okunur olarak döndürür.
     pub fn tasks(&self) -> &[MiraTask] {
         &self.tasks
@@ -310,6 +326,24 @@ fn mira_moves_created_academic_task_to_planning() {
 
     assert_eq!(task.status, MiraTaskStatus::Planning);
 }
+
+#[test]
+fn mira_moves_planning_task_to_running() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+
+    let task = mira.find_task(task_id).unwrap();
+
+    assert_eq!(task.status, MiraTaskStatus::Running);
+}
+
 
 
 
