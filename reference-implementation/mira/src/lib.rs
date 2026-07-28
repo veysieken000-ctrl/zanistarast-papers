@@ -171,12 +171,15 @@ pub enum MudebbirDecision {
 #[derive(Debug, Default)]
 pub struct MiraCore {
     tasks: Vec<MiraTask>,
+    rasterast_reports: Vec<RasterastReport>,
 }
-
 impl MiraCore {
     pub fn new() -> Self {
-        Self { tasks: Vec::new() }
+    Self {
+        tasks: Vec::new(),
+        rasterast_reports: Vec::new(),
     }
+}
 
     /// Görevi Mira’nın iç kuyruğuna ekler.
     pub fn register_task(&mut self, task: MiraTask) -> Uuid {
@@ -240,6 +243,23 @@ pub fn await_rasterast(&mut self, task_id: Uuid) -> bool {
     }
 
     task.update_status(MiraTaskStatus::AwaitingRasterast);
+    true
+}
+
+/// Rasterast raporunu ilgili göreve bağlar.
+pub fn attach_rasterast_report(
+    &mut self,
+    report: RasterastReport,
+) -> bool {
+    let Some(task) = self.find_task(report.task_id) else {
+        return false;
+    };
+
+    if task.status != MiraTaskStatus::AwaitingRasterast {
+        return false;
+    }
+
+    self.rasterast_reports.push(report);
     true
 }
     
@@ -378,7 +398,34 @@ fn mira_moves_running_task_to_awaiting_rasterast() {
     assert_eq!(task.status, MiraTaskStatus::AwaitingRasterast);
 }
 
+#[test]
+fn mira_attaches_rasterast_report_to_awaiting_task() {
+    let mut mira = MiraCore::new();
 
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini hazırla",
+        "Hebûn içeriğini akademik üretim hattından geçir.",
+    );
+
+    assert!(mira.start_planning(task_id));
+    assert!(mira.start_running(task_id));
+    assert!(mira.await_rasterast(task_id));
+
+    let report = RasterastReport {
+        task_id,
+        verified: true,
+        verified_items: vec!["Akademik görev doğrulandı.".to_string()],
+        unverified_items: Vec::new(),
+        contradictions: Vec::new(),
+        risks: Vec::new(),
+        requires_mudebbir_decision: true,
+        created_at: Utc::now(),
+    };
+
+    assert!(mira.attach_rasterast_report(report));
+    assert_eq!(mira.rasterast_reports.len(), 1);
+    assert_eq!(mira.rasterast_reports[0].task_id, task_id);
+}
 
 
 
