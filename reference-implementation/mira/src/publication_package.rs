@@ -243,7 +243,33 @@ fn mock_publication_service_publishes_ready_package() {
         Some("mock-publication-id")
     );
 }    
-    
+ #[test]
+fn mock_publication_service_rejects_incomplete_package() {
+    let package = PublicationPackage {
+        title: "Rasterast Verification".to_string(),
+        latex_source:
+            "\\documentclass{article}\n\\begin{document}\nZanistarast.\n\\end{document}"
+                .to_string(),
+        pdf_bytes: b"%PDF-1.7\n".to_vec(),
+        bibtex_source: None,
+    };
+
+    let request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        package,
+    );
+
+    let service = MockPublicationService;
+    let result = service.publish(&request);
+
+    assert!(!result.success);
+    assert_eq!(
+        result.target,
+        PublicationTarget::Zenodo
+    );
+    assert_eq!(result.identifier, None);
+}
+   
     #[test]
     fn complete_publication_package_is_valid() {
         let package = PublicationPackage {
@@ -791,32 +817,6 @@ fn publication_result_can_represent_failure() {
     assert_eq!(result.identifier, None);
 }
 
-#[test]
-fn mock_publication_service_rejects_incomplete_package() {
-    let package = PublicationPackage {
-        title: "Rasterast Verification".to_string(),
-        latex_source:
-            "\\documentclass{article}\n\\begin{document}\nZanistarast.\n\\end{document}"
-                .to_string(),
-        pdf_bytes: b"%PDF-1.7\n".to_vec(),
-        bibtex_source: None,
-    };
-
-    let request = PublicationRequest::new(
-        PublicationTarget::Zenodo,
-        package,
-    );
-
-    let service = MockPublicationService;
-    let result = service.publish(&request);
-
-    assert!(!result.success);
-    assert_eq!(
-        result.target,
-        PublicationTarget::Zenodo
-    );
-    assert_eq!(result.identifier, None);
-}
 
 
 
