@@ -88,6 +88,26 @@ pub trait PublicationService {
     ) -> PublicationResult;
 }
     
+impl PublicationResult {
+    pub fn success(
+        target: PublicationTarget,
+        identifier: impl Into<String>,
+    ) -> Self {
+        Self {
+            target,
+            success: true,
+            identifier: Some(identifier.into()),
+        }
+    }
+
+    pub fn failure(target: PublicationTarget) -> Self {
+        Self {
+            target,
+            success: false,
+            identifier: None,
+        }
+    }
+}
 
 pub fn build_publication_package(
     title: impl Into<String>,
@@ -706,6 +726,21 @@ fn publication_result_can_represent_success() {
         Some("10.5281/zenodo.1234567")
     );
 }
+
+#[test]
+fn publication_result_can_represent_failure() {
+    let result = PublicationResult::failure(
+        PublicationTarget::Zenodo,
+    );
+
+    assert!(!result.success);
+    assert_eq!(
+        result.target,
+        PublicationTarget::Zenodo
+    );
+    assert_eq!(result.identifier, None);
+}
+
 
 
 
