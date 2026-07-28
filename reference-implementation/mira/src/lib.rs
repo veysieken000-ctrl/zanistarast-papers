@@ -172,12 +172,16 @@ pub enum MudebbirDecision {
 pub struct MiraCore {
     tasks: Vec<MiraTask>,
     rasterast_reports: Vec<RasterastReport>,
+    academic_outputs: Vec<VerifiedAcademicRunnerOutput>,
+
 }
+
 impl MiraCore {
     pub fn new() -> Self {
     Self {
         tasks: Vec::new(),
         rasterast_reports: Vec::new(),
+    academic_outputs: Vec::new(),
     }
 }
 
