@@ -67,11 +67,12 @@ impl PublicationRequest {
             package,
         }
     }
-   }
 
     pub fn is_ready(&self) -> bool {
         self.package.is_ready_for_publication()
     }
+}
+
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
