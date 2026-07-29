@@ -54,6 +54,7 @@ pub mod publication_package;
 pub mod article_record;
 pub mod article_relation;
 pub mod linear_development;
+pub mod circular_development;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -83,6 +84,14 @@ pub use linear_development::{
     LinearDevelopmentMetadata,
 };
 
+pub use circular_development::{
+    ArticleCircularDevelopment,
+    CircularDevelopmentMetadata,
+    DevelopmentDimension,
+    DimensionRelation,
+    DimensionRelationConfidence,
+    DimensionRelationType,
+};
 
 
 
