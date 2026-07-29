@@ -695,51 +695,49 @@ mod tests {
         );
     }
 
-    #[test]
-    fn layers_are_sorted_by_sequence() {
-        let metadata = CorePeripheryMetadata::new(
-            "Örnek alan",
-            "Öz",
-            "Bütün",
-        );
+   #[test]
+fn layers_are_sorted_by_sequence() {
+    let metadata = CorePeripheryMetadata::new(
+        "Örnek alan",
+        "Öz",
+        "Bütün",
+    );
 
-        let layers = vec![
-            CorePeripheryLayer::new(
-                "outer",
-                "Dış katman",
-                2,
-                CorePeripheryPhase::LayeredExpansion,
-                CorePeripheryRole::SurroundingLayer,
-            ),
-            CorePeripheryLayer::new(
-                "core",
-                "Merkez",
-                1,
-                CorePeripheryPhase::CoreFormation,
-                CorePeripheryRole::Core,
-            ),
-        ];
+    let layers = vec![
+        CorePeripheryLayer::new(
+            "outer",
+            "Dış katman",
+            2,
+            CorePeripheryPhase::LayeredExpansion,
+            CorePeripheryRole::SurroundingLayer,
+        ),
+        CorePeripheryLayer::new(
+            "core",
+            "Merkez",
+            1,
+            CorePeripheryPhase::CoreFormation,
+            CorePeripheryRole::Core,
+        ),
+    ];
 
-        let development =
-            ArticleCorePeripheryDevelopment::new(
-                "article-001",
-                metadata,
-                SystemTime::now(),
-            )
-            .with_layers(layers);
+    let development =
+        ArticleCorePeripheryDevelopment::new(
+            "article-001",
+            metadata,
+            SystemTime::now(),
+        )
+        .with_layers(layers);
 
-        assert_eq!(
-            development.layers[
+    assert_eq!(
+        development.layers[0].layer_id,
+        "core"
+    );
 
- assert_eq!(
-            development.layers[0].layer_id,
-            "core"
-        );
-        assert_eq!(
-            development.layers[1].layer_id,
-            "outer"
-        );
-    }
+    assert_eq!(
+        development.layers[1].layer_id,
+        "outer"
+    );
+}
 
     #[test]
     fn missing_core_prevents_completeness() {
