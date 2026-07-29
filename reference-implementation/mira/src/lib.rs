@@ -52,6 +52,7 @@ pub mod pdf_generator;
 pub mod academic_output;
 pub mod publication_package;
 pub mod article_record;
+pub mod article_relation;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -67,6 +68,13 @@ pub use article_record::{
     ArticleRecord,
     ArticleStatus,
 };
+
+pub use article_relation::{
+    ArticleRelation,
+    ArticleRelationConfidence,
+    ArticleRelationType,
+};
+
 
 
 
