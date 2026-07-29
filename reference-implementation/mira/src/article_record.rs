@@ -1,5 +1,53 @@
 use std::time::SystemTime;
 
+/// Bir makalenin başlık, yazar, sınıflandırma ve sürüm
+/// bilgilerini birlikte taşıyan metadata modelidir.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArticleMetadata {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub category: String,
+    pub article_type: String,
+    pub language: String,
+    pub keywords: Vec<String>,
+    pub version: String,
+}
+
+impl ArticleMetadata {
+    pub fn new(
+        title: impl Into<String>,
+        authors: Vec<String>,
+        category: impl Into<String>,
+        article_type: impl Into<String>,
+        language: impl Into<String>,
+        keywords: Vec<String>,
+        version: impl Into<String>,
+    ) -> Self {
+        Self {
+            title: title.into(),
+            authors,
+            category: category.into(),
+            article_type: article_type.into(),
+            language: language.into(),
+            keywords,
+            version: version.into(),
+        }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.category.trim().is_empty()
+            && !self.article_type.trim().is_empty()
+            && !self.language.trim().is_empty()
+            && !self.version.trim().is_empty()
+    }
+}
+
 /// Bir makalenin Zanistarast yayın sistemi içindeki genel durumudur.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ArticleStatus {
@@ -92,18 +140,12 @@ impl ArticlePublicationTarget {
 /// Makalenin bütün yaşam döngüsünü temsil eden kalıcı ana kayıttır.
 ///
 /// `PublicationPackage` yayımlanacak LaTeX, PDF ve BibTeX dosyalarını
-/// taşırken, `ArticleRecord` makalenin kimliğini, sınıflandırmasını,
+/// taşırken, `ArticleRecord` makalenin kimliğini, metadata bilgilerini,
 /// onaylarını ve yayın kanallarındaki durumunu takip eder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ArticleRecord {
     pub article_id: String,
-    pub title: String,
-    pub authors: Vec<String>,
-    pub category: String,
-    pub article_type: String,
-    pub language: String,
-    pub keywords: Vec<String>,
-    pub version: String,
+    pub metadata: ArticleMetadata,
     pub status: ArticleStatus,
 
     pub created_at: SystemTime,
@@ -120,24 +162,12 @@ pub struct ArticleRecord {
 impl ArticleRecord {
     pub fn new(
         article_id: impl Into<String>,
-        title: impl Into<String>,
-        authors: Vec<String>,
-        category: impl Into<String>,
-        article_type: impl Into<String>,
-        language: impl Into<String>,
-        keywords: Vec<String>,
-        version: impl Into<String>,
+        metadata: ArticleMetadata,
         created_at: SystemTime,
     ) -> Self {
         Self {
             article_id: article_id.into(),
-            title: title.into(),
-            authors,
-            category: category.into(),
-            article_type: article_type.into(),
-            language: language.into(),
-            keywords,
-            version: version.into(),
+            metadata,
             status: ArticleStatus::Draft,
             created_at,
             rasterast_verified_at: None,
@@ -152,16 +182,7 @@ impl ArticleRecord {
 
     pub fn is_complete(&self) -> bool {
         !self.article_id.trim().is_empty()
-            && !self.title.trim().is_empty()
-            && !self.authors.is_empty()
-            && self
-                .authors
-                .iter()
-                .all(|author| !author.trim().is_empty())
-            && !self.category.trim().is_empty()
-            && !self.article_type.trim().is_empty()
-            && !self.language.trim().is_empty()
-            && !self.version.trim().is_empty()
+            && self.metadata.is_complete()
     }
 
     pub fn is_officially_published(&self) -> bool {
@@ -178,9 +199,8 @@ impl ArticleRecord {
 mod tests {
     use super::*;
 
-    fn complete_article_record() -> ArticleRecord {
-        ArticleRecord::new(
-            "duygu-akil-001",
+    fn complete_article_metadata() -> ArticleMetadata {
+        ArticleMetadata::new(
             "Duygu ve Akılın Çift Kanatlı İdrak Modeli",
             vec!["Veysi yê MALA SAF".to_string()],
             "Çift Kanatlı İdrak",
@@ -192,8 +212,31 @@ mod tests {
                 "Rasterast".to_string(),
             ],
             "1.0.0",
+        )
+    }
+
+    fn complete_article_record() -> ArticleRecord {
+        ArticleRecord::new(
+            "duygu-akil-001",
+            complete_article_metadata(),
             SystemTime::now(),
         )
+    }
+
+    #[test]
+    fn creates_complete_article_metadata() {
+        let metadata = complete_article_metadata();
+
+        assert!(metadata.is_complete());
+        assert_eq!(
+            metadata.title,
+            "Duygu ve Akılın Çift Kanatlı İdrak Modeli"
+        );
+        assert_eq!(
+            metadata.authors,
+            vec!["Veysi yê MALA SAF".to_string()]
+        );
+        assert_eq!(metadata.version, "1.0.0");
     }
 
     #[test]
@@ -272,6 +315,14 @@ mod tests {
     fn empty_article_identifier_prevents_completeness() {
         let mut article = complete_article_record();
         article.article_id = String::new();
+
+        assert!(!article.is_complete());
+    }
+
+    #[test]
+    fn incomplete_metadata_prevents_record_completeness() {
+        let mut article = complete_article_record();
+        article.metadata.title = String::new();
 
         assert!(!article.is_complete());
     }
