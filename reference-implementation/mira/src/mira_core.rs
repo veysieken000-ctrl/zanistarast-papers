@@ -7,6 +7,17 @@ use crate::academic_runner::{
 };
 use crate::source_verification_report::SourceVerificationReport;
 
+use crate::{
+    MiraRecommendation,
+    MiraRiskLevel,
+    MiraTask,
+    MiraTaskStatus,
+    MudebbirDecision,
+    MudebbirDecisionRecord,
+    RasterastReport,
+    TaskAcademicOutput,
+};
+
 /// Mira’nın temel yönetim çekirdeği.
 #[derive(Debug, Default)]
 pub struct MiraCore {
