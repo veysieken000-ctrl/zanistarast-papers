@@ -53,6 +53,7 @@ pub mod academic_output;
 pub mod publication_package;
 pub mod article_record;
 pub mod article_relation;
+pub mod linear_development;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -74,6 +75,15 @@ pub use article_relation::{
     ArticleRelationConfidence,
     ArticleRelationType,
 };
+
+pub use linear_development::{
+    ArticleLinearDevelopment,
+    DevelopmentStage,
+    DevelopmentStageStatus,
+    LinearDevelopmentMetadata,
+};
+
+
 
 
 
