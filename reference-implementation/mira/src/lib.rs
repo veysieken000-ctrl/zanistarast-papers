@@ -51,6 +51,7 @@ pub mod latex_generator;
 pub mod pdf_generator;
 pub mod academic_output;
 pub mod publication_package;
+pub mod article_record;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -59,5 +60,12 @@ pub use decision::{MudebbirDecision, MudebbirDecisionRecord};
 pub use task_academic_output::TaskAcademicOutput;
 pub use agent_contribution::AgentContribution;
 pub use mira_core::MiraCore;
+pub use article_record::{
+    ArticlePublicationState,
+    ArticlePublicationTarget,
+    ArticleRecord,
+    ArticleStatus,
+};
+
 
 
