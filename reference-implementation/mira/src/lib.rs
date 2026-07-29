@@ -61,11 +61,14 @@ pub use task_academic_output::TaskAcademicOutput;
 pub use agent_contribution::AgentContribution;
 pub use mira_core::MiraCore;
 pub use article_record::{
+    ArticleMetadata,
     ArticlePublicationState,
     ArticlePublicationTarget,
     ArticleRecord,
     ArticleStatus,
 };
+
+
 
 
 
