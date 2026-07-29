@@ -731,4 +731,218 @@ mod tests {
         assert_eq!(
             development.layers[
 
+ assert_eq!(
+            development.layers[0].layer_id,
+            "core"
+        );
+        assert_eq!(
+            development.layers[1].layer_id,
+            "outer"
+        );
+    }
+
+    #[test]
+    fn missing_core_prevents_completeness() {
+        let metadata = CorePeripheryMetadata::new(
+            "Örnek alan",
+            "Öz",
+            "Bütün",
+        );
+
+        let layers = vec![
+            CorePeripheryLayer::new(
+                "outer",
+                "Dış katman",
+                1,
+                CorePeripheryPhase::LayeredExpansion,
+                CorePeripheryRole::SurroundingLayer,
+            ),
+        ];
+
+        let relations = vec![
+            LayerRelation::new(
+                "outer",
+                "unknown",
+                LayerRelationType::Expands,
+                "Eksik merkez ilişkisi.",
+            ),
+        ];
+
+        let development =
+            ArticleCorePeripheryDevelopment::new(
+                "article-002",
+                metadata,
+                SystemTime::now(),
+            )
+            .with_layers(layers)
+            .with_relations(relations);
+
+        assert!(!development.is_complete());
+    }
+
+    #[test]
+    fn duplicate_layer_ids_prevent_completeness() {
+        let metadata = CorePeripheryMetadata::new(
+            "Örnek alan",
+            "Öz",
+            "Bütün",
+        );
+
+        let layers = vec![
+            CorePeripheryLayer::new(
+                "core",
+                "Birinci merkez",
+                1,
+                CorePeripheryPhase::CoreFormation,
+                CorePeripheryRole::Core,
+            ),
+            CorePeripheryLayer::new(
+                "core",
+                "Tekrarlanan merkez",
+                2,
+                CorePeripheryPhase::LayeredExpansion,
+                CorePeripheryRole::InnerLayer,
+            ),
+        ];
+
+        let relations = vec![
+            LayerRelation::new(
+                "core",
+                "other",
+                LayerRelationType::Grounds,
+                "Geçersiz ilişki.",
+            ),
+        ];
+
+        let development =
+            ArticleCorePeripheryDevelopment::new(
+                "article-003",
+                metadata,
+                SystemTime::now(),
+            )
+            .with_layers(layers)
+            .with_relations(relations);
+
+        assert!(!development.is_complete());
+    }
+
+    #[test]
+    fn unknown_layer_reference_prevents_completeness() {
+        let mut development = example_development();
+
+        development.relations.push(
+            LayerRelation::new(
+                "core",
+                "unknown",
+                LayerRelationType::Expands,
+                "Bilinmeyen katman ilişkisi.",
+            ),
+        );
+
+        assert!(!development.is_complete());
+    }
+
+    #[test]
+    fn relation_cannot_target_itself() {
+        let relation = LayerRelation::new(
+            "core",
+            "core",
+            LayerRelationType::ReceivesFeedback,
+            "Geçersiz öz ilişki.",
+        );
+
+        assert!(!relation.is_complete());
+    }
+
+    #[test]
+    fn contradiction_creates_unresolved_structure() {
+        let mut development = example_development();
+
+        development.relations.push(
+            LayerRelation::new(
+                "inner",
+                "whole",
+                LayerRelationType::Contradiction,
+                "Doğrulanması gereken çelişki.",
+            )
+            .mark_rasterast_verified(),
+        );
+
+        assert!(development.has_unresolved_structure());
+        assert!(!development.can_support_synthesis());
+    }
+
+    #[test]
+    fn bidirectional_verification_requires_both_directions() {
+        let deductive = ReasoningResult::new(
+            ReasoningDirection::Deductive,
+            "",
+        );
+
+        let inductive = ReasoningResult::new(
+            ReasoningDirection::Inductive,
+            "Tümevarım sonucu.",
+        );
+
+        let verification =
+            BidirectionalVerification::new(
+                deductive,
+                inductive,
+            );
+
+        assert!(!verification.is_complete());
+        assert!(!verification.can_support_conclusion());
+    }
+
+    #[test]
+    fn missing_link_blocks_bidirectional_conclusion() {
+        let deductive = ReasoningResult::new(
+            ReasoningDirection::Deductive,
+            "Tümdengelim sonucu.",
+        );
+
+        let inductive = ReasoningResult::new(
+            ReasoningDirection::Inductive,
+            "Tümevarım sonucu.",
+        );
+
+        let verification =
+            BidirectionalVerification::new(
+                deductive,
+                inductive,
+            )
+            .with_agreements(vec![
+                "Temel uyum.".to_string(),
+            ])
+            .with_missing_links(vec![
+                "Merkez ile dış katman arasında delil eksik."
+                    .to_string(),
+            ])
+            .mark_rasterast_verified();
+
+        assert!(verification.has_unresolved_conflict());
+        assert!(!verification.can_support_conclusion());
+    }
+
+    #[test]
+    fn verified_complete_model_supports_synthesis() {
+        let development =
+            example_development()
+                .mark_rasterast_verified();
+
+        assert!(development.rasterast_verified);
+        assert!(!development.has_unresolved_structure());
+        assert!(development.can_support_synthesis());
+    }
+
+    #[test]
+    fn unverified_model_cannot_support_synthesis() {
+        let development = example_development();
+
+        assert!(development.is_complete());
+        assert!(!development.can_support_synthesis());
+    }
+}
+
+
 
