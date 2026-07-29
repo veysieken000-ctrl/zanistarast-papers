@@ -55,6 +55,7 @@ pub mod article_record;
 pub mod article_relation;
 pub mod linear_development;
 pub mod circular_development;
+pub mod core_periphery;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -92,6 +93,21 @@ pub use circular_development::{
     DimensionRelationConfidence,
     DimensionRelationType,
 };
+
+pub use core_periphery::{
+    ArticleCorePeripheryDevelopment,
+    BidirectionalVerification,
+    CorePeripheryConfidence,
+    CorePeripheryLayer,
+    CorePeripheryMetadata,
+    CorePeripheryPhase,
+    CorePeripheryRole,
+    LayerRelation,
+    LayerRelationType,
+    ReasoningDirection,
+    ReasoningResult,
+};
+
 
 
 
