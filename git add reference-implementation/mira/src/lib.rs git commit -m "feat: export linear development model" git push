@@ -1,0 +1,633 @@
+use std::time::SystemTime;
+
+/// Bir boyutun başka bir boyutla kurduğu ilişkinin niteliğidir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DimensionRelationType {
+    /// Kaynak boyut hedef boyuta temel veya imkân sağlar.
+    Enables,
+
+    /// Kaynak boyut hedef boyutu etkiler.
+    Influences,
+
+    /// Kaynak ve hedef boyut karşılıklı etkileşim içindedir.
+    MutualInfluence,
+
+    /// Hedef boyuttan kaynak boyuta geri besleme oluşur.
+    Feedback,
+
+    /// İki boyut daha üst bir sentez içinde birleşir.
+    SynthesizesWith,
+
+    /// Boyutlar arasında incelenmesi gereken bir gerilim vardır.
+    Tension,
+
+    /// Boyutlar arasında doğrulanması gereken bir çelişki vardır.
+    Contradiction,
+}
+
+/// Boyutlar arası ilişkinin doğruluk seviyesidir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DimensionRelationConfidence {
+    Low,
+    Medium,
+    High,
+    Verified,
+}
+
+/// Dairesel gelişimde ele alınan tek bir boyutun temel tanımıdır.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DevelopmentDimension {
+    pub dimension_id: String,
+    pub name: String,
+    pub description: String,
+}
+
+impl DevelopmentDimension {
+    pub fn new(
+        dimension_id: impl Into<String>,
+        name: impl Into<String>,
+    ) -> Self {
+        Self {
+            dimension_id: dimension_id.into(),
+            name: name.into(),
+            description: String::new(),
+        }
+    }
+
+    pub fn with_description(
+        mut self,
+        description: impl Into<String>,
+    ) -> Self {
+        self.description = description.into();
+        self
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.dimension_id.trim().is_empty()
+            && !self.name.trim().is_empty()
+    }
+}
+
+/// İki Zanistarast boyutu arasındaki dairesel ilişki kaydıdır.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DimensionRelation {
+    pub source_dimension_id: String,
+    pub target_dimension_id: String,
+    pub relation_type: DimensionRelationType,
+    pub rationale: String,
+    pub evidence: Vec<String>,
+    pub uncertainties: Vec<String>,
+    pub confidence: DimensionRelationConfidence,
+    pub rasterast_verified: bool,
+}
+
+impl DimensionRelation {
+    pub fn new(
+        source_dimension_id: impl Into<String>,
+        target_dimension_id: impl Into<String>,
+        relation_type: DimensionRelationType,
+        rationale: impl Into<String>,
+    ) -> Self {
+        Self {
+            source_dimension_id: source_dimension_id.into(),
+            target_dimension_id: target_dimension_id.into(),
+            relation_type,
+            rationale: rationale.into(),
+            evidence: Vec::new(),
+            uncertainties: Vec::new(),
+            confidence: DimensionRelationConfidence::Low,
+            rasterast_verified: false,
+        }
+    }
+
+    pub fn with_evidence(
+        mut self,
+        evidence: Vec<String>,
+    ) -> Self {
+        self.evidence = evidence;
+        self
+    }
+
+    pub fn with_uncertainties(
+        mut self,
+        uncertainties: Vec<String>,
+    ) -> Self {
+        self.uncertainties = uncertainties;
+        self
+    }
+
+    pub fn with_confidence(
+        mut self,
+        confidence: DimensionRelationConfidence,
+    ) -> Self {
+        self.confidence = confidence;
+        self
+    }
+
+    pub fn mark_rasterast_verified(mut self) -> Self {
+        self.rasterast_verified = true;
+        self.confidence = DimensionRelationConfidence::Verified;
+        self
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.source_dimension_id.trim().is_empty()
+            && !self.target_dimension_id.trim().is_empty()
+            && self.source_dimension_id
+                != self.target_dimension_id
+            && !self.rationale.trim().is_empty()
+    }
+
+    pub fn has_unresolved_risk(&self) -> bool {
+        !self.uncertainties.is_empty()
+            || matches!(
+                self.relation_type,
+                DimensionRelationType::Tension
+                    | DimensionRelationType::Contradiction
+            )
+    }
+}
+
+/// Bir makalenin dairesel gelişim içindeki temel kapsamıdır.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct CircularDevelopmentMetadata {
+    pub primary_dimension_id: String,
+    pub expansion_scope: String,
+    pub proposed_synthesis: String,
+}
+
+impl CircularDevelopmentMetadata {
+    pub fn new(
+        primary_dimension_id: impl Into<String>,
+        expansion_scope: impl Into<String>,
+        proposed_synthesis: impl Into<String>,
+    ) -> Self {
+        Self {
+            primary_dimension_id:
+                primary_dimension_id.into(),
+            expansion_scope: expansion_scope.into(),
+            proposed_synthesis: proposed_synthesis.into(),
+        }
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.primary_dimension_id.trim().is_empty()
+            && !self.expansion_scope.trim().is_empty()
+            && !self.proposed_synthesis.trim().is_empty()
+    }
+}
+
+/// Bir makalenin boyutlar arası dairesel yayılımını,
+/// geri beslemelerini ve önerilen üst sentezini kaydeder.
+///
+/// Bu model tek başına nihai hüküm üretmez.
+/// Rasterast doğrulaması ve Müdebbir kararı gerektirir.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ArticleCircularDevelopment {
+    pub article_id: String,
+    pub metadata: CircularDevelopmentMetadata,
+    pub dimensions: Vec<DevelopmentDimension>,
+    pub relations: Vec<DimensionRelation>,
+    pub rasterast_verified: bool,
+    pub requires_mudebbir_decision: bool,
+    pub created_at: SystemTime,
+}
+
+impl ArticleCircularDevelopment {
+    pub fn new(
+        article_id: impl Into<String>,
+        metadata: CircularDevelopmentMetadata,
+        created_at: SystemTime,
+    ) -> Self {
+        Self {
+            article_id: article_id.into(),
+            metadata,
+            dimensions: Vec::new(),
+            relations: Vec::new(),
+            rasterast_verified: false,
+            requires_mudebbir_decision: true,
+            created_at,
+        }
+    }
+
+    pub fn with_dimensions(
+        mut self,
+        dimensions: Vec<DevelopmentDimension>,
+    ) -> Self {
+        self.dimensions = dimensions;
+        self
+    }
+
+    pub fn with_relations(
+        mut self,
+        relations: Vec<DimensionRelation>,
+    ) -> Self {
+        self.relations = relations;
+        self
+    }
+
+    pub fn mark_rasterast_verified(mut self) -> Self {
+        self.rasterast_verified = true;
+        self
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.article_id.trim().is_empty()
+            && self.metadata.is_complete()
+            && !self.dimensions.is_empty()
+            && self
+                .dimensions
+                .iter()
+                .all(DevelopmentDimension::is_complete)
+            && !self.relations.is_empty()
+            && self
+                .relations
+                .iter()
+                .all(DimensionRelation::is_complete)
+            && self.has_unique_dimension_ids()
+            && self.relations_reference_known_dimensions()
+            && self.primary_dimension_exists()
+    }
+
+    pub fn has_unresolved_relations(&self) -> bool {
+        self.relations
+            .iter()
+            .any(DimensionRelation::has_unresolved_risk)
+    }
+
+    pub fn verified_relation_count(&self) -> usize {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.rasterast_verified
+            })
+            .count()
+    }
+
+    pub fn can_support_synthesis(&self) -> bool {
+        self.is_complete()
+            && self.rasterast_verified
+            && !self.has_unresolved_relations()
+            && self
+                .relations
+                .iter()
+                .all(|relation| {
+                    relation.rasterast_verified
+                })
+    }
+
+    fn has_unique_dimension_ids(&self) -> bool {
+        let mut dimension_ids: Vec<&str> = self
+            .dimensions
+            .iter()
+            .map(|dimension| {
+                dimension.dimension_id.as_str()
+            })
+            .collect();
+
+        dimension_ids.sort_unstable();
+        dimension_ids.dedup();
+
+        dimension_ids.len() == self.dimensions.len()
+    }
+
+    fn relations_reference_known_dimensions(&self) -> bool {
+        self.relations.iter().all(|relation| {
+            self.has_dimension(
+                &relation.source_dimension_id,
+            ) && self.has_dimension(
+                &relation.target_dimension_id,
+            )
+        })
+    }
+
+    fn primary_dimension_exists(&self) -> bool {
+        self.has_dimension(
+            &self.metadata.primary_dimension_id,
+        )
+    }
+
+    fn has_dimension(&self, dimension_id: &str) -> bool {
+        self.dimensions.iter().any(|dimension| {
+            dimension.dimension_id == dimension_id
+        })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn human_synthesis() -> ArticleCircularDevelopment {
+        let metadata =
+            CircularDevelopmentMetadata::new(
+                "biology",
+                "İnsan biyolojisinin zihin, duygu, ahlak ve toplum alanlarına yayılması",
+                "İnsanın biyolojik, zihinsel ve ahlaki bütünlüğü",
+            );
+
+        let dimensions = vec![
+            DevelopmentDimension::new(
+                "biology",
+                "Biyoloji",
+            ),
+            DevelopmentDimension::new(
+                "mind",
+                "Zihin",
+            ),
+            DevelopmentDimension::new(
+                "emotion",
+                "Duygu",
+            ),
+            DevelopmentDimension::new(
+                "ethics",
+                "Ahlak",
+            ),
+            DevelopmentDimension::new(
+                "society",
+                "Toplum",
+            ),
+        ];
+
+        let relations = vec![
+            DimensionRelation::new(
+                "biology",
+                "mind",
+                DimensionRelationType::Enables,
+                "İnsan biyolojisi zihinsel süreçlere maddi imkân sağlar.",
+            )
+            .with_confidence(
+                DimensionRelationConfidence::High,
+            )
+            .mark_rasterast_verified(),
+            DimensionRelation::new(
+                "mind",
+                "emotion",
+                DimensionRelationType::MutualInfluence,
+                "Zihin ve duygu karşılıklı olarak birbirini etkiler.",
+            )
+            .with_confidence(
+                DimensionRelationConfidence::High,
+            )
+            .mark_rasterast_verified(),
+            DimensionRelation::new(
+                "emotion",
+                "ethics",
+                DimensionRelationType::Influences,
+                "Duygular ahlaki kararların oluşumunu etkileyebilir.",
+            )
+            .with_confidence(
+                DimensionRelationConfidence::High,
+            )
+            .mark_rasterast_verified(),
+            DimensionRelation::new(
+                "ethics",
+                "society",
+                DimensionRelationType::SynthesizesWith,
+                "Ahlaki davranış toplumsal düzenle üst bir sentez oluşturur.",
+            )
+            .with_confidence(
+                DimensionRelationConfidence::High,
+            )
+            .mark_rasterast_verified(),
+            DimensionRelation::new(
+                "society",
+                "biology",
+                DimensionRelationType::Feedback,
+                "Toplumsal şartlar insan biyolojisine geri besleme üretir.",
+            )
+            .with_confidence(
+                DimensionRelationConfidence::High,
+            )
+            .mark_rasterast_verified(),
+        ];
+
+        ArticleCircularDevelopment::new(
+            "human-synthesis-001",
+            metadata,
+            SystemTime::now(),
+        )
+        .with_dimensions(dimensions)
+        .with_relations(relations)
+    }
+
+    #[test]
+    fn creates_complete_circular_development() {
+        let development = human_synthesis();
+
+        assert!(development.is_complete());
+        assert_eq!(
+            development.metadata.primary_dimension_id,
+            "biology"
+        );
+        assert_eq!(development.dimensions.len(), 5);
+        assert_eq!(development.relations.len(), 5);
+        assert_eq!(
+            development.verified_relation_count(),
+            5
+        );
+        assert!(
+            development.requires_mudebbir_decision
+        );
+    }
+
+    #[test]
+    fn complete_verified_cycle_supports_synthesis() {
+        let development =
+            human_synthesis().mark_rasterast_verified();
+
+        assert!(development.rasterast_verified);
+        assert!(!development.has_unresolved_relations());
+        assert!(development.can_support_synthesis());
+    }
+
+    #[test]
+    fn unverified_development_cannot_support_synthesis() {
+        let development = human_synthesis();
+
+        assert!(development.is_complete());
+        assert!(!development.can_support_synthesis());
+    }
+
+    #[test]
+    fn unknown_dimension_reference_prevents_completeness() {
+        let metadata =
+            CircularDevelopmentMetadata::new(
+                "biology",
+                "Biyolojik yayılım",
+                "İnsan sentezi",
+            );
+
+        let dimensions = vec![
+            DevelopmentDimension::new(
+                "biology",
+                "Biyoloji",
+            ),
+        ];
+
+        let relations = vec![
+            DimensionRelation::new(
+                "biology",
+                "unknown-dimension",
+                DimensionRelationType::Influences,
+                "Bilinmeyen boyut ilişkisi.",
+            ),
+        ];
+
+        let development =
+            ArticleCircularDevelopment::new(
+                "article-001",
+                metadata,
+                SystemTime::now(),
+            )
+            .with_dimensions(dimensions)
+            .with_relations(relations);
+
+        assert!(!development.is_complete());
+    }
+
+    #[test]
+    fn duplicate_dimension_identifiers_prevent_completeness() {
+        let metadata =
+            CircularDevelopmentMetadata::new(
+                "mind",
+                "Zihinsel yayılım",
+                "Bütünsel idrak",
+            );
+
+        let dimensions = vec![
+            DevelopmentDimension::new(
+                "mind",
+                "Zihin",
+            ),
+            DevelopmentDimension::new(
+                "mind",
+                "Tekrarlanan zihin",
+            ),
+        ];
+
+        let relations = vec![
+            DimensionRelation::new(
+                "mind",
+                "mind",
+                DimensionRelationType::Feedback,
+                "Geçersiz öz ilişki.",
+            ),
+        ];
+
+        let development =
+            ArticleCircularDevelopment::new(
+                "mind-001",
+                metadata,
+                SystemTime::now(),
+            )
+            .with_dimensions(dimensions)
+            .with_relations(relations);
+
+        assert!(!development.is_complete());
+    }
+
+    #[test]
+    fn relation_cannot_target_same_dimension() {
+        let relation = DimensionRelation::new(
+            "ethics",
+            "ethics",
+            DimensionRelationType::Feedback,
+            "Geçersiz öz ilişki.",
+        );
+
+        assert!(!relation.is_complete());
+    }
+
+    #[test]
+    fn contradiction_creates_unresolved_relation() {
+        let relation = DimensionRelation::new(
+            "law",
+            "ethics",
+            DimensionRelationType::Contradiction,
+            "Hukuk ve ahlak arasında doğrulanması gereken çelişki.",
+        )
+        .mark_rasterast_verified();
+
+        assert!(relation.is_complete());
+        assert!(relation.has_unresolved_risk());
+    }
+
+    #[test]
+    fn uncertainty_creates_unresolved_relation() {
+        let relation = DimensionRelation::new(
+            "mind",
+            "spirit",
+            DimensionRelationType::MutualInfluence,
+            "Zihin ve ruh ilişkisi incelenmektedir.",
+        )
+        .with_uncertainties(vec![
+            "İlişkinin bilimsel sınırları kesinleşmemiştir."
+                .to_string(),
+        ]);
+
+        assert!(relation.has_unresolved_risk());
+    }
+
+    #[test]
+    fn rasterast_verification_sets_verified_confidence() {
+        let relation = DimensionRelation::new(
+            "physics",
+            "biology",
+            DimensionRelationType::Enables,
+            "Fiziksel yapı biyolojik varlığa zemin sağlar.",
+        )
+        .mark_rasterast_verified();
+
+        assert!(relation.rasterast_verified);
+        assert_eq!(
+            relation.confidence,
+            DimensionRelationConfidence::Verified
+        );
+    }
+
+    #[test]
+    fn missing_primary_dimension_prevents_completeness() {
+        let metadata =
+            CircularDevelopmentMetadata::new(
+                "spirit",
+                "Ruh boyutunun yayılımı",
+                "Bütünsel insan",
+            );
+
+        let dimensions = vec![
+            DevelopmentDimension::new(
+                "mind",
+                "Zihin",
+            ),
+            DevelopmentDimension::new(
+                "ethics",
+                "Ahlak",
+            ),
+        ];
+
+        let relations = vec![
+            DimensionRelation::new(
+                "mind",
+                "ethics",
+                DimensionRelationType::Influences,
+                "Zihin ahlaki değerlendirmeyi etkiler.",
+            ),
+        ];
+
+        let development =
+            ArticleCircularDevelopment::new(
+                "article-002",
+                metadata,
+                SystemTime::now(),
+            )
+            .with_dimensions(dimensions)
+            .with_relations(relations);
+
+        assert!(!development.is_complete());
+    }
+}
+
+
+
+
