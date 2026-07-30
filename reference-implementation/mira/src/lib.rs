@@ -58,6 +58,8 @@ pub mod circular_development;
 pub mod core_periphery;
 pub mod development_synthesis;
 pub mod truth_foundation;
+pub mod proof_path;
+pub mod quran_analysis;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -128,6 +130,29 @@ pub use truth_foundation::{
     TruthFoundationKind,
     TruthFoundationSet,
 };
+
+pub use proof_path::{
+    ImprovementDirection,
+    InvestigatedTruthStatus,
+    ProofLimitation,
+    ProofLimitationKind,
+    ProofPath,
+    ProofPathEvidence,
+    ProofPathKind,
+    ProofPathSet,
+    ProofStatus,
+};
+
+pub use quran_analysis::{
+    InterpretationConfidence,
+    QuranAnalysis,
+    QuranAnalysisStatus,
+    QuranHadithReference,
+    QuranReviewArea,
+    QuranReviewFinding,
+    RisaleAnalysisReference,
+};
+
 
 
 
