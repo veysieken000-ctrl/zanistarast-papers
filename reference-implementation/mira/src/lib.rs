@@ -61,6 +61,7 @@ pub mod truth_foundation;
 pub mod proof_path;
 pub mod quran_analysis;
 pub mod risale_method;
+pub mod academic_runner;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -174,7 +175,15 @@ pub use risale_method::{
     ZanistarastMethodApplication,
 };
 
-
+pub use academic_runner::{
+    run_academic_analysis,
+    run_synthesis_verified_academic_analysis,
+    run_verified_academic_analysis,
+    AcademicRunnerInput,
+    AcademicRunnerOutput,
+    SynthesisVerifiedAcademicRunnerOutput,
+    VerifiedAcademicRunnerOutput,
+};
 
 
 
