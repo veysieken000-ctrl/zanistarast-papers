@@ -60,6 +60,7 @@ pub mod development_synthesis;
 pub mod truth_foundation;
 pub mod proof_path;
 pub mod quran_analysis;
+pub mod risale_method;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -152,6 +153,22 @@ pub use quran_analysis::{
     QuranReviewFinding,
     RisaleAnalysisReference,
 };
+
+pub use risale_method::{
+    HumanDimension,
+    ReadingDomain,
+    RisaleMethod,
+    RisaleMethodAuthority,
+    RisaleMethodKind,
+    RisaleMethodMap,
+    RisaleMethodReviewStatus,
+    RisaleProofType,
+    RisaleProvenTruth,
+    RisaleReasoningStep,
+    RisaleSourceReference,
+    ZanistarastMethodApplication,
+};
+
 
 
 
