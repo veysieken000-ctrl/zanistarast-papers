@@ -57,6 +57,7 @@ pub mod linear_development;
 pub mod circular_development;
 pub mod core_periphery;
 pub mod development_synthesis;
+pub mod truth_foundation;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -118,6 +119,18 @@ pub use development_synthesis::{
     SynthesisContradiction,
     SynthesisDifference,
 };
+
+pub use truth_foundation::{
+    FoundationAuthority,
+    FoundationReviewStatus,
+    FoundationUse,
+    TruthFoundation,
+    TruthFoundationKind,
+    TruthFoundationSet,
+};
+
+
+
 
 
 
