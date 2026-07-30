@@ -1,17 +1,21 @@
-/// Risale-i Nur'un Zanistarast içindeki kurucu yöntem
-/// konumunu temsil eden veri modelidir.
-///
-/// Anayasal ayrım:
-///
-/// - Kur'an-ı Kerim mutlak vahyî hakikatin kaynağıdır.
-/// - Üstad Bediüzzaman Said-i Kürdî'nin Risale-i Nur'da
-/// kullandığı aklî, mantıkî ve ispatlayıcı yöntemler
-/// Zanistarast için bağlayıcı kurucu yöntemlerdir.
-/// - Risale-i Nur'un vahiy statüsü yoktur ve Kur'an-ı
-/// Kerim ile aynı ontolojik konuma yerleştirilemez.
-/// - Denetlenen Risale-i Nur'un yöntemi değil,
-/// Zanistarast'ın yöntemi anlayış ve uygulama biçimidir.
-/// - Nihai karar Müdebbir'e aittir.
+//! Risale-i Nur'un Zanistarast içindeki kurucu yöntem
+//! konumunu temsil eden veri modelidir.
+//!
+//! # Anayasal ayrım
+//!
+//! Kur'an-ı Kerim mutlak vahyî hakikatin kaynağıdır.
+//!
+//! Üstad Bediüzzaman Said-i Kürdî'nin Risale-i Nur'da
+//! kullandığı aklî, mantıkî ve ispatlayıcı yöntemler
+//! Zanistarast için bağlayıcı kurucu yöntemlerdir.
+//!
+//! Risale-i Nur'un vahiy statüsü yoktur ve Kur'an-ı Kerim
+//! ile aynı ontolojik konuma yerleştirilemez.
+//!
+//! Denetlenen Risale-i Nur'un yöntemi değil,
+//! Zanistarast'ın yöntemi anlayış ve uygulama biçimidir.
+//!
+//! Nihai karar Müdebbir'e aittir.
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RisaleMethodAuthority {
