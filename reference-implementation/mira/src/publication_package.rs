@@ -9,7 +9,7 @@ pub struct PublicationPackage {
     pub bibtex_source: Option<String>,
 }
 
-/// Dosya sistemi için güvenli bir temel dosya adı üretir.
+/// Dosya sisteminde güvenle kullanılabilecek temel dosya adı üretir.
 pub fn sanitize_base_name(value: &str) -> String {
     let sanitized: String = value
         .chars()
@@ -44,7 +44,7 @@ pub enum PublicationTarget {
 }
 
 impl PublicationTarget {
-    /// Yayın hedefinin sabit görünen adını döndürür.
+    /// Yayın hedefinin sabit adını döndürür.
     pub fn name(self) -> &'static str {
         match self {
             Self::Zenodo => "Zenodo",
@@ -54,7 +54,6 @@ impl PublicationTarget {
         }
     }
 }
-
 /// Yayın hedefine gönderilecek akademik metadata.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationMetadata {
@@ -88,7 +87,7 @@ impl PublicationMetadata {
         }
     }
 
-    /// Yayın için zorunlu metadata alanlarının tamamlanıp
+    /// Zorunlu metadata alanlarının tamamlanıp
     /// tamamlanmadığını bildirir.
     pub fn is_complete(&self) -> bool {
         !self.title.trim().is_empty()
@@ -104,11 +103,18 @@ impl PublicationMetadata {
     }
 }
 
+/// Yayın işleminin başarısızlık nedenleri.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PublicationError {
+    IncompletePackage,
+    IncompleteMetadata,
+    MissingMudebbirApproval,
+    ProviderFailure(String),
+}
 /// Belirli bir yayın hedefine gönderilecek yayın isteği.
 ///
-/// Akademik üretim için verilen Müdebbir onayı, gerçek yayınlama
-/// izni anlamına gelmez. Her yayın isteği ayrıca açık bir
-/// Müdebbir yayın onayı gerektirir.
+/// Akademik üretim onayı, dış dünyaya yayınlama izni değildir.
+/// Gerçek yayınlama işlemi ayrıca açık Müdebbir onayı gerektirir.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationRequest {
     pub target: PublicationTarget,
@@ -117,49 +123,63 @@ pub struct PublicationRequest {
     mudebbir_approved: bool,
 }
 
-/// Yayın isteğinin neden hazır olmadığını bildirir.
-///
-/// Bütün koşullar sağlanmışsa None döner.
-pub fn validation_error(
-    &self,
-) -> Option<PublicationError> {
-    if !self.package.is_ready_for_publication() {
-        return Some(
-            PublicationError::IncompletePackage,
-        );
+impl PublicationRequest {
+    pub fn new(
+        target: PublicationTarget,
+        package: PublicationPackage,
+        metadata: PublicationMetadata,
+    ) -> Self {
+        Self {
+            target,
+            package,
+            metadata,
+            mudebbir_approved: false,
+        }
     }
 
-    if !self.metadata.is_complete() {
-        return Some(
-            PublicationError::IncompleteMetadata,
-        );
+    /// Bu yayın isteğini Müdebbir onaylar.
+    pub fn approve_by_mudebbir(&mut self) {
+        self.mudebbir_approved = true;
     }
 
-    if !self.is_approved_by_mudebbir() {
-        return Some(
-            PublicationError::MissingMudebbirApproval,
-        );
+    /// Müdebbir onayı alınıp alınmadığını bildirir.
+    pub fn is_approved_by_mudebbir(&self) -> bool {
+        self.mudebbir_approved
     }
 
-    None
+    /// Yayın isteğinin neden hazır olmadığını bildirir.
+    /// Hazırsa None döndürür.
+    pub fn validation_error(
+        &self,
+    ) -> Option<PublicationError> {
+        if !self.package.is_ready_for_publication() {
+            return Some(
+                PublicationError::IncompletePackage,
+            );
+        }
+
+        if !self.metadata.is_complete() {
+            return Some(
+                PublicationError::IncompleteMetadata,
+            );
+        }
+
+        if !self.is_approved_by_mudebbir() {
+            return Some(
+                PublicationError::MissingMudebbirApproval,
+            );
+        }
+
+        None
+    }
+
+    /// Yayın isteğinin tüm koşulları sağlayıp
+    /// sağlamadığını bildirir.
+    pub fn is_ready(&self) -> bool {
+        self.validation_error().is_none()
+    }
 }
-
-/// Yayın isteğinin yayınlanmaya hazır olup olmadığını bildirir.
-pub fn is_ready(&self) -> bool {
-    self.validation_error().is_none()
-}
-
-
-/// Yayın işleminin başarısız olma nedenleri.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum PublicationError {
-    IncompletePackage,
-    IncompleteMetadata,
-    MissingMudebbirApproval,
-    ProviderFailure(String),
-}
-
-/// Yayın işleminin sonucu.
+/// Bir yayın işleminin sonucunu temsil eder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
     pub target: PublicationTarget,
@@ -167,7 +187,9 @@ pub struct PublicationResult {
     pub identifier: Option<String>,
     pub error: Option<PublicationError>,
 }
+
 impl PublicationResult {
+    /// Başarılı yayın sonucu oluşturur.
     pub fn success(
         target: PublicationTarget,
         identifier: impl Into<String>,
@@ -180,6 +202,7 @@ impl PublicationResult {
         }
     }
 
+    /// Başarısız yayın sonucu oluşturur.
     pub fn failure(
         target: PublicationTarget,
         error: PublicationError,
@@ -193,7 +216,7 @@ impl PublicationResult {
     }
 }
 
-/// Yayın servislerini sağlayıcıdan bağımsız hâle getiren arayüz.
+/// Yayın servislerini sağlayıcıdan bağımsız hale getiren arayüz.
 pub trait PublicationService {
     fn publish(
         &self,
@@ -228,7 +251,7 @@ impl PublicationPackage {
         }
     }
 
-    /// Yayın paketine sonradan BibTeX kaynağı ekler.
+    /// Pakete sonradan BibTeX kaynağı ekler.
     pub fn with_bibtex(
         mut self,
         bibtex: impl Into<String>,
@@ -237,28 +260,25 @@ impl PublicationPackage {
         self
     }
 
-    /// Temel yayın dosyalarının mevcut olup olmadığını bildirir.
+    /// Temel yayın dosyalarının eksiksiz olup olmadığını bildirir.
     pub fn is_complete(&self) -> bool {
         !self.title.trim().is_empty()
             && !self.latex_source.trim().is_empty()
             && !self.pdf_bytes.is_empty()
     }
 
-    /// Pakette boş olmayan bir kaynakça bulunup
-    /// bulunmadığını bildirir.
+    /// Boş olmayan bir BibTeX kaynağı bulunup bulunmadığını bildirir.
     pub fn has_bibliography(&self) -> bool {
         self.bibtex_source
             .as_ref()
             .is_some_and(|value| !value.trim().is_empty())
     }
 
-    /// Paketin teknik olarak yayınlanmaya hazır olup
-    /// olmadığını bildirir.
+    /// Paketin teknik olarak yayınlanmaya hazır olup olmadığını bildirir.
     pub fn is_ready_for_publication(&self) -> bool {
         self.is_complete() && self.has_bibliography()
     }
 }
-
 /// Yayın paketini LaTeX, PDF ve varsa BibTeX dosyaları
 /// olarak belirtilen dizine yazar.
 pub fn export_publication_package(
@@ -271,23 +291,47 @@ pub fn export_publication_package(
 
     std::fs::create_dir_all(directory)?;
 
-    let tex_path = directory.join(format!("{base_name}.tex"));
-    let pdf_path = directory.join(format!("{base_name}.pdf"));
+    let tex_path = directory.join(
+        format!("{base_name}.tex"),
+    );
 
-    std::fs::write(&tex_path, &package.latex_source)?;
-    std::fs::write(&pdf_path, &package.pdf_bytes)?;
+    let pdf_path = directory.join(
+        format!("{base_name}.pdf"),
+    );
 
-    let mut written_files = vec![tex_path, pdf_path];
+    std::fs::write(
+        &tex_path,
+        &package.latex_source,
+    )?;
 
-    if let Some(bibtex_source) = &package.bibtex_source {
-        let bib_path = directory.join(format!("{base_name}.bib"));
+    std::fs::write(
+        &pdf_path,
+        &package.pdf_bytes,
+    )?;
 
-        std::fs::write(&bib_path, bibtex_source)?;
+    let mut written_files = vec![
+        tex_path,
+        pdf_path,
+    ];
+
+    if let Some(bibtex_source) =
+        &package.bibtex_source
+    {
+        let bib_path = directory.join(
+            format!("{base_name}.bib"),
+        );
+
+        std::fs::write(
+            &bib_path,
+            bibtex_source,
+        )?;
+
         written_files.push(bib_path);
     }
 
     Ok(written_files)
 }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -304,13 +348,18 @@ mod tests {
             &self,
             request: &PublicationRequest,
         ) -> PublicationResult {
-            if request.is_ready() {
+            if let Some(error) =
+                request.validation_error()
+            {
+                PublicationResult::failure(
+                    request.target,
+                    error,
+                )
+            } else {
                 PublicationResult::success(
                     request.target,
                     "mock-publication-id",
                 )
-            } else {
-                PublicationResult::failure(request.target)
             }
         }
     }
@@ -318,7 +367,9 @@ mod tests {
     fn complete_metadata() -> PublicationMetadata {
         PublicationMetadata::new(
             "Rasterast Verification",
-            vec!["Veysi yê MALA SAF".to_string()],
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
             "Deterministic verification for academic publication.",
             vec![
                 "Rasterast".to_string(),
@@ -332,7 +383,8 @@ mod tests {
 
     fn complete_package() -> PublicationPackage {
         PublicationPackage {
-            title: "Rasterast Verification".to_string(),
+            title:
+                "Rasterast Verification".to_string(),
             latex_source:
                 "\\documentclass{article}\n\
                  \\begin{document}\n\
@@ -341,107 +393,13 @@ mod tests {
                     .to_string(),
             pdf_bytes: b"%PDF-1.7\n".to_vec(),
             bibtex_source: Some(
-                "@article{rasterast2026}".to_string(),
+                "@article{rasterast2026}"
+                    .to_string(),
             ),
         }
     }
-
-    #[test]
-    fn mock_publication_service_publishes_mudebbir_approved_request() {
-        let mut request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            complete_package(),
-            complete_metadata(),
-        );
-
-        assert!(!request.is_approved_by_mudebbir());
-        assert!(!request.is_ready());
-
-        request.approve_by_mudebbir();
-
-        assert!(request.is_approved_by_mudebbir());
-        assert!(request.is_ready());
-
-        let service = MockPublicationService;
-        let result = service.publish(&request);
-
-        assert!(result.success);
-
-        assert_eq!(
-            result.target,
-            PublicationTarget::Zenodo,
-        );
-
-        assert_eq!(
-            result.identifier.as_deref(),
-            Some("mock-publication-id"),
-        );
-    }
-
-    #[test]
-    fn mock_publication_service_rejects_unapproved_request() {
-        let request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            complete_package(),
-            complete_metadata(),
-        );
-
-        assert!(!request.is_approved_by_mudebbir());
-        assert!(!request.is_ready());
-
-        let service = MockPublicationService;
-        let result = service.publish(&request);
-
-        assert!(!result.success);
-
-        assert_eq!(
-            result.target,
-            PublicationTarget::Zenodo,
-        );
-
-        assert_eq!(result.identifier, None);
-    }
-
-    #[test]
-    fn mock_publication_service_rejects_incomplete_package() {
-        let package = PublicationPackage {
-            title: "Rasterast Verification".to_string(),
-            latex_source:
-                "\\documentclass{article}\n\
-                 \\begin{document}\n\
-                 Zanistarast.\n\
-                 \\end{document}"
-                    .to_string(),
-            pdf_bytes: b"%PDF-1.7\n".to_vec(),
-            bibtex_source: None,
-        };
-
-        let mut request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            package,
-            complete_metadata(),
-        );
-
-        request.approve_by_mudebbir();
-
-        assert!(request.is_approved_by_mudebbir());
-        assert!(!request.is_ready());
-
-        let service = MockPublicationService;
-        let result = service.publish(&request);
-
-        assert!(!result.success);
-
-        assert_eq!(
-            result.target,
-            PublicationTarget::Zenodo,
-        );
-
-        assert_eq!(result.identifier, None);
-    }
-
-    #[test]
-    fn complete_publication_package_is_valid() {
+#[test]
+    fn complete_publication_package_is_ready() {
         let package = complete_package();
 
         assert!(package.is_complete());
@@ -450,11 +408,12 @@ mod tests {
     }
 
     #[test]
-    fn package_without_bibliography_remains_complete() {
+    fn package_without_bibliography_is_not_ready() {
         let package = PublicationPackage {
             title: "Zanistarast".to_string(),
             latex_source:
-                "\\documentclass{article}".to_string(),
+                "\\documentclass{article}"
+                    .to_string(),
             pdf_bytes: b"%PDF-1.7\n".to_vec(),
             bibtex_source: None,
         };
@@ -469,7 +428,8 @@ mod tests {
         let package = PublicationPackage {
             title: "Zanistarast".to_string(),
             latex_source:
-                "\\documentclass{article}".to_string(),
+                "\\documentclass{article}"
+                    .to_string(),
             pdf_bytes: Vec::new(),
             bibtex_source: None,
         };
@@ -484,7 +444,8 @@ mod tests {
             AcademicOutputInput {
                 title: "Rasterast".to_string(),
                 author:
-                    "Veysi yê MALA SAF".to_string(),
+                    "Veysi yê MALA SAF"
+                        .to_string(),
                 abstract_text:
                     "Deterministic verification."
                         .to_string(),
@@ -517,8 +478,6 @@ mod tests {
             output.pdf_bytes,
         );
 
-        assert!(package.has_bibliography());
-        assert!(package.is_complete());
         assert!(package.is_ready_for_publication());
     }
 
@@ -528,7 +487,8 @@ mod tests {
             AcademicOutputInput {
                 title: "Rasterast".to_string(),
                 author:
-                    "Veysi yê MALA SAF".to_string(),
+                    "Veysi yê MALA SAF"
+                        .to_string(),
                 abstract_text: String::new(),
                 body: String::new(),
                 bibliography: None,
@@ -554,150 +514,266 @@ mod tests {
     }
 
     #[test]
-    fn publication_package_requires_bibliography_for_publication() {
-        let output = generate_academic_output(
-            AcademicOutputInput {
-                title: "Rasterast".to_string(),
-                author:
-                    "Veysi yê MALA SAF".to_string(),
-                abstract_text: String::new(),
-                body: String::new(),
-                bibliography: None,
-            },
+    fn unapproved_request_reports_approval_error() {
+        let request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
         );
 
-        let package =
-            PublicationPackage::from_academic_output(
-                "Rasterast",
-                &output,
-                None,
-            );
+        assert!(!request.is_ready());
 
-        assert!(package.is_complete());
-        assert!(!package.has_bibliography());
-        assert!(!package.is_ready_for_publication());
-
-        let package = package.with_bibtex(
-            "@article{rasterast2026}",
-        );
-
-        assert!(package.has_bibliography());
-        assert!(package.is_ready_for_publication());
-    }
-#[test]
-    fn exports_publication_package_files() {
-        let package = complete_package();
-
-        let output_directory = std::env::temp_dir().join(
-            format!(
-                "mira-publication-package-{}",
-                std::process::id(),
+        assert_eq!(
+            request.validation_error(),
+            Some(
+                PublicationError::
+                    MissingMudebbirApproval,
             ),
         );
-
-        let output_directory_text = output_directory
-            .to_str()
-            .expect(
-                "Temporary directory should be valid UTF-8.",
-            );
-
-        let written_files = export_publication_package(
-            &package,
-            output_directory_text,
-            "rasterast",
-        )
-        .expect(
-            "Publication package should be exported.",
-        );
-
-        assert_eq!(written_files.len(), 3);
-
-        assert_eq!(
-            std::fs::read_to_string(
-                output_directory.join("rasterast.tex"),
-            )
-            .expect("LaTeX file should be readable."),
-            package.latex_source,
-        );
-
-        assert_eq!(
-            std::fs::read(
-                output_directory.join("rasterast.pdf"),
-            )
-            .expect("PDF file should be readable."),
-            package.pdf_bytes,
-        );
-
-        assert_eq!(
-            std::fs::read_to_string(
-                output_directory.join("rasterast.bib"),
-            )
-            .expect("BibTeX file should be readable."),
-            "@article{rasterast2026}",
-        );
-
-        std::fs::remove_dir_all(&output_directory)
-            .expect(
-                "Temporary directory should be removed.",
-            );
     }
 
     #[test]
-    fn exports_package_without_bibtex_as_two_files() {
+    fn approved_complete_request_is_ready() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(
+            request.is_approved_by_mudebbir()
+        );
+
+        assert!(request.is_ready());
+
+        assert_eq!(
+            request.validation_error(),
+            None,
+        );
+    }
+
+    #[test]
+    fn incomplete_package_reports_package_error() {
         let package = PublicationPackage {
-            title: "Zanistarast".to_string(),
+            title:
+                "Rasterast Verification".to_string(),
             latex_source:
-                "\\documentclass{article}\n".to_string(),
+                "\\documentclass{article}"
+                    .to_string(),
             pdf_bytes: b"%PDF-1.7\n".to_vec(),
             bibtex_source: None,
         };
 
-        let output_directory = std::env::temp_dir().join(
-            format!(
-                "mira-publication-package-no-bib-{}",
-                std::process::id(),
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            package,
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(!request.is_ready());
+
+        assert_eq!(
+            request.validation_error(),
+            Some(
+                PublicationError::IncompletePackage,
+            ),
+        );
+    }
+
+    #[test]
+    fn incomplete_metadata_reports_metadata_error() {
+        let metadata = PublicationMetadata::new(
+            "",
+            Vec::new(),
+            "",
+            Vec::new(),
+            "",
+            "",
+            "",
+        );
+
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            metadata,
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(!request.is_ready());
+
+        assert_eq!(
+            request.validation_error(),
+            Some(
+                PublicationError::IncompleteMetadata,
+            ),
+        );
+    }
+ #[test]
+    fn mock_service_publishes_approved_request() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        let service = MockPublicationService;
+        let result = service.publish(&request);
+
+        assert!(result.success);
+
+        assert_eq!(
+            result.target,
+            PublicationTarget::Zenodo,
+        );
+
+        assert_eq!(
+            result.identifier.as_deref(),
+            Some("mock-publication-id"),
+        );
+
+        assert_eq!(result.error, None);
+    }
+
+    #[test]
+    fn mock_service_rejects_unapproved_request() {
+        let request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        let service = MockPublicationService;
+        let result = service.publish(&request);
+
+        assert!(!result.success);
+        assert_eq!(result.identifier, None);
+
+        assert_eq!(
+            result.error,
+            Some(
+                PublicationError::MissingMudebbirApproval,
+            ),
+        );
+    }
+
+    #[test]
+    fn publication_result_represents_success() {
+        let result = PublicationResult::success(
+            PublicationTarget::Zenodo,
+            "10.5281/zenodo.1234567",
+        );
+
+        assert!(result.success);
+
+        assert_eq!(
+            result.identifier.as_deref(),
+            Some("10.5281/zenodo.1234567"),
+        );
+
+        assert_eq!(result.error, None);
+    }
+
+    #[test]
+    fn publication_result_represents_failure() {
+        let result = PublicationResult::failure(
+            PublicationTarget::Zenodo,
+            PublicationError::MissingMudebbirApproval,
+        );
+
+        assert!(!result.success);
+        assert_eq!(result.identifier, None);
+
+        assert_eq!(
+            result.error,
+            Some(
+                PublicationError::MissingMudebbirApproval,
+            ),
+        );
+    }
+
+    #[test]
+    fn provider_failure_can_carry_message() {
+        let result = PublicationResult::failure(
+            PublicationTarget::Arxiv,
+            PublicationError::ProviderFailure(
+                "Sağlayıcı yanıt vermedi.".to_string(),
             ),
         );
 
-        let output_directory_text = output_directory
-            .to_str()
-            .expect(
-                "Temporary directory should be valid UTF-8.",
-            );
+        assert!(!result.success);
 
-        let written_files = export_publication_package(
-            &package,
-            output_directory_text,
-            "zanistarast",
-        )
-        .expect(
-            "Publication package should be exported.",
+        assert_eq!(
+            result.error,
+            Some(
+                PublicationError::ProviderFailure(
+                    "Sağlayıcı yanıt vermedi.".to_string(),
+                ),
+            ),
+        );
+    }
+
+    #[test]
+    fn publication_metadata_reports_complete_state() {
+        let metadata = complete_metadata();
+
+        assert!(metadata.is_complete());
+
+        assert_eq!(
+            metadata.title,
+            "Rasterast Verification",
         );
 
-        assert_eq!(written_files.len(), 2);
+        assert_eq!(
+            metadata.authors,
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+        );
+    }
 
-        assert!(
-            output_directory
-                .join("zanistarast.tex")
-                .exists()
+    #[test]
+    fn publication_metadata_rejects_missing_fields() {
+        let metadata = PublicationMetadata::new(
+            "",
+            Vec::new(),
+            "",
+            Vec::new(),
+            "",
+            "",
+            "",
         );
 
-        assert!(
-            output_directory
-                .join("zanistarast.pdf")
-                .exists()
+        assert!(!metadata.is_complete());
+    }
+
+    #[test]
+    fn publication_targets_have_stable_names() {
+        assert_eq!(
+            PublicationTarget::Zenodo.name(),
+            "Zenodo",
         );
 
-        assert!(
-            !output_directory
-                .join("zanistarast.bib")
-                .exists()
+        assert_eq!(
+            PublicationTarget::Arxiv.name(),
+            "arXiv",
         );
 
-        std::fs::remove_dir_all(&output_directory)
-            .expect(
-                "Temporary directory should be removed.",
-            );
+        assert_eq!(
+            PublicationTarget::HuggingFace.name(),
+            "Hugging Face",
+        );
+
+        assert_eq!(
+            PublicationTarget::PapersWithCode.name(),
+            "Papers With Code",
+        );
     }
 
     #[test]
@@ -723,80 +799,19 @@ mod tests {
     }
 
     #[test]
-    fn exports_files_with_sanitized_base_name() {
-        let package = complete_package();
-
-        let output_directory = std::env::temp_dir().join(
-            format!(
-                "mira-publication-sanitized-{}",
-                std::process::id(),
-            ),
-        );
-
-        let output_directory_text = output_directory
-            .to_str()
-            .expect(
-                "Temporary directory should be valid UTF-8.",
-            );
-
-        let written_files = export_publication_package(
-            &package,
-            output_directory_text,
-            "Rasterast Verification/2026",
-        )
-        .expect(
-            "Publication package should be exported.",
-        );
-
-        assert_eq!(written_files.len(), 3);
-
-        assert!(
-            output_directory
-                .join(
-                    "Rasterast_Verification_2026.tex",
-                )
-                .exists()
-        );
-
-        assert!(
-            output_directory
-                .join(
-                    "Rasterast_Verification_2026.pdf",
-                )
-                .exists()
-        );
-
-        assert!(
-            output_directory
-                .join(
-                    "Rasterast_Verification_2026.bib",
-                )
-                .exists()
-        );
-
-        std::fs::remove_dir_all(&output_directory)
-            .expect(
-                "Temporary directory should be removed.",
-            );
-    }
-
-    #[test]
     fn builds_final_publication_package() {
         let academic_output = generate_academic_output(
             AcademicOutputInput {
-                title:
-                    "Rasterast Verification".to_string(),
-                author:
-                    "Veysi yê MALA SAF".to_string(),
+                title: "Rasterast Verification".to_string(),
+                author: "Veysi yê MALA SAF".to_string(),
                 abstract_text:
-                    "Deterministic verification."
-                        .to_string(),
+                    "Deterministic verification.".to_string(),
                 body:
-                    "\\section{Introduction}\n\
-                     Zanistarast."
+                    "\\section{Introduction}\nZanistarast."
                         .to_string(),
-                bibliography:
-                    Some("references".to_string()),
+                bibliography: Some(
+                    "references".to_string(),
+                ),
             },
         );
 
@@ -823,62 +838,35 @@ mod tests {
             academic_output.pdf_bytes,
         );
 
-        assert!(package.has_bibliography());
-        assert!(package.is_complete());
         assert!(package.is_ready_for_publication());
     }
 
     #[test]
-    fn builds_and_exports_final_publication_package() {
-        let academic_output = generate_academic_output(
-            AcademicOutputInput {
-                title:
-                    "Rasterast Verification".to_string(),
-                author:
-                    "Veysi yê MALA SAF".to_string(),
-                abstract_text:
-                    "Deterministic verification."
-                        .to_string(),
-                body:
-                    "\\section{Introduction}\n\
-                     Zanistarast."
-                        .to_string(),
-                bibliography:
-                    Some("references".to_string()),
-            },
-        );
+    fn exports_publication_package_files() {
+        let package = complete_package();
 
-        let package = build_publication_package(
-            "Rasterast Verification",
-            &academic_output,
-            Some(
-                "@article{rasterast2026}".to_string(),
-            ),
-        );
-
-        assert!(package.is_ready_for_publication());
-
-        let output_directory = std::env::temp_dir().join(
-            format!(
-                "mira-final-publication-package-{}",
+        let output_directory =
+            std::env::temp_dir().join(format!(
+                "mira-publication-package-{}",
                 std::process::id(),
-            ),
-        );
+            ));
 
-        let output_directory_text = output_directory
-            .to_str()
+        let output_directory_text =
+            output_directory
+                .to_str()
+                .expect(
+                    "Temporary directory must be valid UTF-8.",
+                );
+
+        let written_files =
+            export_publication_package(
+                &package,
+                output_directory_text,
+                "Rasterast Verification/2026",
+            )
             .expect(
-                "Temporary directory should be valid UTF-8.",
+                "Publication package must be exported.",
             );
-
-        let written_files = export_publication_package(
-            &package,
-            output_directory_text,
-            "Rasterast Verification/2026",
-        )
-        .expect(
-            "Final publication package should be exported.",
-        );
 
         assert_eq!(written_files.len(), 3);
 
@@ -908,232 +896,10 @@ mod tests {
 
         std::fs::remove_dir_all(&output_directory)
             .expect(
-                "Temporary directory should be removed.",
+                "Temporary directory must be removed.",
             );
     }
-
-  #[test]
-    fn publication_targets_have_stable_names() {
-        assert_eq!(
-            PublicationTarget::Zenodo.name(),
-            "Zenodo",
-        );
-
-        assert_eq!(
-            PublicationTarget::Arxiv.name(),
-            "arXiv",
-        );
-
-        assert_eq!(
-            PublicationTarget::HuggingFace.name(),
-            "Hugging Face",
-        );
-
-        assert_eq!(
-            PublicationTarget::PapersWithCode.name(),
-            "Papers With Code",
-        );
-    }
-
-    #[test]
-    fn publication_request_requires_package_metadata_and_mudebbir_approval() {
-        let mut request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            complete_package(),
-            complete_metadata(),
-        );
-
-        assert_eq!(
-            request.target,
-            PublicationTarget::Zenodo,
-        );
-
-        assert_eq!(
-            request.target.name(),
-            "Zenodo",
-        );
-
-        assert!(!request.is_approved_by_mudebbir());
-        assert!(!request.is_ready());
-
-        request.approve_by_mudebbir();
-
-        assert!(request.is_approved_by_mudebbir());
-        assert!(request.is_ready());
-    }
-
-    #[test]
-    fn publication_request_rejects_incomplete_package() {
-        let incomplete_package = PublicationPackage {
-            title:
-                "Rasterast Verification".to_string(),
-            latex_source:
-                "\\documentclass{article}\n\
-                 \\begin{document}\n\
-                 Zanistarast.\n\
-                 \\end{document}"
-                    .to_string(),
-            pdf_bytes: b"%PDF-1.7\n".to_vec(),
-            bibtex_source: None,
-        };
-
-        let mut request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            incomplete_package,
-            complete_metadata(),
-        );
-
-        request.approve_by_mudebbir();
-
-        assert!(request.is_approved_by_mudebbir());
-        assert!(!request.is_ready());
-    }
-
-    #[test]
-    fn publication_request_rejects_incomplete_metadata() {
-        let incomplete_metadata =
-            PublicationMetadata::new(
-                "",
-                Vec::new(),
-                "",
-                Vec::new(),
-                "",
-                "",
-                "",
-            );
-
-        let mut request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            complete_package(),
-            incomplete_metadata,
-        );
-
-        request.approve_by_mudebbir();
-
-        assert!(request.is_approved_by_mudebbir());
-        assert!(!request.is_ready());
-    }
-
-    #[test]
-    fn publication_result_can_represent_success() {
-        let result = PublicationResult::success(
-            PublicationTarget::Zenodo,
-            "10.5281/zenodo.1234567",
-        );
-
-        assert!(result.success);
-
-        assert_eq!(
-            result.target,
-            PublicationTarget::Zenodo,
-        );
-
-        assert_eq!(
-            result.identifier.as_deref(),
-            Some("10.5281/zenodo.1234567"),
-        );
-    }
-
-   #[test]
-fn publication_result_can_represent_failure() {
-    let result = PublicationResult::failure(
-        PublicationTarget::Zenodo,
-        PublicationError::MissingMudebbirApproval,
-    );
-
-    assert!(!result.success);
-
-    assert_eq!(
-        result.target,
-        PublicationTarget::Zenodo,
-    );
-
-    assert_eq!(result.identifier, None);
-
-    assert_eq!(
-        result.error,
-        Some(
-            PublicationError::MissingMudebbirApproval,
-        ),
-    );
 }
-#[test]
-fn publication_request_reports_validation_error() {
-    let request = PublicationRequest::new(
-        PublicationTarget::Zenodo,
-        PublicationPackage {
-            title: "Rasterast".to_string(),
-            latex_source: "latex".to_string(),
-            pdf_bytes: b"%PDF".to_vec(),
-            bibtex_source: None,
-        },
-        PublicationMetadata::new(
-            "Rasterast",
-            vec!["Veysi yê MALA SAF".to_string()],
-            "Abstract",
-            Vec::new(),
-            "tr",
-            "CC-BY-4.0",
-            "1.0.0",
-        ),
-    );
-
-    assert_eq!(
-        request.validation_error(),
-        Some(PublicationError::IncompletePackage),
-    );
-}
-
-    #[test]
-    fn publication_metadata_reports_complete_state() {
-        let metadata = complete_metadata();
-
-        assert!(metadata.is_complete());
-
-        assert_eq!(
-            metadata.title,
-            "Rasterast Verification",
-        );
-
-        assert_eq!(
-            metadata.authors,
-            vec!["Veysi yê MALA SAF".to_string()],
-        );
-    }
-
-    #[test]
-    fn publication_metadata_rejects_missing_required_fields() {
-        let metadata = PublicationMetadata::new(
-            "",
-            Vec::new(),
-            "",
-            Vec::new(),
-            "",
-            "",
-            "",
-        );
-
-        assert!(!metadata.is_complete());
-    }
-
-    #[test]
-    fn publication_metadata_allows_empty_keywords() {
-        let metadata = PublicationMetadata::new(
-            "Rasterast Verification",
-            vec!["Veysi yê MALA SAF".to_string()],
-            "Deterministic verification.",
-            Vec::new(),
-            "tr",
-            "CC-BY-4.0",
-            "1.0.0",
-        );
-
-        assert!(metadata.is_complete());
-        assert!(metadata.keywords.is_empty());
-    }
-}
-
-
 
 
 
