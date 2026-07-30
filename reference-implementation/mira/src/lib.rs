@@ -146,13 +146,17 @@ pub use proof_path::{
 };
 
 pub use quran_analysis::{
-    InterpretationConfidence,
     QuranAnalysis,
+    QuranAnalysisLimitation,
+    QuranAnalysisLimitationKind,
+    QuranAnalysisSet,
+    QuranAnalysisStatement,
     QuranAnalysisStatus,
-    QuranHadithReference,
-    QuranReviewArea,
-    QuranReviewFinding,
-    RisaleAnalysisReference,
+    QuranAnalysisType,
+    QuranSourceRecord,
+    QuranSourceVerificationStatus,
+    QuranStatementStatus,
+    QuranVerseReference,
 };
 
 pub use risale_method::{
