@@ -5,302 +5,114 @@
 ///
 /// - Kur'an-ı Kerim mutlak vahyî hakikatin kaynağıdır.
 /// - Üstad Bediüzzaman Said-i Kürdî'nin Risale-i Nur'da
-/// kullandığı aklî, mantıkî, temsilî ve ispatlayıcı
-/// yöntemler Zanistarast için bağlayıcı ve mutlak doğru
-/// yöntemlerdir.
-/// - Zanistarast'ın bu yöntemleri anlama, sınıflandırma ve
-/// uygulama biçimi insanîdir; bu nedenle Rasterast
-/// denetimine açıktır.
-/// - Denetlenen Risale-i Nur yöntemi değil, Zanistarast'ın
-/// yöntemi doğru anlayıp uygulayıp uygulamadığıdır.
+/// kullandığı aklî, mantıkî ve ispatlayıcı yöntemler
+/// Zanistarast için bağlayıcı kurucu yöntemlerdir.
+/// - Risale-i Nur'un vahiy statüsü yoktur ve Kur'an-ı
+/// Kerim ile aynı ontolojik konuma yerleştirilemez.
+/// - Denetlenen Risale-i Nur'un yöntemi değil,
+/// Zanistarast'ın yöntemi anlayış ve uygulama biçimidir.
+/// - Nihai karar Müdebbir'e aittir.
 
-/// Risale-i Nur'daki kurucu yöntemlerin Zanistarast
-/// açısından sahip olduğu bağlayıcılık alanıdır.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RisaleMethodAuthority {
-    /// Kur'an hakikatlerini açıklama ve ispat etme yöntemi.
     QuranicProofMethod,
-
-    /// Akıl yürütmede bağlayıcı yöntem.
     BindingReasoningMethod,
-
-    /// Mantıksal çıkarımda bağlayıcı yöntem.
     BindingLogicalMethod,
-
-    /// İman ile aklı birlikte çalıştıran bağlayıcı yöntem.
     BindingFaithReasonMethod,
-
-    /// İnsanı öz, ruh, kalp, duygu, akıl, ahlak ve irade
-    /// bütünlüğü içinde okuyan bağlayıcı yöntem.
     BindingHumanUnderstandingMethod,
-
-    /// Kâinatı mana, düzen, hikmet, maksat ve esmâ
-    /// üzerinden okuyan bağlayıcı yöntem.
     BindingCreationReadingMethod,
-
-    /// Ahlak, vicdan ve fıtrat değerlendirmesinde
-    /// bağlayıcı yöntem.
     BindingMoralFitrahMethod,
 }
 
 impl RisaleMethodAuthority {
-    /// Risale-i Nur yöntemlerinin Zanistarast içinde
-    /// isteğe bağlı bir araştırma tercihi olmadığını
-    /// gösterir.
     pub fn is_binding(self) -> bool {
         true
     }
 
-    /// Bu otoritenin Kur'an'ın vahiy statüsüyle aynı
-    /// olmadığını açık biçimde korur.
     pub fn is_revelation(self) -> bool {
         false
     }
 }
 
-/// Risale-i Nur'da kullanılan temel düşünme, açıklama ve
-/// ispat yöntemlerinin sınıflandırılmasıdır.
-///
-/// Bu sınıflandırma Risale-i Nur'un yerine geçmez.
-/// Yalnızca Zanistarast'ın yöntem haritasını oluşturur.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RisaleMethodKind {
-    /// Temsil yoluyla soyut veya derin bir hakikati
-    /// anlaşılır hâle getirme.
     Representation,
-
-    /// İki durum veya varlık düzeni arasında karşılaştırma.
     Comparison,
-
-    /// Benzerliklerden hareketle açıklama ve çıkarım.
     Analogy,
-
-    /// Verilen öncüllerden zorunlu sonuca ulaşma.
     NecessaryReasoning,
-
-    /// Bir iddianın karşıtının doğurduğu çelişki veya
-    /// imkânsızlığı gösterme.
     ContradictionAnalysis,
-
-    /// Çok sayıdaki işaretin ortak sonucunu birlikte okuma.
     CollectiveEvidence,
-
-    /// Bir tek eserden failine, sanatkârına veya kaynağına
-    /// ulaşan çıkarım.
     FromWorkToMaker,
-
-    /// Fiilden isme, isimden sıfata ve sıfattan zata doğru
-    /// ilerleyen okuma.
     FromActToNameAndAttribute,
-
-    /// Kâinattaki düzen, ölçü, uyum ve bağlantıları okuma.
     OrderReading,
-
-    /// Varlıklardaki fayda, amaç, uygunluk ve hikmeti okuma.
     WisdomReading,
-
-    /// Rahmet, inayet, rızık, koruma ve cevap verme
-    /// ilişkilerini okuma.
     MercyAndProvidenceReading,
-
-    /// Birlik içindeki çokluk ve çokluk içindeki birliği
-    /// değerlendirme.
     UnityFromMultiplicity,
-
-    /// Varlıklarda görünen isim ve sıfat tecellilerini okuma.
     DivineNamesReading,
-
-    /// Kâinatı anlam taşıyan bir kitap olarak okuma.
     CreationBookReading,
-
-    /// İnsanı kendisini ve varlığı okuyabilen merkezî bir
-    /// muhatap olarak değerlendirme.
     HumanReading,
-
-    /// İnsanın yaratılış yapısı, ihtiyaçları ve yönelimleri
-    /// üzerinden delil kurma.
     FitrahReading,
-
-    /// Vicdanın ihtiyaç, yönelim, sorumluluk ve şahitliğini
-    /// değerlendirme.
     ConscienceReading,
-
-    /// Kalbin iman, anlam, muhabbet, korku, ümit ve bağlılık
-    /// yönlerini birlikte okuma.
     HeartReading,
-
-    /// İnsanın aczini hakikate ulaşmada bir delil ve
-    /// yöneliş kapısı olarak değerlendirme.
     ImpotenceMethod,
-
-    /// İnsanın fakrını, ihtiyaçlarını ve bağımlılığını
-    /// hakikate ulaşmada bir delil olarak değerlendirme.
     PovertyMethod,
-
-    /// Şefkat üzerinden varlık, sorumluluk ve ahlak okuması.
     CompassionMethod,
-
-    /// Tefekkür üzerinden insan, kâinat ve Kur'an
-    /// ilişkisini kurma.
     ReflectionMethod,
-
-    /// İman ile aklı çatıştırmadan birlikte çalıştırma.
     FaithReasonIntegration,
-
-    /// Akıl ile kalbi aynı hakikat üzerinde birleştirme.
     HeartReasonIntegration,
-
-    /// Duygu ile akıl arasındaki ilişkiyi hakikat ve ahlak
-    /// ekseninde düzenleme.
     EmotionReasonIntegration,
-
-    /// Ruh ile bedenin birbirinden koparılmadan okunması.
     SoulBodyIntegration,
-
-    /// İnsan davranışından niyet, sorumluluk ve ahlak
-    /// sonucuna ulaşma.
     MoralReasoning,
-
-    /// Ölüm, fanilik ve geçicilik üzerinden baki anlamı
-    /// araştırma.
     MortalityAndPermanenceReading,
-
-    /// Haşir, adalet, hikmet, rahmet ve insan arzuları
-    /// arasında bütünlüklü delil kurma.
     ResurrectionReasoning,
-
-    /// Nübüvveti insanlık, vahiy, ahlak ve kâinat düzeni
-    /// içinde değerlendirme.
     ProphethoodReasoning,
-
-    /// Tevhidi bütün varlık alanlarını birleştiren ana
-    /// açıklama ilkesi olarak okuma.
     UnityReasoning,
-
-    /// Bir yöntemin birkaç akıl, kalp, fıtrat, kâinat ve
-    /// vahiy yolunu birlikte kullanması.
     IntegratedProof,
 }
 
-/// Risale-i Nur yönteminin hitap ettiği veya değerlendirdiği
-/// insan boyutlarıdır.
-///
-/// İnsan yalnızca biyolojik beden veya yalnızca akıl olarak
-/// ele alınmaz.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum HumanDimension {
-    /// İnsanın varlıksal özü.
     Essence,
-
-    /// Ruh.
     Spirit,
-
-    /// Kalp.
     Heart,
-
-    /// Vicdan.
     Conscience,
-
-    /// Duyguların genel alanı.
     Emotion,
-
-    /// Akıl ve kavrama gücü.
     Intellect,
-
-    /// Muhakeme ve sonuç çıkarma gücü.
     Reason,
-
-    /// Geçerli çıkarım ve çelişmezlik alanı.
     Logic,
-
-    /// Ahlak ve değer alanı.
     Morality,
-
-    /// Seçme ve yönelme gücü.
     Will,
-
-    /// Niyet.
     Intention,
-
-    /// İman.
     Faith,
-
-    /// Muhabbet.
     Love,
-
-    /// Korku.
     Fear,
-
-    /// Ümit.
     Hope,
-
-    /// Hayal.
     Imagination,
-
-    /// Hafıza.
     Memory,
-
-    /// Benlik ve ene.
     Selfhood,
-
-    /// Beden.
     Body,
-
-    /// Fiil ve davranış.
     Action,
-
-    /// Sorumluluk.
     Responsibility,
 }
 
-/// Risale-i Nur yönteminin uygulandığı temel okuma alanıdır.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ReadingDomain {
-    /// Kur'an ayetlerinin okunması.
     Quran,
-
-    /// Kâinat kitabının okunması.
     Creation,
-
-    /// İnsan varlığının okunması.
     Human,
-
-    /// Fıtratın okunması.
     Fitrah,
-
-    /// Ruhun okunması.
     Spirit,
-
-    /// Kalp ve vicdanın okunması.
     HeartAndConscience,
-
-    /// Ahlakın okunması.
     Morality,
-
-    /// Toplum ve medeniyetin okunması.
     Society,
-
-    /// Tarihin okunması.
     History,
-
-    /// Bilimsel bilgi ve modellerin okunması.
     Science,
-
-    /// Hayat ve canlılığın okunması.
     Life,
-
-    /// Ölüm, ahiret ve beka ilişkisinin okunması.
     Afterlife,
-
-    /// İman hakikatlerinin bütüncül okunması.
     FaithTruths,
-
-    /// Birden çok alanın birlikte okunması.
     Integrated,
 }
 
-/// Bir Risale-i Nur yönteminin kurduğu başlıca delil veya
-/// ispat biçimidir.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum RisaleProofType {
     Quranic,
@@ -321,11 +133,6 @@ pub enum RisaleProofType {
     Integrated,
 }
 
-/// Zanistarast'ın bir Risale-i Nur yöntemini değerlendirme
-/// sürecindeki durumudur.
-///
-/// Bu durum yöntemin doğruluğunu değil, Zanistarast'ın
-/// yöntemi anlama ve uygulama durumunu gösterir.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum RisaleMethodReviewStatus {
     NotStarted,
@@ -343,9 +150,12 @@ pub enum RisaleMethodReviewStatus {
     ApplicationRequiresCorrection,
 }
 
-/// Risale-i Nur'un orijinal metnindeki kaynak kaydıdır.
-///
-/// Orijinal metin ile Zanistarast açıklaması ayrı tutulur.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RisaleReasoningOrigin {
+    OriginalRisaleMethod,
+    ZanistarastApplication,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RisaleSourceReference {
     pub work_name: String,
@@ -354,6 +164,7 @@ pub struct RisaleSourceReference {
     pub original_text: String,
     pub surrounding_context: String,
     pub edition_information: String,
+    pub original_text_verified: bool,
 }
 
 impl RisaleSourceReference {
@@ -369,45 +180,7 @@ impl RisaleSourceReference {
             original_text: String::new(),
             surrounding_context: String::new(),
             edition_information: String::new(),
-        }
-    }
-
-    pub fn with_original_text(
-        mut selfening,
-    EmotionalBalance,
-    FearHopeBalance,
-    ResponsibilityAwareness,
-    WorshipConsciousness,
-    MeaningIntegration,
-    IllusionRemoval,
-    ContradictionRemoval,
-}
-
-/// Risale-i Nur'un orijinal metnindeki bir yöntem
-/// dayanağını temsil eder.
-///
-/// Orijinal metin, Zanistarast açıklamasından ve bilimsel
-/// uzantıdan ayrı tutulur.
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RisaleMethodReference {
-    pub work_name: String,
-    pub section_reference: String,
-    pub original_text: String,
-    pub method_observation: String,
-    pub zanistarast_analysis: String,
-}
-
-impl RisaleMethodReference {
-    pub fn new(
-        work_name: impl Into<String>,
-        section_reference: impl Into<String>,
-    ) -> Self {
-        Self {
-            work_name: work_name.into(),
-            section_reference: section_reference.into(),
-            original_text: String::new(),
-            method_observation: String::new(),
-            zanistarast_analysis: String::new(),
+            original_text_verified: false,
         }
     }
 
@@ -419,32 +192,91 @@ impl RisaleMethodReference {
         self
     }
 
-    pub fn with_method_observation(
+    pub fn with_surrounding_context(
         mut self,
-        method_observation: impl Into<String>,
+        surrounding_context: impl Into<String>,
     ) -> Self {
-        self.method_observation = method_observation.into();
+        self.surrounding_context = surrounding_context.into();
         self
     }
 
-    pub fn with_zanistarast_analysis(
+    pub fn with_edition_information(
         mut self,
-        zanistarast_analysis: impl Into<String>,
+        edition_information: impl Into<String>,
     ) -> Self {
-        self.zanistarast_analysis =
-            zanistarast_analysis.into();
+        self.edition_information = edition_information.into();
+        self
+    }
+
+    pub fn mark_original_text_verified(mut self) -> Self {
+        self.original_text_verified = true;
         self
     }
 
     pub fn is_complete(&self) -> bool {
         !self.work_name.trim().is_empty()
-            && !self.section_reference.trim().is_empty()
+            && !self.section_name.trim().is_empty()
+            && !self.page_or_location.trim().is_empty()
             && !self.original_text.trim().is_empty()
-            && !self.method_observation.trim().is_empty()
+            && !self.surrounding_context.trim().is_empty()
+            && !self.edition_information.trim().is_empty()
     }
 
-    /// Orijinal Risale metni ile Zanistarast yorumunun aynı
-    /// içerik gibi kayaleProvenTruth {
+    pub fn is_verified(&self) -> bool {
+        self.is_complete() && self.original_text_verified
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RisaleReasoningStep {
+    pub order: usize,
+    pub statement: String,
+    pub explanation: String,
+    pub origin: RisaleReasoningOrigin,
+    pub source_reference_index: Option<usize>,
+}
+
+impl RisaleReasoningStep {
+    pub fn new(
+        order: usize,
+        statement: impl Into<String>,
+        explanation: impl Into<String>,
+        origin: RisaleReasoningOrigin,
+    ) -> Self {
+        Self {
+            order,
+            statement: statement.into(),
+            explanation: explanation.into(),
+            origin,
+            source_reference_index: None,
+        }
+    }
+
+    pub fn with_source_reference_index(
+        mut self,
+        source_reference_index: usize,
+    ) -> Self {
+        self.source_reference_index = Some(source_reference_index);
+        self
+    }
+
+    pub fn is_complete(&self) -> bool {
+        self.order > 0
+            && !self.statement.trim().is_empty()
+            && !self.explanation.trim().is_empty()
+    }
+
+    pub fn is_original_risale_step(&self) -> bool {
+        self.origin == RisaleReasoningOrigin::OriginalRisaleMethod
+    }
+
+    pub fn is_zanistarast_application_step(&self) -> bool {
+        self.origin == RisaleReasoningOrigin::ZanistarastApplication
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RisaleProvenTruth {
     pub name: String,
     pub description: String,
     pub related_quran_topics: Vec<String>,
@@ -496,12 +328,6 @@ impl RisaleProvenTruth {
     }
 }
 
-/// Risale-i Nur yönteminin Zanistarast bilim paradigmasına
-/// taşınan uygulamasıdır.
-///
-/// Bu kayıt yöntemin kendisi değildir. Zanistarast'ın
-/// yöntemden hareketle yaptığı insanî uygulamadır ve
-/// Rasterast denetimine açıktır.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ZanistarastMethodApplication {
     pub application_id: String,
@@ -590,8 +416,6 @@ impl ZanistarastMethodApplication {
     }
 }
 
-/// Risale-i Nur'daki tek bir kurucu yöntemin Zanistarast
-/// kayıt modelidir.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RisaleMethod {
     pub method_id: String,
@@ -750,6 +574,48 @@ impl RisaleMethod {
         self
     }
 
+    pub fn with_scientific_applications(
+        mut self,
+        applications: Vec<ZanistarastMethodApplication>,
+    ) -> Self {
+        self.scientific_applications = applications;
+        self
+    }
+
+    pub fn with_interpretation_risks(
+        mut self,
+        risks: Vec<String>,
+    ) -> Self {
+        self.interpretation_risks = risks;
+        self
+    }
+
+    pub fn with_unresolved_questions(
+        mut self,
+        questions: Vec<String>,
+    ) -> Self {
+        self.unresolved_questions = questions;
+        self
+    }
+
+    pub fn with_application_contradictions(
+        mut self,
+        contradictions: Vec<String>,
+    ) -> Self {
+        self.contradictions_in_application = contradictions;
+        self
+    }
+
+    pub fn mark_original_method_preserved(mut self) -> Self {
+        self.original_method_preserved = true;
+        self
+    }
+
+    pub fn mark_rasterast_verified(mut self) -> Self {
+        self.rasterast_verified = true;
+        self
+    }
+
     pub fn add_scientific_application(
         &mut self,
         application: ZanistarastMethodApplication,
@@ -763,71 +629,90 @@ impl RisaleMethod {
             && !self.description.trim().is_empty()
     }
 
-    /// Risale-i Nur yönteminin Kur'an'ın vahiy statüsüyle
-    /// karıştırılmadığını denetler.
     pub fn preserves_revelation_distinction(&self) -> bool {
         !self.authority.is_revelation()
     }
 
-    /// Risale-i Nur yöntemının Risale-i Nur'un
-    /// orijinal metni gibi sunulup sunulmadığını denetler.
-    pub fn separates_risale_from_zanistarast(&self) -> bool {
-        self.source_references.iter().all(
-            RisaleMethodReference::
-                separates_original_from_zanistarast,
-        )
+    pub fn preserves_binding_method_authority(&self) -> bool {
+        self.authority.is_binding()
     }
 
-    /// Bilimsel uzantıların Risale-i Nur'un doğrudan hükmü
-    /// olarak sunulmaması için kaynak temelinin varlığını
-    /// denetler.
-    pub fn scientific_extension_has_method_basis(&self) -> bool {
-        self.scientific_extensions.is_empty()
-            || self.has_source_basis()
+    pub fn has_verified_original_sources(&self) -> bool {
+        !self.source_references.is_empty()
+            && self
+                .source_references
+                .iter()
+                .all(RisaleSourceReference::is_verified)
     }
 
-    /// Yöntemin insanı yalnız akıl veya beden boyutuna
-    /// indirgemediğini denetler.
-    pub fn has_integrated_human_scope(&self) -> bool {
-        if self.reads_domain(ReadingDomain::Human) {
-            let has_non_physical_dimension =
-                self.addressed_dimensions.iter().any(|dimension| {
-                    !matches!(dimension, HumanDimension::Body)
-                });
-
-            let has_inner_dimension =
-                self.addressed_dimensions.iter().any(|dimension| {
-                    matches!(
-                        dimension,
-                        HumanDimension::Essence
-                            | HumanDimension::Spirit
-                            | HumanDimension::Heart
-                            | HumanDimension::Conscience
-                            | HumanDimension::Emotion
-                            | HumanDimension::Faith
-                    )
-                });
-
-            has_non_physical_dimension && has_inner_dimension
-        } else {
-            true
+    pub fn has_valid_reasoning_steps(&self) -> bool {
+        if self.reasoning_steps.is_empty() {
+            return false;
         }
+
+        if !self
+            .reasoning_steps
+            .iter()
+            .all(RisaleReasoningStep::is_complete)
+        {
+            return false;
+        }
+
+        let mut orders: Vec<usize> = self
+            .reasoning_steps
+            .iter()
+            .map(|step| step.order)
+            .collect();
+
+        orders.sort_unstable();
+        orders.dedup();
+
+        orders.len() == self.reasoning_steps.len()
     }
 
-    pub fn invalid_applications(
-        &self,
-    ) -> Vec<&RisaleMethodApplication> {
-        self.applications
+pub fn has_original_risale_reasoning_step(&self) -> bool {
+        self.reasoning_steps
             .iter()
-            .filter(|application| !applicationemin doğru
-    /// sınıflandırıldığına ve doğru aktarıldığına karar
-    /// verilmesi için kullanılan koşuldur.
+            .any(RisaleReasoningStep::is_original_risale_step)
+    }
+
+    pub fn separates_source_method_from_zanistarast_additions(
+        &self,
+    ) -> bool {
+        self.reasoning_steps.iter().all(|step| match step.origin {
+            RisaleReasoningOrigin::OriginalRisaleMethod => {
+                step.source_reference_index
+                    .map(|index| index < self.source_references.len())
+                    .unwrap_or(false)
+            }
+            RisaleReasoningOrigin::ZanistarastApplication => true,
+        })
+    }
+
+    pub fn has_unresolved_application_issues(&self) -> bool {
+        !self.interpretation_risks.is_empty()
+            || !self.unresolved_questions.is_empty()
+            || !self.contradictions_in_application.is_empty()
+    }
+
+    pub fn application_may_require_correction(&self) -> bool {
+        self.has_unresolved_application_issues()
+            || self
+                .scientific_applications
+                .iter()
+                .any(|application| {
+                    !application.source_method_preserved
+                        || !application.rasterast_verified
+                })
+    }
+
     pub fn can_be_registered_as_verified_method(&self) -> bool {
         self.is_identity_complete()
             && self.preserves_revelation_distinction()
             && self.preserves_binding_method_authority()
             && self.has_verified_original_sources()
             && self.has_valid_reasoning_steps()
+            && self.has_original_risale_reasoning_step()
             && self
                 .separates_source_method_from_zanistarast_additions()
             && !self.has_unresolved_application_issues()
@@ -840,14 +725,10 @@ impl RisaleMethod {
         self.is_identity_complete()
             && self.preserves_revelation_distinction()
             && self.preserves_binding_method_authority()
-            && self
-                .separates_source_method_from_zanistarast_additions()
             && self.requires_mudebbir_decision
     }
 }
 
-/// Birden fazla Risale-i Nur yöntemini birlikte tutan
-/// yöntem haritasıdır.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct RisaleMethodMap {
     pub map_id: String,
@@ -867,7 +748,10 @@ impl RisaleMethodMap {
         }
     }
 
-    pub fn with_methods(mut self, methods: Vec<RisaleMethod>) -> Self {
+    pub fn with_methods(
+        mut self,
+        methods: Vec<RisaleMethod>,
+    ) -> Self {
         self.methods = methods;
         self
     }
@@ -876,7 +760,10 @@ impl RisaleMethodMap {
         self.methods.push(method);
     }
 
-    pub fn find_method(&self, method_id: &str) -> Option<&RisaleMethod> {
+    pub fn find_method(
+        &self,
+        method_id: &str,
+    ) -> Option<&RisaleMethod> {
         self.methods
             .iter()
             .find(|method| method.method_id == method_id)
@@ -904,6 +791,18 @@ impl RisaleMethodMap {
             .collect()
     }
 
+    pub fn methods_by_reading_domain(
+        &self,
+        reading_domain: ReadingDomain,
+    ) -> Vec<&RisaleMethod> {
+        self.methods
+            .iter()
+            .filter(|method| {
+                method.reading_domain == reading_domain
+            })
+            .collect()
+    }
+
     pub fn verified_method_count(&self) -> usize {
         self.methods
             .iter()
@@ -927,7 +826,9 @@ impl RisaleMethodMap {
     pub fn invalid_methods(&self) -> Vec<&RisaleMethod> {
         self.methods
             .iter()
-            .filter(|method| !method.is_constitutionally_valid())
+            .filter(|method| {
+                !method.is_constitutionally_valid()
+            })
             .collect()
     }
 
@@ -958,6 +859,7 @@ mod tests {
         .with_edition_information(
             "Doğrulanmış orijinal metin bilgisi.",
         )
+        .mark_original_text_verified()
     }
 
     fn source_reasoning_step() -> RisaleReasoningStep {
@@ -965,7 +867,9 @@ mod tests {
             1,
             "Eserde görülen düzen ve ölçü tespit edilir.",
             "Bu adım Risale-i Nur'daki kâinat okuma yöntemine dayanır.",
+            RisaleReasoningOrigin::OriginalRisaleMethod,
         )
+        .with_source_reference_index(0)
     }
 
     fn zanistarast_reasoning_step() -> RisaleReasoningStep {
@@ -973,8 +877,8 @@ mod tests {
             2,
             "Yöntem çağdaş bir bilimsel modele uygulanır.",
             "Bu adım Zanistarast'ın yöntem uygulamasıdır.",
+            RisaleReasoningOrigin::ZanistarastApplication,
         )
-        .mark_as_zanistarast_addition()
     }
 
     fn proven_truth() -> RisaleProvenTruth {
@@ -1018,12 +922,16 @@ mod tests {
             HumanDimension::Logic,
             HumanDimension::Heart,
         ])
-        .with_source_references(vec![source_reference()])
+        .with_source_references(vec![
+            source_reference(),
+        ])
         .with_reasoning_steps(vec![
             source_reasoning_step(),
             zanistarast_reasoning_step(),
         ])
-        .with_proven_truths(vec![proven_truth()])
+        .with_proven_truths(vec![
+            proven_truth(),
+        ])
         .with_related_quran_topics(vec![
             "Tevhid".to_string(),
             "Hikmet".to_string(),
@@ -1040,7 +948,7 @@ mod tests {
                 .to_string(),
         ])
         .with_zanistarast_interpretation(
-            "Bu yöntem Zanistarast bilim paradigmasında fizik, hayat ve insan alanlarına uygulanacaktır.",
+            "Bu yöntem fizik, hayat ve insan alanlarına uygulanacaktır.",
         )
         .mark_original_method_preserved()
         .mark_rasterast_verified()
@@ -1066,7 +974,9 @@ mod tests {
             ReadingDomain::FaithTruths,
             RisaleProofType::Representative,
         )
-        .with_reasoning_steps(vec![source_reasoning_step()])
+        .with_reasoning_steps(vec![
+            source_reasoning_step(),
+        ])
         .mark_original_method_preserved()
         .mark_rasterast_verified();
 
@@ -1085,11 +995,16 @@ mod tests {
     }
 
     #[test]
-    fn reasoning_step_cannot_have_two_origins() {
-        let mut step = source_reasoning_step();
-        step.zanistarast_added = true;
+    fn source_step_requires_valid_reference_index() {
+        let mut method = complete_method();
 
-        assert!(!step.has_valid_origin_marking());
+        method.reasoning_steps[0].source_reference_index =
+            Some(99);
+
+        assert!(
+            !method
+                .separates_source_method_from_zanistarast_additions()
+        );
     }
 
     #[test]
@@ -1097,62 +1012,70 @@ mod tests {
         let method = complete_method();
 
         assert!(method.is_constitutionally_valid());
-        assert!(method.can_be_registered_as_verified_method());
+        assert!(
+            method.can_be_registered_as_verified_method()
+        );
         assert!(method.requires_mudebbir_decision);
     }
 
     #[test]
-    fn unresolved_application_issue_blocks_registration() {
+    fn unresolved_issue_blocks_registration() {
         let method = complete_method()
             .with_interpretation_risks(vec![
-                "Yöntemin bilimsel alana aktarımı yeniden incelenmelidir."
+                "Bilimsel aktarım yeniden incelenmelidir."
                     .to_string(),
             ]);
 
         assert!(method.application_may_require_correction());
-        assert!(!method.can_be_registered_as_verified_method());
+        assert!(
+            !method.can_be_registered_as_verified_method()
+        );
     }
 
     #[test]
     fn scientific_application_remains_reviewable() {
-        let application = ZanistarastMethodApplication::new(
-            "application-001",
-            "Biyoloji",
-            "Canlılığı yalnızca maddi süreçlere indirgemeyen bütüncül model.",
-        )
-        .with_applied_method_description(
-            "Kâinat kitabı, hikmet ve insan okuma yöntemleri biyolojiye uygulanır.",
-        )
-        .mark_source_method_preserved();
+        let application =
+            ZanistarastMethodApplication::new(
+                "application-001",
+                "Biyoloji",
+                "Canlılığı yalnızca maddi süreçlere indirgemeyen model.",
+            )
+            .with_applied_method_description(
+                "Kâinat kitabı ve hikmet okuma yöntemi biyolojiye uygulanır.",
+            )
+            .mark_source_method_preserved();
 
         assert!(application.is_complete());
         assert!(!application.can_be_approved());
     }
 
     #[test]
-    fn scientific_application_requires_rasterast_and_mudebbir_gate() {
-        let application = ZanistarastMethodApplication::new(
-            "application-002",
-            "İnsan bilimi",
-            "Öz, ruh, duygu, akıl, ahlak ve beden bütünlüğü modeli.",
-        )
-        .with_applied_method_description(
-            "İnsan okuma, fıtrat, vicdan ve iman-akıl bütünlüğü yöntemleri uygulanır.",
-        )
-        .mark_source_method_preserved()
-        .mark_rasterast_verified();
+    fn scientific_application_requires_rasterast() {
+        let application =
+            ZanistarastMethodApplication::new(
+                "application-002",
+                "İnsan bilimi",
+                "Öz, ruh, duygu, akıl ve beden bütünlüğü modeli.",
+            )
+            .with_applied_method_description(
+                "İnsan, fıtrat ve vicdan okuma yöntemleri uygulanır.",
+            )
+            .mark_source_method_preserved()
+            .mark_rasterast_verified();
 
         assert!(application.can_be_approved());
         assert!(application.requires_mudebbir_decision);
     }
 
     #[test]
-    fn method_map_finds_methods_by_human_dimension() {
+    fn method_map_finds_method_by_dimension() {
         let map = RisaleMethodMap::new(
             "risale-map-001",
             "Risale-i Nur Kurucu Yöntem Haritası",
         )
-        .with_methods(vec![complete_method()]);
+        .with_methods(vec![
+            complete_method(),
+        ]);
 
         let methods =
             map.methods_for_dimension(HumanDimension::Heart);
@@ -1163,18 +1086,27 @@ mod tests {
     }
 
     #[test]
-    fn rasterast_reviews_application_not_method_truth() {
+    fn application_problem_does_not_remove_method_authority() {
         let method = complete_method()
             .with_application_contradictions(vec![
-                "Zanistarast uygulamasında yöntem dışı bir çıkarım tespit edildi."
+                "Zanistarast uygulamasında yöntem dışı çıkarım."
                     .to_string(),
             ]);
 
         assert!(method.preserves_binding_method_authority());
         assert!(method.application_may_require_correction());
-        assert!(!method.can_be_registered_as_verified_method());
+        assert!(
+            !method.can_be_registered_as_verified_method()
+        );
     }
 }
+
+
+
+
+
+   
+   
 
 
 
