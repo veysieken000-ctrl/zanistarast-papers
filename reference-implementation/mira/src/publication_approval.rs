@@ -479,7 +479,7 @@ mod tests {
         );
 
         let service =
-            DefaultPublicationApprovalService::default();
+    DefaultPublicationApprovalService;
 
         let result =
             service.approve(&request, record.clone());
@@ -510,8 +510,8 @@ mod tests {
             None,
         );
 
-        let service =
-            DefaultPublicationApprovalService::default();
+       let service =
+    DefaultPublicationApprovalService; 
 
         let result =
             service.approve(&request, record);
