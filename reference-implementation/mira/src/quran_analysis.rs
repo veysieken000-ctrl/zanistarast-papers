@@ -1,161 +1,198 @@
-/// Kur'an ayetinin insan tarafından analiz edilme sürecinin
-/// mevcut durumudur.
-///
-/// Bu durum Kur'an'ın doğruluk durumunu değil, insan
-/// analizinin tamamlanma ve doğrulanma durumunu gösterir.
+//! Kur'an-ı Kerim analiz modeli.
+//!
+//! Bu modül Kur'an-ı Kerim'in vahiy statüsü ile
+//! Zanistarast tarafından yapılan insanî analiz ve
+//! açıklamayı birbirinden ayırır.
+//!
+//! Kur'an-ı Kerim mutlak vahyî hakikattir.
+//! İnsan tarafından yapılan meal, yorum, açıklama,
+//! sınıflandırma ve bilimsel ilişkilendirmeler ise
+//! denetlenebilir ve düzeltilebilir çalışmalardır.
+//!
+//! Risale-i Nur'un kurucu akıl, mantık ve ispat
+//! yöntemleri yalnızca doğrulanmış yöntem bağlantısı
+//! üzerinden kullanılabilir.
+//!
+//! Rasterast Kur'an-ı Kerim'i değil, insanın kaynak
+//! kullanımını, yorumunu, çıkarımını ve uygulamasını
+//! denetler.
+//!
+//! Nihai karar Müdebbir'e aittir.
+
+use crate::{
+    ProofPath,
+    ProofPathKind,
+    RisaleMethodBinding,
+    TruthFoundation,
+};
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum QuranAnalysisType {
+    DirectVerseAnalysis,
+    MultiVerseAnalysis,
+    ConceptAnalysis,
+    ThemeAnalysis,
+    LinguisticAnalysis,
+    ContextualAnalysis,
+    CreationBookRelation,
+    FitrahRelation,
+    ScientificRelation,
+    HistoricalRelation,
+    ComparativeAnalysis,
+    RisaleMethodAnalysis,
+    ZanistarastSynthesis,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum QuranAnalysisStatus {
-    NotStarted,
-    InProgress,
-    RequiresMoreEvidence,
-    RequiresArabicReview,
-    RequiresLinguisticReview,
-    RequiresContextReview,
-    RequiresRelatedVerseReview,
-    RequiresRisaleReview,
-    RequiresHadithReview,
-    RequiresCreationBookReview,
-    RequiresFitrahReview,
-    RequiresRationalReview,
-    RequiresRasterastReview,
-    AwaitingMudebbirDecision,
-    Completed,
+    Draft,
+    SourceReview,
+    AnalysisReview,
+    AwaitingRasterast,
+    RasterastVerified,
+    RequiresRevision,
+    AwaitingMudebbir,
+    Approved,
+    Rejected,
+    Archived,
 }
 
-/// Kur'an analizinde uygulanabilecek temel kontrol
-/// alanlarıdır.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum QuranReviewArea {
-    ArabicOriginalText,
-    VerseReference,
-    Translation,
-    RootAnalysis,
-    Grammar,
-    SemanticRange,
-    ImmediateContext,
-    SurahContext,
-    QuranicWhole,
-    RelatedVerses,
-    RevelationContext,
-    AuthenticHadith,
-    RisaleNurOriginalText,
-    ClassicalTafsir,
-    ContemporaryTafsir,
-    CreationBook,
-    Fitrah,
-    Reason,
-    Logic,
-    Observation,
-    Experiment,
-    Mathematics,
-    ZanistarastInterpretation,
-}
-
-/// Bir ayete ilişkin insan yorumunun güven durumudur.
-///
-/// Ayetin hakikat statüsü ile insan yorumunun güven seviyesi
-/// birbirinden ayrıdır.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum InterpretationConfidence {
-    /// Ayetin açık lafzına doğrudan dayanır.
-    ExplicitText,
+pub enum QuranStatementStatus {
+    /// Kur'an-ı Kerim'in açık bildirimi.
+    RevealedStatement,
 
-    /// Ayet bütünlüğü, dil ve güçlü kaynaklarla sağlam
-    /// biçimde desteklenir.
-    StronglyGrounded,
+    /// Ayetlerden insan tarafından çıkarılan doğrudan
+    /// anlam veya açıklama.
+    HumanInterpretation,
 
-    /// Makul delillere dayanır; başka yorumlar mümkündür.
-    Probable,
+    /// Ayetlerle ilişkilendirilen insanî araştırma sonucu.
+    HumanResearchRelation,
 
-    /// Ek dilsel, bağlamsal veya kaynak araştırması gerekir.
-    NeedsReview,
-
-    /// Mevcut çıkarım ayetin anlamını aşmaktadır.
-    Overextended,
-
-    /// Kaynak ve bağlamla çelişen insan yorumu.
-    RejectedInterpretation,
+    /// Zanistarast tarafından önerilen ve denetlenebilir
+    /// sentez veya model.
+    ZanistarastSynthesis,
 }
 
-/// Ayet analizindeki tek bir kontrolün sonucudur.
+impl QuranStatementStatus {
+    pub fn is_revealed(self) -> bool {
+        self == Self::RevealedStatement
+    }
+
+    pub fn is_humanly_fallible(self) -> bool {
+        matches!(
+            self,
+            Self::HumanInterpretation
+                | Self::HumanResearchRelation
+                | Self::ZanistarastSynthesis
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QuranSourceVerificationStatus {
+    Unverified,
+    ReferenceVerified,
+    TextVerified,
+    FullyVerified,
+    Rejected,
+}
+
+impl QuranSourceVerificationStatus {
+    pub fn is_verified(self) -> bool {
+        self == Self::FullyVerified
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum QuranAnalysisLimitationKind {
+    MissingSource,
+    UnverifiedVerseText,
+    TranslationDependency,
+    LinguisticAmbiguity,
+    ContextInsufficient,
+    InterpretationDifference,
+    LogicalGap,
+    UnsupportedInference,
+    ScientificOverreach,
+    HistoricalUncertainty,
+    RisaleMethodBindingMissing,
+    RisaleSourceUnverified,
+    CategoryError,
+    ScopeError,
+    Unknown,
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct QuranReviewFinding {
-    pub area: QuranReviewArea,
-    pub reviewed: bool,
-    pub finding: String,
-    pub risks: Vec<String>,
-    pub open_questions: Vec<String>,
+pub struct QuranVerseReference {
+    pub surah_number: u16,
+    pub verse_number: u16,
+    pub reference_label: String,
 }
 
-impl QuranReviewFinding {
+impl QuranVerseReference {
     pub fn new(
-        area: QuranReviewArea,
-        finding: impl Into<String>,
+        surah_number: u16,
+        verse_number: u16,
     ) -> Self {
         Self {
-            area,
-            reviewed: false,
-            finding: finding.into(),
-            risks: Vec::new(),
-            open_questions: Vec::new(),
+            surah_number,
+            verse_number,
+            reference_label: String::new(),
         }
     }
 
-    pub fn mark_reviewed(mut self) -> Self {
-        self.reviewed = true;
-        self
-    }
-
-    pub fn with_risks(mut self, risks: Vec<String>) -> Self {
-        self.risks = risks;
-        self
-    }
-
-    pub fn with_open_questions(
+    pub fn with_reference_label(
         mut self,
-        open_questions: Vec<String>,
+        reference_label: impl Into<String>,
     ) -> Self {
-        self.open_questions = open_questions;
+        self.reference_label = reference_label.into();
         self
     }
 
-    pub fn is_complete(&self) -> bool {
-        !self.finding.trim().is_empty()
-    }
-
-    pub fn has_unresolved_items(&self) -> bool {
-        !self.risks.is_empty() || !self.open_questions.is_empty()
+    pub fn is_valid(&self) -> bool {
+        self.surah_number >= 1
+            && self.surah_number <= 114
+            && self.verse_number >= 1
     }
 }
 
-/// Risale-i Nur'un orijinal metninden yapılan bir analiz
-/// kaydıdır.
-///
-/// Risale-i Nur, Kur'an ile özdeşleştirilmez; Kur'an'ın
-/// okunması ve ispat yollarının anlaşılması bakımından
-/// başlıca yorum ve yöntem referansı olarak incelenir.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RisaleAnalysisReference {
-    pub work_name: String,
-    pub section_reference: String,
+pub struct QuranSourceRecord {
+    pub source_id: String,
+    pub verse_reference: QuranVerseReference,
+
+    /// Kur'an-ı Kerim'in kaynak kaydında kullanılan
+    /// Arapça ayet metnidir.
     pub original_text: String,
-    pub proof_method: String,
-    pub zanistarast_analysis: String,
-    pub interpretation_risks: Vec<String>,
+
+    /// Kullanılan meal veya anlam aktarımıdır.
+    ///
+    /// Bu alan vahyin kendisi değil, insan tarafından
+    /// yapılan anlam aktarımıdır.
+    pub translation_text: String,
+
+    /// Meal veya tercümenin kaynak bilgisidir.
+    pub translation_source: String,
+
+    pub verification_status: QuranSourceVerificationStatus,
+    pub source_notes: Vec<String>,
 }
 
-impl RisaleAnalysisReference {
+impl QuranSourceRecord {
     pub fn new(
-        work_name: impl Into<String>,
-        section_reference: impl Into<String>,
+        source_id: impl Into<String>,
+        verse_reference: QuranVerseReference,
     ) -> Self {
         Self {
-            work_name: work_name.into(),
-            section_reference: section_reference.into(),
+            source_id: source_id.into(),
+            verse_reference,
             original_text: String::new(),
-            proof_method: String::new(),
-            zanistarast_analysis: String::new(),
-            interpretation_risks: Vec::new(),
+            translation_text: String::new(),
+            translation_source: String::new(),
+            verification_status:
+                QuranSourceVerificationStatus::Unverified,
+            source_notes: Vec::new(),
         }
     }
 
@@ -167,220 +204,244 @@ impl RisaleAnalysisReference {
         self
     }
 
-    pub fn with_proof_method(
+    pub fn with_translation(
         mut self,
-        proof_method: impl Into<String>,
+        translation_text: impl Into<String>,
+        translation_source: impl Into<String>,
     ) -> Self {
-        self.proof_method = proof_method.into();
+        self.translation_text = translation_text.into();
+        self.translation_source = translation_source.into();
         self
     }
 
-    pub fn with_zanistarast_analysis(
+    pub fn with_verification_status(
         mut self,
-        zanistarast_analysis: impl Into<String>,
+        verification_status: QuranSourceVerificationStatus,
     ) -> Self {
-        self.zanistarast_analysis =
-            zanistarast_analysis.into();
+        self.verification_status = verification_status;
         self
     }
 
-    pub fn with_interpretation_risks(
+    pub fn with_source_notes(
         mut self,
-        interpretation_risks: Vec<String>,
+        source_notes: Vec<String>,
     ) -> Self {
-        self.interpretation_risks = interpretation_risks;
+        self.source_notes = source_notes;
         self
     }
 
     pub fn is_complete(&self) -> bool {
-        !self.work_name.trim().is_empty()
-            && !self.section_reference.trim().is_empty()
+        !self.source_id.trim().is_empty()
+            && self.verse_reference.is_valid()
             && !self.original_text.trim().is_empty()
     }
 
-    pub fn separates_original_from_analysis(&self) -> bool {
-        self.zanistarast_analysis.trim().is_empty()
-            || self.original_text.trim()
-                != self.zanistarast_analysis.trim()
+    pub fn can_be_used_as_verified_source(&self) -> bool {
+        self.is_complete()
+            && self.verification_status.is_verified()
+    }
+
+    pub fn translation_is_separate_from_revelation(&self) -> bool {
+        self.translation_text.trim().is_empty()
+            || self.translation_text.trim()
+                != self.original_text.trim()
     }
 }
 
-/// Ayetle ilişkilendirilen hadis kaydıdır.
-///
-/// Hadislerin sıhhat değerlendirmesi insan ilmî çalışmasına
-/// dayandığı için kaynak ve sıhhat bilgisi ayrıca tutulur.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub struct QuranHadithReference {
-    pub reference: String,
-    pub text: String,
-    pub authenticity_grade: String,
-    pub authenticity_source: String,
-    pub relation_to_verse: String,
-    pub review_notes: Vec<String>,
+pub struct QuranAnalysisLimitation {
+    pub kind: QuranAnalysisLimitationKind,
+    pub description: String,
+    pub proposed_correction: String,
 }
 
-impl QuranHadithReference {
+impl QuranAnalysisLimitation {
     pub fn new(
-        reference: impl Into<String>,
-        authenticity_grade: impl Into<String>,
+        kind: QuranAnalysisLimitationKind,
+        description: impl Into<String>,
     ) -> Self {
         Self {
-            reference: reference.into(),
-            text: String::new(),
-            authenticity_grade: authenticity_grade.into(),
-            authenticity_source: String::new(),
-            relation_to_verse: String::new(),
-            review_notes: Vec::new(),
+            kind,
+            description: description.into(),
+            proposed_correction: String::new(),
         }
     }
 
-    pub fn with_text(mut self, text: impl Into<String>) -> Self {
-        self.text = text.into();
-        self
-    }
-
-    pub fn with_authenticity_source(
+    pub fn with_proposed_correction(
         mut self,
-        authenticity_source: impl Into<String>,
+        proposed_correction: impl Into<String>,
     ) -> Self {
-        self.authenticity_source =
-            authenticity_source.into();
-        self
-    }
-
-    pub fn with_relation_to_verse(
-        mut self,
-        relation_to_verse: impl Into<String>,
-    ) -> Self {
-        self.relation_to_verse =
-            relation_to_verse.into();
-        self
-    }
-
-    pub fn with_review_notes(
-        mut self,
-        review_notes: Vec<String>,
-    ) -> Self {
-        self.review_notes = review_notes;
+        self.proposed_correction =
+            proposed_correction.into();
         self
     }
 
     pub fn is_complete(&self) -> bool {
-        !self.reference.trim().is_empty()
-            && !self.text.trim().is_empty()
-            && !self.authenticity_grade.trim().is_empty()
-            && !self.authenticity_source.trim().is_empty()
+        !self.description.trim().is_empty()
+    }
+
+    pub fn has_correction_path(&self) -> bool {
+        !self.proposed_correction.trim().is_empty()
     }
 }
 
-/// Kur'an-ı Kerim'deki bir ayetin insan tarafından yapılan
-/// analiz kaydıdır.
-///
-/// Bu yapı Kur'an'ın doğruluğunu sınamaz. Ayetin metninin,
-/// bağlamının ve insan yorumunun doğru ele alınıp
-/// alınmadığını denetler.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QuranAnalysisStatement {
+    pub statement_id: String,
+    pub status: QuranStatementStatus,
+    pub statement: String,
+
+    /// Bu hükmün dayandığı kaynak kayıtlarının
+    /// kimlikleridir.
+    pub source_ids: Vec<String>,
+
+    /// İnsan tarafından kurulan açıklama ve çıkarım
+    /// basamaklarıdır.
+    pub reasoning_steps: Vec<String>,
+
+    /// Açıklamanın kesinlik veya kapsam sınırlarıdır.
+    pub limitations: Vec<String>,
+}
+
+impl QuranAnalysisStatement {
+    pub fn new(
+        statement_id: impl Into<String>,
+        status: QuranStatementStatus,
+        statement: impl Into<String>,
+    ) -> Self {
+        Self {
+            statement_id: statement_id.into(),
+            status,
+            statement: statement.into(),
+            source_ids: Vec::new(),
+            reasoning_steps: Vec::new(),
+            limitations: Vec::new(),
+        }
+    }
+
+    pub fn with_source_ids(
+        mut self,
+        source_ids: Vec<String>,
+    ) -> Self {
+        self.source_ids = source_ids;
+        self
+    }
+
+    pub fn with_reasoning_steps(
+        mut self,
+        reasoning_steps: Vec<String>,
+    ) -> Self {
+        self.reasoning_steps = reasoning_steps;
+        self
+    }
+
+    pub fn with_limitations(
+        mut self,
+        limitations: Vec<String>,
+    ) -> Self {
+        self.limitations = limitations;
+        self
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.statement_id.trim().is_empty()
+            && !self.statement.trim().is_empty()
+            && self
+                .source_ids
+                .iter()
+                .all(|item| !item.trim().is_empty())
+            && self
+                .reasoning_steps
+                .iter()
+                .all(|item| !item.trim().is_empty())
+            && self
+                .limitations
+                .iter()
+                .all(|item| !item.trim().is_empty())
+    }
+
+    /// Vahyî bildirimin insan yorumu gibi
+    /// etiketlenmesini engelleyen temel ayrımdır.
+    pub fn preserves_statement_status(&self) -> bool {
+        if self.status.is_revealed() {
+            self.reasoning_steps.is_empty()
+                && self.limitations.is_empty()
+        } else {
+            true
+        }
+    }
+
+    /// İnsan yorumunun vahyin kendisi gibi
+    /// sunulmasını engeller.
+    pub fn human_statement_remains_fallible(&self) -> bool {
+        self.status.is_humanly_fallible()
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuranAnalysis {
     pub analysis_id: String,
-    pub verse_reference: String,
-    pub arabic_text: String,
-    pub verified_translation: String,
-    pub topic: String,
+    pub title: String,
+    pub subject: String,
+    pub analysis_type: QuranAnalysisType,
     pub status: QuranAnalysisStatus,
-    pub interpretation_confidence: InterpretationConfidence,
 
-    pub immediate_context: Vec<String>,
-    pub related_verses: Vec<String>,
-    pub linguistic_notes: Vec<String>,
-    pub root_analysis: Vec<String>,
-    pub semantic_alternatives: Vec<String>,
-    pub revelation_context: Vec<String>,
+    /// Bu analizin dayandığı Kur'an hakikat temelidir.
+    ///
+    /// Temel kaydı başka modülde korunur; burada
+    /// değiştirilmez.
+    pub foundation: TruthFoundation,
 
-    pub related_hadiths: Vec<QuranHadithReference>,
-    pub risale_references: Vec<RisaleAnalysisReference>,
+    /// Kullanılan Kur'an kaynaklarıdır.
+    pub sources: Vec<QuranSourceRecord>,
 
-    pub creation_book_observations: Vec<String>,
-    pub fitrah_evidence: Vec<String>,
-    pub rational_arguments: Vec<String>,
-    pub logical_arguments: Vec<String>,
-    pub mathematical_models: Vec<String>,
-    pub empirical_research: Vec<String>,
+    /// Vahyî bildirimler ile insanî açıklamalar ayrı
+    /// kayıtlar olarak tutulur.
+    pub statements: Vec<QuranAnalysisStatement>,
 
-    pub human_interpretation: String,
-    pub zanistarast_interpretation: String,
+    /// Analizde kullanılan farklı ispat yollarıdır.
+    pub proof_paths: Vec<ProofPath>,
+
+    /// Analizde Risale-i Nur yöntemi kullanılıyorsa
+    /// doğrulanmış yöntem bağlantısıdır.
+    pub risale_method_binding: Option<RisaleMethodBinding>,
+
+    pub limitations: Vec<QuranAnalysisLimitation>,
     pub alternative_interpretations: Vec<String>,
-    pub review_findings: Vec<QuranReviewFinding>,
 
-    pub contradictions: Vec<String>,
-    pub interpretation_risks: Vec<String>,
-    pub open_questions: Vec<String>,
-
+    /// Rasterast'ın Kur'an'ı değil, bu insanî analiz
+    /// kaydını doğruladığını gösterir.
     pub rasterast_verified: bool,
+
+    /// Analizin nihai karar için Müdebbir'e sunulması
+    /// gerektiğini gösterir.
     pub requires_mudebbir_decision: bool,
 }
 
 impl QuranAnalysis {
     pub fn new(
         analysis_id: impl Into<String>,
-        verse_reference: impl Into<String>,
-        topic: impl Into<String>,
+        title: impl Into<String>,
+        subject: impl Into<String>,
+        analysis_type: QuranAnalysisType,
+        foundation: TruthFoundation,
     ) -> Self {
         Self {
             analysis_id: analysis_id.into(),
-            verse_reference: verse_reference.into(),
-            arabic_text: String::new(),
-            verified_translation: String::new(),
-            topic: topic.into(),
-            status: QuranAnalysisStatus::NotStarted,
-            interpretation_confidence:
-                InterpretationConfidence::NeedsReview,
-
-            immediate_context: Vec::new(),
-            related_verses: Vec::new(),
-            linguistic_notes: Vec::new(),
-            root_analysis: Vec::new(),
-            semantic_alternatives: Vec::new(),
-            revelation_context: Vec::new(),
-
-            related_hadiths: Vec::new(),
-            risale_references: Vec::new(),
-
-            creation_book_observations: Vec::new(),
-            fitrah_evidence: Vec::new(),
-            rational_arguments: Vec::new(),
-            logical_arguments: Vec::new(),
-            mathematical_models: Vec::new(),
-            empirical_research: Vec::new(),
-
-            human_interpretation: String::new(),
-            zanistarast_interpretation: String::new(),
+            title: title.into(),
+            subject: subject.into(),
+            analysis_type,
+            status: QuranAnalysisStatus::Draft,
+            foundation,
+            sources: Vec::new(),
+            statements: Vec::new(),
+            proof_paths: Vec::new(),
+            risale_method_binding: None,
+            limitations: Vec::new(),
             alternative_interpretations: Vec::new(),
-            review_findings: Vec::new(),
-
-            contradictions: Vec::new(),
-            interpretation_risks: Vec::new(),
-            open_questions: Vec::new(),
-
             rasterast_verified: false,
             requires_mudebbir_decision: true,
         }
-    }
-
-    pub fn with_arabic_text(
-        mut self,
-        arabic_text: impl Into<String>,
-    ) -> Self {
-        self.arabic_text = arabic_text.into();
-        self
-    }
-
-    pub fn with_verified_translation(
-        mut self,
-        verified_translation: impl Into<String>,
-    ) -> Self {
-        self.verified_translation =
-            verified_translation.into();
-        self
     }
 
     pub fn with_status(
@@ -391,143 +452,44 @@ impl QuranAnalysis {
         self
     }
 
-    pub fn with_interpretation_confidence(
+    pub fn with_sources(
         mut self,
-        interpretation_confidence: InterpretationConfidence,
+        sources: Vec<QuranSourceRecord>,
     ) -> Self {
-        self.interpretation_confidence =
-            interpretation_confidence;
+        self.sources = sources;
         self
     }
 
-    pub fn with_immediate_context(
+    pub fn with_statements(
         mut self,
-        immediate_context: Vec<String>,
+        statements: Vec<QuranAnalysisStatement>,
     ) -> Self {
-        self.immediate_context = immediate_context;
+        self.statements = statements;
         self
     }
 
-    pub fn with_related_verses(
+    pub fn with_proof_paths(
         mut self,
-        related_verses: Vec<String>,
+        proof_paths: Vec<ProofPath>,
     ) -> Self {
-        self.related_verses = related_verses;
+        self.proof_paths = proof_paths;
         self
     }
 
-    pub fn with_linguistic_notes(
+    pub fn with_risale_method_binding(
         mut self,
-        linguistic_notes: Vec<String>,
+        risale_method_binding: RisaleMethodBinding,
     ) -> Self {
-        self.linguistic_notes = linguistic_notes;
+        self.risale_method_binding =
+            Some(risale_method_binding);
         self
     }
 
-    pub fn with_root_analysis(
+    pub fn with_limitations(
         mut self,
-        root_analysis: Vec<String>,
+        limitations: Vec<QuranAnalysisLimitation>,
     ) -> Self {
-        self.root_analysis = root_analysis;
-        self
-    }
-
-    pub fn with_semantic_alternatives(
-        mut self,
-        semantic_alternatives: Vec<String>,
-    ) -> Self {
-        self.semantic_alternatives =
-            semantic_alternatives;
-        self
-    }
-
-    pub fn with_revelation_context(
-        mut self,
-        revelation_context: Vec<String>,
-    ) -> Self {
-        self.revelation_context = revelation_context;
-        self
-    }
-
-    pub fn with_related_hadiths(
-        mut self,
-        related_hadiths: Vec<QuranHadithReference>,
-    ) -> Self {
-        self.related_hadiths = related_hadiths;
-        self
-    }
-
-    pub fn with_risale_references(
-        mut self,
-        risale_references: Vec<RisaleAnalysisReference>,
-    ) -> Self {
-        self.risale_references = risale_references;
-        self
-    }
-
-    pub fn with_creation_book_observations(
-        mut self,
-        observations: Vec<String>,
-    ) -> Self {
-        self.creation_book_observations = observations;
-        self
-    }
-
-    pub fn with_fitrah_evidence(
-        mut self,
-        fitrah_evidence: Vec<String>,
-    ) -> Self {
-        self.fitrah_evidence = fitrah_evidence;
-        self
-    }
-
-    pub fn with_rational_arguments(
-        mut self,
-        rational_arguments: Vec<String>,
-    ) -> Self {
-        self.rational_arguments = rational_arguments;
-        self
-    }
-
-    pub fn with_logical_arguments(
-        mut self,
-        logical_arguments: Vec<String>,
-    ) -> Self {
-        self.logical_arguments = logical_arguments;
-        self
-    }
-
-    pub fn with_mathematical_models(
-        mut self,
-        mathematical_models: Vec<String>,
-    ) -> Self {
-        self.mathematical_models = mathematical_models;
-        self
-    }
-
-    pub fn with_empirical_research(
-        mut self,
-        empirical_research: Vec<String>,
-    ) -> Self {
-        self.empirical_research = empirical_research;
-        self
-    }
-
-    pub fn with_human_interpretation(
-        mut self,
-        human_interpretation: impl Into<String>,
-    ) -> Self {
-        self.human_interpretation =
-            human_interpretation.into();
-        self
-    }
-
-    pub fn with_zanistarast_interpretation(
-        mut self,
-        zanistarast_interpretation: impl Into<String>,
-    ) -> Self {
-        self.zanistarast_interpretation =
-            zanistarast_interpretation.into();
+        self.limitations = limitations;
         self
     }
 
@@ -540,205 +502,282 @@ impl QuranAnalysis {
         self
     }
 
-    pub fn with_review_findings(
-        mut self,
-        review_findings: Vec<QuranReviewFinding>,
-    ) -> Self {
-        self.review_findings = review_findings;
-        self
-    }
-
-    pub fn with_contradictions(
-        mut self,
-        contradictions: Vec<String>,
-    ) -> Self {
-        self.contradictions = contradictions;
-        self
-    }
-
-    pub fn with_interpretation_risks(
-        mut self,
-        interpretation_risks: Vec<String>,
-    ) -> Self {
-        self.interpretation_risks =
-            interpretation_risks;
-        self
-    }
-
-    pub fn with_open_questions(
-        mut self,
-        open_questions: Vec<String>,
-    ) -> Self {
-        self.open_questions = open_questions;
-        self
-    }
-
     pub fn mark_rasterast_verified(mut self) -> Self {
         self.rasterast_verified = true;
+        self.status = QuranAnalysisStatus::RasterastVerified;
         self
+    }
+
+    pub fn await_mudebbir(mut self) -> Self {
+        self.status = QuranAnalysisStatus::AwaitingMudebbir;
+        self
+    }
+
+    pub fn approve(mut self) -> Self {
+        self.status = QuranAnalysisStatus::Approved;
+        self
+    }
+
+    pub fn reject(mut self) -> Self {
+        self.status = QuranAnalysisStatus::Rejected;
+        self
+    }
+
+    pub fn add_source(
+        &mut self,
+        source: QuranSourceRecord,
+    ) {
+        self.sources.push(source);
+    }
+
+    pub fn add_statement(
+        &mut self,
+        statement: QuranAnalysisStatement,
+    ) {
+        self.statements.push(statement);
+    }
+
+    pub fn add_proof_path(
+        &mut self,
+        proof_path: ProofPath,
+    ) {
+        self.proof_paths.push(proof_path);
+    }
+
+    pub fn add_limitation(
+        &mut self,
+        limitation: QuranAnalysisLimitation,
+    ) {
+        self.limitations.push(limitation);
     }
 
     pub fn is_identity_complete(&self) -> bool {
         !self.analysis_id.trim().is_empty()
-            && !self.verse_reference.trim().is_empty()
-            && !self.arabic_text.trim().is_empty()
-            && !self.verified_translation.trim().is_empty()
-            && !self.topic.trim().is_empty()
+            && !self.title.trim().is_empty()
+            && !self.subject.trim().is_empty()
     }
 
-    /// Kur'an'ın kendi metni ile Zanistarast yorumunun
-    /// birbirine karıştırılmasını engeller.
-    pub fn separates_quran_from_zanistarast_interpretation(
-        &self,
-    ) -> bool {
-        self.zanistarast_interpretation.trim().is_empty()
-            || self.arabic_text.trim()
-                != self.zanistarast_interpretation.trim()
-    }
-
-    /// Genel insan yorumuyla Zanistarast'ın özel yorumunun
-    /// açık biçimde ayrılıp ayrılmadığını denetler.
-    pub fn separates_human_and_zanistarast_interpretation(
-        &self,
-    ) -> bool {
-        self.human_interpretation.trim().is_empty()
-            || self.zanistarast_interpretation.trim().is_empty()
-            || self.human_interpretation.trim()
-                != self.zanistarast_interpretation.trim()
-    }
-
-    pub fn has_context_review(&self) -> bool {
-        !self.immediate_context.is_empty()
-            || self.review_findings.iter().any(|finding| {
-                finding.reviewed
-                    && matches!(
-                        finding.area,
-                        QuranReviewArea::ImmediateContext
-                            | QuranReviewArea::SurahContext
-                            | QuranReviewArea::QuranicWhole
-                    )
-            })
-    }
-
-    pub fn has_related_verse_review(&self) -> bool {
-        !self.related_verses.is_empty()
-            || self.review_findings.iter().any(|finding| {
-                finding.reviewed
-                    && finding.area
-                        == QuranReviewArea::RelatedVerses
-            })
-    }
-
-    pub fn has_linguistic_review(&self) -> bool {
-        !self.linguistic_notes.is_empty()
-            || !self.root_analysis.is_empty()
-            || self.review_findings.iter().any(|finding| {
-                finding.reviewed
-                    && matches!(
-                        finding.area,
-                        QuranReviewArea::RootAnalysis
-                            | QuranReviewArea::Grammar
-                            | QuranReviewArea::SemanticRange
-                    )
-            })
-    }
-
-    pub fn has_risale_review(&self) -> bool {
-        !self.risale_references.is_empty()
+    pub fn sources_are_complete(&self) -> bool {
+        !self.sources.is_empty()
             && self
-                .risale_references
+                .sources
                 .iter()
-                .all(RisaleAnalysisReference::is_complete)
-            && self.risale_references.iter().all(
-                RisaleAnalysisReference::
-                    separates_original_from_analysis,
+                .all(QuranSourceRecord::is_complete)
+    }
+
+    pub fn sources_are_verified(&self) -> bool {
+        !self.sources.is_empty()
+            && self.sources.iter().all(
+                QuranSourceRecord::
+                    can_be_used_as_verified_source,
             )
     }
 
-    pub fn has_hadith_review(&self) -> bool {
-        !self.related_hadiths.is_empty()
-            && self
-                .related_hadiths
-                .iter()
-                .all(QuranHadithReference::is_complete)
-    }
-
-    pub fn has_creation_book_review(&self) -> bool {
-        !self.creation_book_observations.is_empty()
-    }
-
-    pub fn has_fitrah_review(&self) -> bool {
-        !self.fitrah_evidence.is_empty()
-    }
-
-    pub fn has_rational_review(&self) -> bool {
-        !self.rational_arguments.is_empty()
-            || !self.logical_arguments.is_empty()
-    }
-
-    pub fn has_unresolved_items(&self) -> bool {
-        !self.contradictions.is_empty()
-            || !self.interpretation_risks.is_empty()
-            || !self.open_questions.is_empty()
-            || self
-                .review_findings
-                .iter()
-                .any(QuranReviewFinding::has_unresolved_items)
-    }
-
-    /// İnsan yorumunun ayetin açık hükmünü aştığını gösteren
-    /// güven seviyelerini denetler.
-    pub fn interpretation_overreaches_text(&self) -> bool {
-        matches!(
-            self.interpretation_confidence,
-            InterpretationConfidence::Overextended
-                | InterpretationConfidence::
-                    RejectedInterpretation
+    pub fn translations_remain_separate(&self) -> bool {
+        self.sources.iter().all(
+            QuranSourceRecord::
+                translation_is_separate_from_revelation,
         )
     }
 
-    /// Ayet analizinin tamamlanmış kabul edilebilmesi için
-    /// gereken asgari anayasal koşulları denetler.
-    pub fn can_be_completed(&self) -> bool {
-        self.is_identity_complete()
-            && self.has_context_review()
-            && self.has_related_verse_review()
-            && self.has_linguistic_review()
-            && self
-                .review_findings
-                .iter()
-                .all(QuranReviewFinding::is_complete)
-            && self
-                .risale_references
-                .iter()
-                .all(RisaleAnalysisReference::is_complete)
-            && self
-                .risale_references
-                .iter()
-                .all(
-                    RisaleAnalysisReference::
-                        separates_original_from_analysis,
-                )
-            && self
-                .related_hadiths
-                .iter()
-                .all(QuranHadithReference::is_complete)
-            && self
-                .separates_quran_from_zanistarast_interpretation()
-            && self
-                .separates_human_and_zanistarast_interpretation()
-            && !self.interpretation_overreaches_text()
-            && !self.has_unresolved_items()
-            && self.rasterast_verified
+    pub fn statements_are_valid(&self) -> bool {
+        !self.statements.is_empty()
+            && self.statements.iter().all(|statement| {
+                statement.is_complete()
+                    && statement.preserves_statement_status()
+            })
     }
 
-    pub fn is_constitutionally_valid(&self) -> bool {
-        self.is_identity_complete()
-            && self
-                .separates_quran_from_zanistarast_interpretation()
-            && self
-                .separates_human_and_zanistarast_interpretation()
+    pub fn limitations_are_valid(&self) -> bool {
+        self.limitations
+            .iter()
+            .all(QuranAnalysisLimitation::is_complete)
+    }
+
+    pub fn alternatives_are_valid(&self) -> bool {
+        self.alternative_interpretations
+            .iter()
+            .all(|item| !item.trim().is_empty())
+    }
+
+    pub fn has_revealed_statement(&self) -> bool {
+        self.statements
+            .iter()
+            .any(|statement| statement.status.is_revealed())
+    }
+
+    pub fn has_human_interpretation(&self) -> bool {
+        self.statements.iter().any(|statement| {
+            statement.status.is_humanly_fallible()
+        })
+    }
+
+    pub fn has_risale_proof_path(&self) -> bool {
+        self.proof_paths.iter().any(|path| {
+            path.kind == ProofPathKind::RisaleMethod
+        })
+    }
+
+    /// Risale yöntemi kullanılmışsa hem analiz düzeyinde
+    /// hem de ilgili ispat yollarında doğrulanmış yöntem
+    /// bağlantısı bulunmasını zorunlu tutar.
+    pub fn has_valid_risale_method_use(&self) -> bool {
+        if self.has_risale_proof_path()
+            || self.analysis_type
+                == QuranAnalysisType::RisaleMethodAnalysis
+        {
+            let analysis_binding_is_valid = self
+                .risale_method_binding
+                .as_ref()
+                .map(RisaleMethodBinding::is_verified)
+                .unwrap_or(false);
+
+            let proof_paths_are_valid = self
+                .proof_paths
+                .iter()
+                .filter(|path| {
+                    path.kind == ProofPathKind::RisaleMethod
+                })
+                .all(|path| {
+                    path.has_valid_risale_method_binding()
+                });
+
+            analysis_binding_is_valid
+                && proof_paths_are_valid
+        } else {
+            self.risale_method_binding.is_none()
+        }
+    }
+
+    pub fn proof_paths_are_valid(&self) -> bool {
+        self.proof_paths
+            .iter()
+            .all(ProofPath::is_constitutionally_valid)
+    }
+
+    /// Vahyî hüküm bulunmadığında bir insan yorumunun
+    /// vahiy gibi sunulmasını engeller.
+    pub fn revelation_and_interpretation_are_separate(
+        &self,
+    ) -> bool {
+        self.statements.iter().all(|statement| {
+            statement.preserves_statement_status()
+        })
+    }
+
+    /// Rasterast doğrulamasının yalnızca insanî analiz
+    /// kaydına ait olduğunu model düzeyinde açık tutar.
+    pub fn rasterast_verifies_analysis_not_revelation(
+        &self,
+    ) -> bool {
+        if self.rasterast_verified {
+            self.has_revealed_statement()
+                || self.has_human_interpretation()
+        } else {
+            true
+        }
+    }
+
+    pub fn has_unresolved_items(&self) -> bool {
+        !self.limitations.is_empty()
+            || !self.alternative_interpretations.is_empty()
+            || self.proof_paths.iter().any(
+                ProofPath::has_unresolved_items,
+            )
+    }
+
+    pub fn can_await_mudebbir_decision(&self) -> bool {
+        self.is_complete()
+            && self.sources_are_verified()
+            && self.proof_paths_are_valid()
+            && self.has_valid_risale_method_use()
+            && self.rasterast_verified
             && self.requires_mudebbir_decision
+    }
+
+    pub fn can_be_approved(&self) -> bool {
+        self.can_await_mudebbir_decision()
+            && self.status
+                == QuranAnalysisStatus::AwaitingMudebbir
+            && !self.has_unresolved_items()
+    }
+
+    pub fn is_complete(&self) -> bool {
+        self.is_identity_complete()
+            && self.sources_are_complete()
+            && self.translations_remain_separate()
+            && self.statements_are_valid()
+            && self.limitations_are_valid()
+            && self.alternatives_are_valid()
+            && self.proof_paths_are_valid()
+            && self.has_valid_risale_method_use()
+            && self.revelation_and_interpretation_are_separate()
+            && self.rasterast_verifies_analysis_not_revelation()
+            && self.requires_mudebbir_decision
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct QuranAnalysisSet {
+    pub subject: String,
+    pub analyses: Vec<QuranAnalysis>,
+}
+
+impl QuranAnalysisSet {
+    pub fn new(subject: impl Into<String>) -> Self {
+        Self {
+            subject: subject.into(),
+            analyses: Vec::new(),
+        }
+    }
+
+    pub fn with_analyses(
+        mut self,
+        analyses: Vec<QuranAnalysis>,
+    ) -> Self {
+        self.analyses = analyses;
+        self
+    }
+
+    pub fn add_analysis(
+        &mut self,
+        analysis: QuranAnalysis,
+    ) {
+        self.analyses.push(analysis);
+    }
+
+    pub fn approved_analysis_count(&self) -> usize {
+        self.analyses
+            .iter()
+            .filter(|analysis| {
+                analysis.status == QuranAnalysisStatus::Approved
+            })
+            .count()
+    }
+
+    pub fn analyses_awaiting_mudebbir(
+        &self,
+    ) -> Vec<&QuranAnalysis> {
+        self.analyses
+            .iter()
+            .filter(|analysis| {
+                analysis.status
+                    == QuranAnalysisStatus::AwaitingMudebbir
+            })
+            .collect()
+    }
+
+    pub fn invalid_analyses(&self) -> Vec<&QuranAnalysis> {
+        self.analyses
+            .iter()
+            .filter(|analysis| !analysis.is_complete())
+            .collect()
+    }
+
+    pub fn is_complete(&self) -> bool {
+        !self.subject.trim().is_empty()
+            && !self.analyses.is_empty()
+            && self.invalid_analyses().is_empty()
     }
 }
 
@@ -746,205 +785,176 @@ impl QuranAnalysis {
 mod tests {
     use super::*;
 
-    fn risale_reference() -> RisaleAnalysisReference {
-        RisaleAnalysisReference::new(
-            "Sözler",
-            "Örnek bölüm",
+    fn verified_source() -> QuranSourceRecord {
+        QuranSourceRecord::new(
+            "quran-source-001",
+            QuranVerseReference::new(1, 1)
+                .with_reference_label("Fâtiha 1"),
         )
         .with_original_text(
-            "Risale-i Nur orijinal metin bölümü.",
+            "Doğrulanmış örnek Arapça kaynak metni.",
         )
-        .with_proof_method(
-            "Temsil ve akli kıyas yöntemi.",
+        .with_translation(
+            "Doğrulanmış örnek anlam aktarımı.",
+            "Doğrulanmış meal kaynağı",
         )
-        .with_zanistarast_analysis(
-            "İspat yolunun Zanistarast açısından analizi.",
+        .with_verification_status(
+            QuranSourceVerificationStatus::FullyVerified,
         )
-    }
-
-    fn hadith_reference() -> QuranHadithReference {
-        QuranHadithReference::new(
-            "Örnek hadis kaynağı",
-            "Sahih",
-        )
-        .with_text("Hadis metni.")
-        .with_authenticity_source(
-            "Hadis sıhhat değerlendirmesi kaynağı.",
-        )
-        .with_relation_to_verse(
-            "Ayetin konusu ile ilişkili açıklama.",
-        )
-    }
-
-    fn complete_analysis() -> QuranAnalysis {
-        QuranAnalysis::new(
-            "analysis-001",
-            "Örnek sure ve ayet",
-            "Meleklerin varlığı",
-        )
-        .with_arabic_text(
-            "Doğrulanmış Arapça ayet metni.",
-        )
-        .with_verified_translation(
-            "Doğrulanmış anlam kaydı.",
-        )
-        .with_status(
-            QuranAnalysisStatus::RequiresRasterastReview,
-        )
-        .with_interpretation_confidence(
-            InterpretationConfidence::StronglyGrounded,
-        )
-        .with_immediate_context(vec![
-            "Önceki ve sonraki ayetlerin bağlamı.".to_string(),
-        ])
-        .with_related_verses(vec![
-            "Aynı konudaki ilgili ayet.".to_string(),
-        ])
-        .with_linguistic_notes(vec![
-            "Dilsel kullanım notu.".to_string(),
-        ])
-        .with_root_analysis(vec![
-            "Kelime kökü analizi.".to_string(),
-        ])
-        .with_related_hadiths(vec![hadith_reference()])
-        .with_risale_references(vec![risale_reference()])
-        .with_creation_book_observations(vec![
-            "Kâinat kitabı araştırma notu.".to_string(),
-        ])
-        .with_fitrah_evidence(vec![
-            "Fıtrat delili değerlendirmesi.".to_string(),
-        ])
-        .with_rational_arguments(vec![
-            "Akli çıkarım.".to_string(),
-        ])
-        .with_logical_arguments(vec![
-            "Mantıksal çıkarım.".to_string(),
-        ])
-        .with_human_interpretation(
-            "İnsan yorumunun ayrı kaydı.",
-        )
-        .with_zanistarast_interpretation(
-            "Zanistarast yorumunun ayrı kaydı.",
-        )
-        .with_review_findings(vec![
-            QuranReviewFinding::new(
-                QuranReviewArea::QuranicWhole,
-                "Ayet Kur'an bütünlüğü içinde incelendi.",
-            )
-            .mark_reviewed(),
-        ])
-        .mark_rasterast_verified()
     }
 
     #[test]
-    fn analysis_reviews_human_understanding_not_quranic_truth() {
-        let analysis = complete_analysis();
+    fn verse_reference_requires_valid_surah_and_verse() {
+        let valid = QuranVerseReference::new(1, 1);
+        let invalid_surah =
+            QuranVerseReference::new(115, 1);
+        let invalid_verse =
+            QuranVerseReference::new(1, 0);
 
-        assert!(analysis.is_identity_complete());
-        assert!(analysis.rasterast_verified);
-        assert!(analysis.requires_mudebbir_decision);
+        assert!(valid.is_valid());
+        assert!(!invalid_surah.is_valid());
+        assert!(!invalid_verse.is_valid());
     }
 
     #[test]
-    fn quran_and_zanistarast_interpretation_remain_separate() {
-        let analysis = complete_analysis();
-
-        assert!(
-            analysis
-                .separates_quran_from_zanistarast_interpretation()
+    fn verified_source_requires_original_text() {
+        let incomplete = QuranSourceRecord::new(
+            "quran-source-002",
+            QuranVerseReference::new(2, 255),
+        )
+        .with_verification_status(
+            QuranSourceVerificationStatus::FullyVerified,
         );
+
+        assert!(!incomplete.is_complete());
         assert!(
-            analysis
-                .separates_human_and_zanistarast_interpretation()
+            !incomplete.can_be_used_as_verified_source()
+        );
+
+        let complete = verified_source();
+
+        assert!(complete.is_complete());
+        assert!(
+            complete.can_be_used_as_verified_source()
         );
     }
-#[test]
-    fn identical_quran_text_and_interpretation_are_rejected() {
-        let analysis = QuranAnalysis::new(
-            "analysis-002",
-            "Örnek ayet",
-            "Örnek konu",
+
+    #[test]
+    fn translation_must_remain_separate_from_revelation() {
+        let source = QuranSourceRecord::new(
+            "quran-source-003",
+            QuranVerseReference::new(112, 1),
         )
-        .with_arabic_text("Aynı ifade")
-        .with_verified_translation("Doğrulanmış anlam")
-        .with_zanistarast_interpretation("Aynı ifade");
+        .with_original_text("Aynı metin")
+        .with_translation(
+            "Aynı metin",
+            "Örnek kaynak",
+        );
 
         assert!(
-            !analysis
-                .separates_quran_from_zanistarast_interpretation()
+            !source.translation_is_separate_from_revelation()
         );
-        assert!(!analysis.is_constitutionally_valid());
     }
 
     #[test]
-    fn overextended_interpretation_cannot_be_completed() {
-        let analysis = complete_analysis()
-            .with_interpretation_confidence(
-                InterpretationConfidence::Overextended,
-            );
-
-        assert!(analysis.interpretation_overreaches_text());
-        assert!(!analysis.can_be_completed());
-    }
-
-    #[test]
-    fn unresolved_question_blocks_completion() {
-        let analysis = complete_analysis()
-            .with_open_questions(vec![
-                "Dilsel alternatif yeniden incelenmelidir."
-                    .to_string(),
-            ]);
-
-        assert!(analysis.has_unresolved_items());
-        assert!(!analysis.can_be_completed());
-    }
-
-    #[test]
-    fn complete_analysis_requires_rasterast_verification() {
-        let mut analysis = complete_analysis();
-        analysis.rasterast_verified = false;
-
-        assert!(!analysis.can_be_completed());
-    }
-
-    #[test]
-    fn complete_analysis_preserves_mudebbir_gate() {
-        let analysis = complete_analysis();
-
-        assert!(analysis.can_be_completed());
-        assert!(analysis.requires_mudebbir_decision);
-    }
-
-    #[test]
-    fn risale_original_text_and_analysis_remain_separate() {
-        let reference = risale_reference();
-
-        assert!(reference.is_complete());
-        assert!(reference.separates_original_from_analysis());
-    }
-
-    #[test]
-    fn risale_cannot_replace_original_text_with_analysis() {
-        let reference = RisaleAnalysisReference::new(
-            "Sözler",
-            "Örnek bölüm",
+    fn revealed_statement_has_no_human_reasoning_steps() {
+        let statement = QuranAnalysisStatement::new(
+            "statement-001",
+            QuranStatementStatus::RevealedStatement,
+            "Kur'an-ı Kerim'in açık bildirimi.",
         )
-        .with_original_text("Aynı ifade")
-        .with_zanistarast_analysis("Aynı ifade");
+        .with_source_ids(vec![
+            "quran-source-001".to_string(),
+        ])
+        .with_reasoning_steps(vec![
+            "İnsanî çıkarım basamağı.".to_string(),
+        ]);
 
-        assert!(!reference.separates_original_from_analysis());
+        assert!(!statement.preserves_statement_status());
     }
 
     #[test]
-    fn hadith_reference_requires_authenticity_source() {
-        let reference = QuranHadithReference::new(
-            "Örnek hadis kaynağı",
-            "Sahih",
+    fn revealed_statement_can_preserve_its_status() {
+        let statement = QuranAnalysisStatement::new(
+            "statement-002",
+            QuranStatementStatus::RevealedStatement,
+            "Kur'an-ı Kerim'in açık bildirimi.",
         )
-        .with_text("Hadis metni.");
+        .with_source_ids(vec![
+            "quran-source-001".to_string(),
+        ]);
 
-        assert!(!reference.is_complete());
+        assert!(statement.is_complete());
+        assert!(statement.preserves_statement_status());
+        assert!(!statement.human_statement_remains_fallible());
+    }
+
+    #[test]
+    fn human_interpretation_remains_fallible() {
+        let statement = QuranAnalysisStatement::new(
+            "statement-003",
+            QuranStatementStatus::HumanInterpretation,
+            "Ayet hakkında insan tarafından yapılan yorum.",
+        )
+        .with_source_ids(vec![
+            "quran-source-001".to_string(),
+        ])
+        .with_reasoning_steps(vec![
+            "Dil ve bağlam incelemesi.".to_string(),
+            "İnsanî yorum sonucu.".to_string(),
+        ]);
+
+        assert!(statement.is_complete());
+        assert!(statement.preserves_statement_status());
+        assert!(statement.human_statement_remains_fallible());
+    }
+
+    #[test]
+    fn limitation_can_define_correction_path() {
+        let limitation = QuranAnalysisLimitation::new(
+            QuranAnalysisLimitationKind::
+                LinguisticAmbiguity,
+            "Kelimenin anlam alanı yeniden incelenmelidir.",
+        )
+        .with_proposed_correction(
+            "Klasik sözlükler ve ayet bağlamları karşılaştırılmalıdır.",
+        );
+
+        assert!(limitation.is_complete());
+        assert!(limitation.has_correction_path());
+    }
+
+    #[test]
+    fn source_verification_status_is_explicit() {
+        assert!(
+            QuranSourceVerificationStatus::FullyVerified
+                .is_verified()
+        );
+
+        assert!(
+            !QuranSourceVerificationStatus::Unverified
+                .is_verified()
+        );
+
+        assert!(
+            !QuranSourceVerificationStatus::Rejected
+                .is_verified()
+        );
+    }
+
+    #[test]
+    fn analysis_status_keeps_mudebbir_gate() {
+        assert_ne!(
+            QuranAnalysisStatus::RasterastVerified,
+            QuranAnalysisStatus::Approved,
+        );
+
+        assert_ne!(
+            QuranAnalysisStatus::AwaitingMudebbir,
+            QuranAnalysisStatus::Approved,
+        );
     }
 }
 
-          
+
+
