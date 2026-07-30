@@ -1,300 +1,438 @@
-/// Zanistarast bilimsel sentezinde kullanılan temel kaynak
-/// ve delil alanlarıdır.
-///
-/// Bu sıralama, bütün kaynakların aynı ontolojik veya
-/// epistemik statüde olduğu anlamına gelmez.
+//! Zanistarast hakikat temellerinin anayasal veri modelidir.
+//!
+//! # Temel ayrım
+//!
+//! Kur'an-ı Kerim mutlak vahyî hakikatin ve Zanistarast
+//! bilim paradigmasının başlangıç kaynağıdır.
+//!
+//! Üstad Bediüzzaman Said-i Kürdî'nin Risale-i Nur'daki
+//! aklî, mantıkî, imanî ve ispatlayıcı yöntemleri
+//! Zanistarast için bağlayıcı kurucu yöntemlerdir.
+//!
+//! Risale-i Nur, Kur'an-ı Kerim ile aynı vahiy statüsüne
+//! yerleştirilmez. Ancak Zanistarast içinde sıradan,
+//! isteğe bağlı veya birbirinin alternatifi olan insanî
+//! yöntemlerden biri olarak da değerlendirilmez.
+//!
+//! Zanistarast'ın kaynakları anlama, sınıflandırma ve
+//! bilimsel alanlara uygulama biçimi insanîdir. Bu nedenle
+//! Rasterast denetimine ve Müdebbir kararına açıktır.
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum TruthFoundationKind {
-    /// Zanistarast'ın en üst ve tartışılmaz vahyî hakikat
-    /// kaynağıdır.
     Quran,
-
-    /// Sıhhati doğrulanmış nebevî aktarımlardır.
+    OriginalRisaleNur,
     AuthenticHadith,
-
-    /// Kur'an'ın okunması, iman hakikatlerinin açıklanması
-    /// ve ispat yolları bakımından başlıca yorum ve yöntem
-    /// referansıdır.
-    RisaleNurOriginalText,
-
-    /// Yaratılmış varlıkların, düzenlerin, yasaların ve
-    /// ilişkilerin gözlem ve araştırma alanıdır.
-    CreationBook,
-
-    /// Yaratılışa yerleştirilmiş yapı, yönelim ve uygunluk
-    /// delillerinin araştırma alanıdır.
-    FitrahEvidence,
-
-    /// Kavramları ayırma, ilişkileri kurma, hüküm ve sonuç
-    /// çıkarma aracıdır.
+    Creation,
+    Fitrah,
+    HumanEssence,
+    Spirit,
+    Heart,
+    Conscience,
+    Emotion,
     Reason,
-
-    /// Çelişmezlik, geçerli çıkarım ve kavramsal tutarlılık
-    /// denetimidir.
     Logic,
-
-    /// Varlık ve olayların doğrudan veya araçlı izlenmesidir.
+    Morality,
     Observation,
-
-    /// Kontrollü şartlarda sınama ve tekrar araştırmasıdır.
     Experiment,
-
-    /// Nicel veya nitel özelliklerin belirli yöntemlerle
-    /// kaydedilmesidir.
-    Measurement,
-
-    /// İlişkilerin sembolik ve biçimsel olarak modellenmesidir.
     Mathematics,
-
-    /// Kaynakları, yöntemleri ve sonuçları açık bilimsel
-    /// araştırmalardır.
-    ScientificResearch,
-
-    /// Zanistarast tarafından oluşturulan yorum, hipotez,
-    /// açıklama veya sentezdir.
-    ZanistarastInterpretation,
+    ReliableScience,
 }
 
-/// Bir kaynağın Zanistarast içindeki temel otorite ve
-/// hakikat statüsüdür.
-///
-/// Bu statü, insanın kaynağı yorumlama başarısıyla aynı şey
-/// değildir. Kaynak kesin olabilirken insan yorumu hatalı
-/// veya eksik olabilir.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl TruthFoundationKind {
+    pub fn is_revelation(self) -> bool {
+        matches!(self, Self::Quran)
+    }
+
+    pub fn is_binding_risale_method(self) -> bool {
+        matches!(self, Self::OriginalRisaleNur)
+    }
+
+    pub fn is_human_verification_instrument(self) -> bool {
+        matches!(
+            self,
+            Self::Observation
+                | Self::Experiment
+                | Self::Mathematics
+                | Self::ReliableScience
+        )
+    }
+
+    pub fn is_human_inner_dimension(self) -> bool {
+        matches!(
+            self,
+            Self::HumanEssence
+                | Self::Spirit
+                | Self::Heart
+                | Self::Conscience
+                | Self::Emotion
+                | Self::Reason
+                | Self::Logic
+                | Self::Morality
+        )
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FoundationAuthority {
-    /// Kur'an-ı Kerim'in Zanistarast içindeki tartışılmaz
-    /// vahyî hakikat statüsüdür.
-    AbsoluteRevelatoryTruth,
+    /// Kur'an-ı Kerim'e mahsus mutlak vahyî otorite.
+    AbsoluteRevealedTruth,
 
-    /// Sıhhati doğrulanmış nebevî bildirimin otoritesidir.
-    AuthenticPropheticAuthority,
+    /// Risale-i Nur'un Zanistarast içindeki bağlayıcı,
+    /// kurucu akıl, mantık, iman ve ispat yöntemi.
+    BindingFoundationalMethod,
 
-    /// Kur'an değildir ve vahiy seviyesinde değildir; fakat
-    /// Zanistarast için başlıca yorum ve ispat yöntemi
-    /// referansıdır.
-    PrimaryInterpretiveReference,
+    /// Sıhhati doğrulanmış hadislerin bağlayıcı nebevî
+    /// açıklama ve uygulama otoritesi.
+    AuthenticatedPropheticGuidance,
 
-    /// Kâinat ve fıtratta gözlenen yaratılmış düzenin delil
-    /// değeridir.
-    CreatedOrderEvidence,
+    /// Yaratılışta ve varlık düzeninde okunan şahitlik.
+    CreationWitness,
 
-    /// Akıl, mantık, deney, gözlem, ölçüm ve matematik gibi
-    /// insanın hakikati araştırma yöntemleridir.
-    InvestigativeMethod,
+    /// İnsanın yaratılış yapısında bulunan şahitlik.
+    FitrahWitness,
 
-    /// Zanistarast tarafından üretilen ve Rasterast
-    /// denetimine açık insan yorumudur.
-    HumanInterpretation,
+    /// İnsan özü, ruh, kalp, vicdan, duygu, akıl ve
+    /// ahlak alanlarında bulunan iç şahitlik.
+    HumanInnerWitness,
+
+    /// Deney, gözlem ve matematikle elde edilen fakat
+    /// insanî sınırlar taşıyan doğrulama.
+    EmpiricalVerification,
+
+    /// Güvenilir bilimsel çalışmalardan yararlanmayı,
+    /// fakat onları mutlaklaştırmamayı ifade eder.
+    ReliableScientificEvidence,
 }
 
-/// Bir temel kaynağın belirli bir çalışmada nasıl
-/// kullanıldığını gösterir.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+impl FoundationAuthority {
+    pub fn is_absolute_revelation(self) -> bool {
+        matches!(self, Self::AbsoluteRevealedTruth)
+    }
+
+    pub fn is_binding_foundational_method(self) -> bool {
+        matches!(self, Self::BindingFoundationalMethod)
+    }
+
+    pub fn is_humanly_reviewable(self) -> bool {
+        !self.is_absolute_revelation()
+            && !self.is_binding_foundational_method()
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FoundationUse {
-    /// Doğrudan hüküm veya bildirim kaynağıdır.
-    DirectStatement,
-
-    /// Bir kavramı açıklamak veya yorumlamak için kullanılır.
-    Interpretation,
-
-    /// Akli veya mantıki ispat yolu sağlar.
-    ProofMethod,
-
-    /// Gözlemsel veya deneysel delil sağlar.
-    EmpiricalEvidence,
-
-    /// Matematiksel veya biçimsel model sağlar.
-    FormalModel,
-
-    /// Kaynaklar arasında karşılaştırma yapılmasını sağlar.
-    ComparativeAnalysis,
-
-    /// Yeni bir Zanistarast sentezinin kurulmasına katkı verir.
-    Synthesis,
+    OntologicalTruth,
+    QuranicStartingPoint,
+    FoundationalProofMethod,
+    FoundationalReasoningMethod,
+    FoundationalLogicalMethod,
+    FaithReasonIntegration,
+    HumanUnderstanding,
+    CreationReading,
+    FitrahReading,
+    MoralEvaluation,
+    PropheticExplanation,
+    InterpretationSupport,
+    EmpiricalInvestigation,
+    MathematicalFormalization,
+    ScientificComparison,
+    RasterastVerification,
 }
 
-/// Bir kaynağın insan tarafından kullanımında uygulanacak
-/// temel doğrulama durumudur.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FoundationReviewStatus {
-    NotReviewed,
-    UnderReview,
-    Reviewed,
-    RequiresReinterpretation,
-    Conflicted,
-    RejectedUse,
+    NotStarted,
+    SourceLocated,
+    SourceVerificationInProgress,
+    SourceVerified,
+    InterpretationReviewRequired,
+    MethodApplicationReviewRequired,
+    EmpiricalReviewRequired,
+    RequiresRasterastReview,
+    AwaitingMudebbirDecision,
+    ApprovedForUse,
+    ApplicationRequiresCorrection,
+    RejectedApplication,
 }
 
-/// Bir hakikat temelinin tekil kaydıdır.
-///
-/// `authority`, kaynağın Zanistarast içindeki statüsünü;
-/// `review_status` ise insanın o kaynağı belirli çalışmada
-/// kullanma ve yorumlama durumunu gösterir.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TruthFoundation {
     pub foundation_id: String,
+    pub name: String,
+    pub description: String,
+
     pub kind: TruthFoundationKind,
     pub authority: FoundationAuthority,
-    pub use_type: FoundationUse,
-    pub reference: String,
-    pub original_text: String,
-    pub human_interpretation: String,
+    pub uses: Vec<FoundationUse>,
     pub review_status: FoundationReviewStatus,
-    pub limitations: Vec<String>,
-    pub open_questions: Vec<String>,
-    pub requires_rasterast_review: bool,
+
+    pub source_references: Vec<String>,
+    pub original_text_references: Vec<String>,
+    pub related_topics: Vec<String>,
+
+    pub zanistarast_interpretation: String,
+    pub scientific_application_notes: Vec<String>,
+
+    pub source_verified: bool,
+    pub original_preserved: bool,
+    pub interpretation_separated: bool,
+    pub rasterast_verified: bool,
     pub requires_mudebbir_decision: bool,
+
+    pub risks: Vec<String>,
+    pub uncertainties: Vec<String>,
+    pub contradictions: Vec<String>,
 }
 
 impl TruthFoundation {
     pub fn new(
         foundation_id: impl Into<String>,
+        name: impl Into<String>,
+        description: impl Into<String>,
         kind: TruthFoundationKind,
         authority: FoundationAuthority,
-        use_type: FoundationUse,
-        reference: impl Into<String>,
     ) -> Self {
         Self {
             foundation_id: foundation_id.into(),
+            name: name.into(),
+            description: description.into(),
+
             kind,
             authority,
-            use_type,
-            reference: reference.into(),
-            original_text: String::new(),
-            human_interpretation: String::new(),
-            review_status: FoundationReviewStatus::NotReviewed,
-            limitations: Vec::new(),
-            open_questions: Vec::new(),
-            requires_rasterast_review: true,
+            uses: Vec::new(),
+            review_status: FoundationReviewStatus::NotStarted,
+
+            source_references: Vec::new(),
+            original_text_references: Vec::new(),
+            related_topics: Vec::new(),
+
+            zanistarast_interpretation: String::new(),
+            scientific_application_notes: Vec::new(),
+
+            source_verified: false,
+            original_preserved: false,
+            interpretation_separated: false,
+            rasterast_verified: false,
             requires_mudebbir_decision: true,
+
+            risks: Vec::new(),
+            uncertainties: Vec::new(),
+            contradictions: Vec::new(),
         }
     }
 
-    pub fn with_original_text(
+    pub fn with_uses(
         mut self,
-        original_text: impl Into<String>,
+        uses: Vec<FoundationUse>,
     ) -> Self {
-        self.original_text = original_text.into();
-        self
-    }
-
-    pub fn with_human_interpretation(
-        mut self,
-        human_interpretation: impl Into<String>,
-    ) -> Self {
-        self.human_interpretation =
-            human_interpretation.into();
+        self.uses = uses;
         self
     }
 
     pub fn with_review_status(
         mut self,
-        review_status: FoundationReviewStatus,
+        status: FoundationReviewStatus,
     ) -> Self {
-        self.review_status = review_status;
+        self.review_status = status;
         self
     }
 
-    pub fn with_limitations(
+    pub fn with_source_references(
         mut self,
-        limitations: Vec<String>,
+        references: Vec<String>,
     ) -> Self {
-        self.limitations = limitations;
+        self.source_references = references;
         self
     }
 
-    pub fn with_open_questions(
+    pub fn with_original_text_references(
         mut self,
-        open_questions: Vec<String>,
+        references: Vec<String>,
     ) -> Self {
-        self.open_questions = open_questions;
+        self.original_text_references = references;
         self
     }
 
-    pub fn is_complete(&self) -> bool {
+    pub fn with_related_topics(
+        mut self,
+        topics: Vec<String>,
+    ) -> Self {
+        self.related_topics = topics;
+        self
+    }
+
+    pub fn with_zanistarast_interpretation(
+        mut self,
+        interpretation: impl Into<String>,
+    ) -> Self {
+        self.zanistarast_interpretation =
+            interpretation.into();
+        self
+    }
+
+    pub fn with_scientific_application_notes(
+        mut self,
+        notes: Vec<String>,
+    ) -> Self {
+        self.scientific_application_notes = notes;
+        self
+    }
+
+    pub fn with_risks(
+        mut self,
+        risks: Vec<String>,
+    ) -> Self {
+        self.risks = risks;
+        self
+    }
+
+    pub fn with_uncertainties(
+        mut self,
+        uncertainties: Vec<String>,
+    ) -> Self {
+        self.uncertainties = uncertainties;
+        self
+    }
+
+    pub fn with_contradictions(
+        mut self,
+        contradictions: Vec<String>,
+    ) -> Self {
+        self.contradictions = contradictions;
+        self
+    }
+
+    pub fn mark_source_verified(mut self) -> Self {
+        self.source_verified = true;
+        self
+    }
+
+    pub fn mark_original_preserved(mut self) -> Self {
+        self.original_preserved = true;
+        self
+    }
+
+    pub fn mark_interpretation_separated(mut self) -> Self {
+        self.interpretation_separated = true;
+        self
+    }
+
+    pub fn mark_rasterast_verified(mut self) -> Self {
+        self.rasterast_verified = true;
+        self
+    }
+
+    pub fn is_identity_complete(&self) -> bool {
         !self.foundation_id.trim().is_empty()
-            && !self.reference.trim().is_empty()
+            && !self.name.trim().is_empty()
+            && !self.description.trim().is_empty()
     }
 
-    /// Kur'an-ı Kerim kaydının doğru otorite statüsüyle
-    /// oluşturulup oluşturulmadığını denetler.
-    pub fn has_valid_quranic_authority(&self) -> bool {
-        self.kind != TruthFoundationKind::Quran
-            || self.authority
-                == FoundationAuthority::AbsoluteRevelatoryTruth
+    pub fn has_source_basis(&self) -> bool {
+        !self.source_references.is_empty()
     }
 
-    /// Risale-i Nur'un Kur'an veya vahiy seviyesine
-    /// çıkarılmasını engeller.
-    pub fn has_valid_risale_authority(&self) -> bool {
-        self.kind
-            != TruthFoundationKind::RisaleNurOriginalText
-            || self.authority
-                == FoundationAuthority::
-                    PrimaryInterpretiveReference
+    pub fn has_original_text_basis(&self) -> bool {
+        !self.original_text_references.is_empty()
     }
 
-    /// Zanistarast yorumunun mutlak veya nebevî otorite
-    /// olarak kaydedilmesini engeller.
-    pub fn has_valid_zanistarast_authority(&self) -> bool {
-        self.kind
-            != TruthFoundationKind::ZanistarastInterpretation
-            || self.authority
-                == FoundationAuthority::HumanInterpretation
-    }
-
-    /// Kaynağın kendi metni ile insan yorumunun birbirine
-    /// karıştırılmasını engeller.
-    pub fn separates_source_from_interpretation(&self) -> bool {
-        self.human_interpretation.trim().is_empty()
-            || self.original_text.trim().is_empty()
-            || self.original_text.trim()
-                != self.human_interpretation.trim()
-    }
-
-    /// Kur'anî hakikatin deneysel ispat bulunmadığı için
-    /// düşük statüye indirilemeyeceğini belirtir.
-    pub fn cannot_be_downgraded_by_empirical_absence(
-        &self,
-    ) -> bool {
+    pub fn is_quran_foundation(&self) -> bool {
         self.kind == TruthFoundationKind::Quran
-            && self.authority
-                == FoundationAuthority::AbsoluteRevelatoryTruth
     }
 
-    /// Kaynak hakikati kesin olsa bile insan yorumunun
-    /// Rasterast denetiminden geçmesi gerekir.
-    pub fn interpretation_requires_review(&self) -> bool {
-        !self.human_interpretation.trim().is_empty()
-            && self.requires_rasterast_review
+    pub fn is_original_risale_foundation(&self) -> bool {
+        self.kind == TruthFoundationKind::OriginalRisaleNur
     }
 
-    /// Kaynak kullanımının anayasal temel şartlara uyup
-    /// uymadığını gösterir.
+    pub fn preserves_quran_authority(&self) -> bool {
+        if self.is_quran_foundation() {
+            self.authority
+                == FoundationAuthority::AbsoluteRevealedTruth
+        } else {
+            !self.authority.is_absolute_revelation()
+        }
+    }
+
+    pub fn preserves_risale_method_authority(&self) -> bool {
+        if self.is_original_risale_foundation() {
+            self.authority
+                == FoundationAuthority::BindingFoundationalMethod
+                && self.uses.contains(
+                    &FoundationUse::FoundationalProofMethod,
+                )
+        } else {
+            self.authority
+                != FoundationAuthority::BindingFoundationalMethod
+        }
+    }
+
+    pub fn separates_quran_and_risale_status(&self) -> bool {
+        if self.is_quran_foundation() {
+            self.authority.is_absolute_revelation()
+        } else if self.is_original_risale_foundation() {
+            self.authority.is_binding_foundational_method()
+                && !self.authority.is_absolute_revelation()
+        } else {
+            !self.authority.is_absolute_revelation()
+                && !self.authority
+                    .is_binding_foundational_method()
+        }
+    }
+
+    pub fn application_has_open_issues(&self) -> bool {
+        !self.risks.is_empty()
+            || !self.uncertainties.is_empty()
+            || !self.contradictions.is_empty()
+    }
+
+    pub fn requires_source_verification(&self) -> bool {
+        matches!(
+            self.kind,
+            TruthFoundationKind::Quran
+                | TruthFoundationKind::OriginalRisaleNur
+                | TruthFoundationKind::AuthenticHadith
+                | TruthFoundationKind::ReliableScience
+        )
+    }
+
     pub fn is_constitutionally_valid(&self) -> bool {
-        self.is_complete()
-            && self.has_valid_quranic_authority()
-            && self.has_valid_risale_authority()
-            && self.has_valid_zanistarast_authority()
-            && self.separates_source_from_interpretation()
+        self.is_identity_complete()
+            && self.preserves_quran_authority()
+            && self.preserves_risale_method_authority()
+            && self.separates_quran_and_risale_status()
+            && self.requires_mudebbir_decision
+    }
+
+    pub fn can_be_approved_for_use(&self) -> bool {
+        let source_condition =
+            !self.requires_source_verification()
+                || self.source_verified;
+
+        self.is_constitutionally_valid()
+            && source_condition
+            && self.original_preserved
+            && self.interpretation_separated
+            && self.rasterast_verified
+            && !self.application_has_open_issues()
     }
 }
 
-/// Zanistarast'ın bir çalışmada kullandığı birden fazla
-/// hakikat temelini birlikte tutar.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct TruthFoundationSet {
-    pub subject: String,
+    pub set_id: String,
+    pub title: String,
     pub foundations: Vec<TruthFoundation>,
 }
 
 impl TruthFoundationSet {
     pub fn new(
-        subject: impl Into<String>,
+        set_id: impl Into<String>,
+        title: impl Into<String>,
     ) -> Self {
         Self {
-            subject: subject.into(),
+            set_id: set_id.into(),
+            title: title.into(),
             foundations: Vec::new(),
         }
     }
@@ -314,61 +452,43 @@ impl TruthFoundationSet {
         self.foundations.push(foundation);
     }
 
-    pub fn has_quranic_foundation(&self) -> bool {
-        self.foundations.iter().any(|foundation| {
-            foundation.kind == TruthFoundationKind::Quran
-                && foundation.authority
-                    == FoundationAuthority::
-                        AbsoluteRevelatoryTruth
-        })
+    pub fn find_foundation(
+        &self,
+        foundation_id: &str,
+    ) -> Option<&TruthFoundation> {
+        self.foundations
+            .iter()
+            .find(|foundation| {
+                foundation.foundation_id == foundation_id
+            })
     }
 
-    pub fn has_risale_reference(&self) -> bool {
-        self.foundations.iter().any(|foundation| {
-            foundation.kind
-                == TruthFoundationKind::
-                    RisaleNurOriginalText
-                && foundation.authority
-                    == FoundationAuthority::
-                        PrimaryInterpretiveReference
-        })
+    pub fn foundations_by_kind(
+        &self,
+        kind: TruthFoundationKind,
+    ) -> Vec<&TruthFoundation> {
+        self.foundations
+            .iter()
+            .filter(|foundation| foundation.kind == kind)
+            .collect()
     }
 
-    pub fn has_creation_book_evidence(&self) -> bool {
-        self.foundations.iter().any(|foundation| {
-            foundation.kind
-                == TruthFoundationKind::CreationBook
-        })
+    pub fn quran_foundation(
+        &self,
+    ) -> Option<&TruthFoundation> {
+        self.foundations
+            .iter()
+            .find(|foundation| foundation.is_quran_foundation())
     }
 
-    pub fn has_fitrah_evidence(&self) -> bool {
-        self.foundations.iter().any(|foundation| {
-            foundation.kind
-                == TruthFoundationKind::FitrahEvidence
-        })
-    }
-
-    pub fn has_rational_method(&self) -> bool {
-        self.foundations.iter().any(|foundation| {
-            matches!(
-                foundation.kind,
-                TruthFoundationKind::Reason
-                    | TruthFoundationKind::Logic
-                    | TruthFoundationKind::Mathematics
-            )
-        })
-    }
-
-    pub fn has_empirical_method(&self) -> bool {
-        self.foundations.iter().any(|foundation| {
-            matches!(
-                foundation.kind,
-                TruthFoundationKind::Observation
-                    | TruthFoundationKind::Experiment
-                    | TruthFoundationKind::Measurement
-                    | TruthFoundationKind::ScientificResearch
-            )
-        })
+    pub fn risale_foundation(
+        &self,
+    ) -> Option<&TruthFoundation> {
+        self.foundations
+            .iter()
+            .find(|foundation| {
+                foundation.is_original_risale_foundation()
+            })
     }
 
     pub fn invalid_foundations(
@@ -382,9 +502,46 @@ impl TruthFoundationSet {
             .collect()
     }
 
+    pub fn approved_foundation_count(&self) -> usize {
+        self.foundations
+            .iter()
+            .filter(|foundation| {
+                foundation.can_be_approved_for_use()
+            })
+            .count()
+    }
+
+    pub fn preserves_foundation_order(&self) -> bool {
+        let Some(quran_index) = self
+            .foundations
+            .iter()
+            .position(|foundation| {
+                foundation.is_quran_foundation()
+            })
+        else {
+            return false;
+        };
+
+        let Some(risale_index) = self
+            .foundations
+            .iter()
+            .position(|foundation| {
+                foundation.is_original_risale_foundation()
+            })
+        else {
+            return false;
+        };
+
+        quran_index < risale_index
+    }
+
     pub fn is_complete(&self) -> bool {
-        !self.subject.trim().is_empty()
+        !self.set_id.trim().is_empty()
+            && !self.title.trim().is_empty()
             && !self.foundations.is_empty()
+            && self.quran_foundation().is_some()
+            && self.risale_foundation().is_some()
+            && self.preserves_foundation_order()
             && self.invalid_foundations().is_empty()
     }
 }
@@ -395,190 +552,193 @@ mod tests {
 
     fn quran_foundation() -> TruthFoundation {
         TruthFoundation::new(
-            "foundation-quran-001",
+            "foundation-quran",
+            "Kur'an-ı Kerim",
+            "Zanistarast'ın mutlak vahyî hakikat ve başlangıç kaynağıdır.",
             TruthFoundationKind::Quran,
-            FoundationAuthority::AbsoluteRevelatoryTruth,
-            FoundationUse::DirectStatement,
-            "Kur'an-ı Kerim ayet kaydı",
+            FoundationAuthority::AbsoluteRevealedTruth,
         )
-        .with_original_text(
-            "Doğrulanmış ayet metni burada korunur.",
+        .with_uses(vec![
+            FoundationUse::OntologicalTruth,
+            FoundationUse::QuranicStartingPoint,
+        ])
+        .with_source_references(vec![
+            "Kur'an-ı Kerim".to_string(),
+        ])
+        .with_original_text_references(vec![
+            "Doğrulanmış mushaf metni".to_string(),
+        ])
+        .mark_source_verified()
+        .mark_original_preserved()
+        .mark_interpretation_separated()
+        .mark_rasterast_verified()
+    }
+
+    fn risale_foundation() -> TruthFoundation {
+        TruthFoundation::new(
+            "foundation-risale",
+            "Risale-i Nur",
+            "Zanistarast için bağlayıcı kurucu akıl, mantık, iman ve ispat yöntemidir.",
+            TruthFoundationKind::OriginalRisaleNur,
+            FoundationAuthority::BindingFoundationalMethod,
         )
-        .with_human_interpretation(
-            "Ayetin Zanistarast açısından değerlendirmesi.",
-        )
+        .with_uses(vec![
+            FoundationUse::FoundationalProofMethod,
+            FoundationUse::FoundationalReasoningMethod,
+            FoundationUse::FoundationalLogicalMethod,
+            FoundationUse::FaithReasonIntegration,
+            FoundationUse::HumanUnderstanding,
+            FoundationUse::CreationReading,
+        ])
+        .with_source_references(vec![
+            "Risale-i Nur Külliyatı".to_string(),
+        ])
+        .with_original_text_references(vec![
+            "Doğrulanmış orijinal Risale metni".to_string(),
+        ])
+        .mark_source_verified()
+        .mark_original_preserved()
+        .mark_interpretation_separated()
+        .mark_rasterast_verified()
     }
 
     #[test]
-    fn quran_has_absolute_revelatory_authority() {
+    fn quran_has_absolute_revealed_authority() {
         let foundation = quran_foundation();
 
-        assert!(foundation.has_valid_quranic_authority());
+        assert!(foundation.is_quran_foundation());
+        assert!(
+            foundation.authority.is_absolute_revelation()
+        );
+        assert!(foundation.preserves_quran_authority());
+        assert!(foundation.can_be_approved_for_use());
+    }
+
+    #[test]
+    fn risale_has_binding_foundational_method_authority() {
+        let foundation = risale_foundation();
+
+        assert!(foundation.is_original_risale_foundation());
         assert!(
             foundation
-                .cannot_be_downgraded_by_empirical_absence()
+                .authority
+                .is_binding_foundational_method()
         );
-        assert!(foundation.is_constitutionally_valid());
+        assert!(!foundation.authority.is_absolute_revelation());
+        assert!(
+            foundation.preserves_risale_method_authority()
+        );
+        assert!(foundation.can_be_approved_for_use());
     }
 
     #[test]
-    fn quran_cannot_be_registered_as_human_interpretation() {
+    fn risale_cannot_be_assigned_revelation_authority() {
         let foundation = TruthFoundation::new(
-            "foundation-quran-002",
-            TruthFoundationKind::Quran,
-            FoundationAuthority::HumanInterpretation,
-            FoundationUse::DirectStatement,
-            "Kur'an-ı Kerim ayet kaydı",
-        );
+            "invalid-risale",
+            "Risale-i Nur",
+            "Geçersiz otorite eşleştirmesi.",
+            TruthFoundationKind::OriginalRisaleNur,
+            FoundationAuthority::AbsoluteRevealedTruth,
+        )
+        .with_uses(vec![
+            FoundationUse::FoundationalProofMethod,
+        ]);
 
-        assert!(!foundation.has_valid_quranic_authority());
+        assert!(
+            !foundation.preserves_risale_method_authority()
+        );
+        assert!(
+            !foundation.separates_quran_and_risale_status()
+        );
         assert!(!foundation.is_constitutionally_valid());
     }
 
     #[test]
-    fn risale_is_primary_interpretive_reference() {
+    fn ordinary_foundation_cannot_use_risale_authority() {
         let foundation = TruthFoundation::new(
-            "foundation-risale-001",
-            TruthFoundationKind::RisaleNurOriginalText,
-            FoundationAuthority::
-                PrimaryInterpretiveReference,
-            FoundationUse::ProofMethod,
-            "Risale-i Nur orijinal metin kaydı",
-        )
-        .with_original_text(
-            "Orijinal metin bölümü.",
-        )
-        .with_human_interpretation(
-            "Metindeki ispat yolunun Zanistarast analizi.",
-        );
-
-        assert!(foundation.has_valid_risale_authority());
-        assert!(foundation.is_constitutionally_valid());
-    }
-
-    #[test]
-    fn risale_cannot_be_assigned_quranic_authority() {
-        let foundation = TruthFoundation::new(
-            "foundation-risale-002",
-            TruthFoundationKind::RisaleNurOriginalText,
-            FoundationAuthority::
-                AbsoluteRevelatoryTruth,
-            FoundationUse::Interpretation,
-            "Risale-i Nur orijinal metin kaydı",
-        );
-
-        assert!(!foundation.has_valid_risale_authority());
-        assert!(!foundation.is_constitutionally_valid());
-    }
-
-    #[test]
-    fn zanistarast_interpretation_remains_human_interpretation() {
-        let foundation = TruthFoundation::new(
-            "foundation-zanistarast-001",
-            TruthFoundationKind::ZanistarastInterpretation,
-            FoundationAuthority::HumanInterpretation,
-            FoundationUse::Synthesis,
-            "Zanistarast sentez kaydı",
+            "foundation-science",
+            "Güvenilir bilim",
+            "Doğrulanmış bilimsel bulgular.",
+            TruthFoundationKind::ReliableScience,
+            FoundationAuthority::BindingFoundationalMethod,
         );
 
         assert!(
-            foundation.has_valid_zanistarast_authority()
-        );
-        assert!(foundation.requires_mudebbir_decision);
-        assert!(foundation.is_constitutionally_valid());
-    }
-
-    #[test]
-    fn source_and_interpretation_must_remain_separate() {
-        let foundation = TruthFoundation::new(
-            "foundation-logic-001",
-            TruthFoundationKind::Logic,
-            FoundationAuthority::InvestigativeMethod,
-            FoundationUse::ProofMethod,
-            "Mantıksal çıkarım kaydı",
-        )
-        .with_original_text("Aynı ifade")
-        .with_human_interpretation("Aynı ifade");
-
-        assert!(
-            !foundation
-                .separates_source_from_interpretation()
+            !foundation.preserves_risale_method_authority()
         );
         assert!(!foundation.is_constitutionally_valid());
     }
 
     #[test]
-    fn foundation_set_combines_distinct_proof_paths() {
-        let risale = TruthFoundation::new(
-            "foundation-risale-003",
-            TruthFoundationKind::RisaleNurOriginalText,
-            FoundationAuthority::
-                PrimaryInterpretiveReference,
-            FoundationUse::ProofMethod,
-            "Risale-i Nur orijinal metin kaydı",
-        );
+    fn source_verification_is_required_for_risale() {
+        let foundation = TruthFoundation::new(
+            "foundation-risale-unverified",
+            "Risale-i Nur",
+            "Kaynak doğrulaması tamamlanmamış yöntem kaydı.",
+            TruthFoundationKind::OriginalRisaleNur,
+            FoundationAuthority::BindingFoundationalMethod,
+        )
+        .with_uses(vec![
+            FoundationUse::FoundationalProofMethod,
+        ])
+        .mark_original_preserved()
+        .mark_interpretation_separated()
+        .mark_rasterast_verified();
 
-        let creation_book = TruthFoundation::new(
-            "foundation-creation-001",
-            TruthFoundationKind::CreationBook,
-            FoundationAuthority::CreatedOrderEvidence,
-            FoundationUse::EmpiricalEvidence,
-            "Kâinat kitabı gözlem kaydı",
-        );
+        assert!(foundation.requires_source_verification());
+        assert!(!foundation.can_be_approved_for_use());
+    }
 
-        let fitrah = TruthFoundation::new(
-            "foundation-fitrah-001",
-            TruthFoundationKind::FitrahEvidence,
-            FoundationAuthority::CreatedOrderEvidence,
-            FoundationUse::ProofMethod,
-            "Fıtrat delili kaydı",
-        );
+    #[test]
+    fn application_issue_blocks_approval_not_authority() {
+        let foundation = risale_foundation()
+            .with_risks(vec![
+                "Zanistarast uygulaması yeniden incelenmelidir."
+                    .to_string(),
+            ]);
 
-        let logic = TruthFoundation::new(
-            "foundation-logic-002",
-            TruthFoundationKind::Logic,
-            FoundationAuthority::InvestigativeMethod,
-            FoundationUse::ProofMethod,
-            "Mantıksal inceleme kaydı",
+        assert!(
+            foundation.preserves_risale_method_authority()
         );
+        assert!(foundation.application_has_open_issues());
+        assert!(!foundation.can_be_approved_for_use());
+    }
 
-        let observation = TruthFoundation::new(
-            "foundation-observation-001",
-            TruthFoundationKind::Observation,
-            FoundationAuthority::InvestigativeMethod,
-            FoundationUse::EmpiricalEvidence,
-            "Gözlem kaydı",
-        );
-
-        let set = TruthFoundationSet::new(
-            "Meleklerin varlığı ve ispat yolları",
+    #[test]
+    fn foundation_set_requires_quran_before_risale() {
+        let valid_set = TruthFoundationSet::new(
+            "foundation-set-001",
+            "Zanistarast Hakikat Temelleri",
         )
         .with_foundations(vec![
             quran_foundation(),
-            risale,
-            creation_book,
-            fitrah,
-            logic,
-            observation,
+            risale_foundation(),
         ]);
 
-        assert!(set.has_quranic_foundation());
-        assert!(set.has_risale_reference());
-        assert!(set.has_creation_book_evidence());
-        assert!(set.has_fitrah_evidence());
-        assert!(set.has_rational_method());
-        assert!(set.has_empirical_method());
-        assert!(set.is_complete());
+        assert!(valid_set.preserves_foundation_order());
+        assert!(valid_set.is_complete());
+        assert_eq!(valid_set.approved_foundation_count(), 2);
     }
 
     #[test]
-    fn rasterast_review_applies_to_human_interpretation() {
-        let foundation = quran_foundation();
+    fn reversed_foundation_order_is_rejected() {
+        let invalid_set = TruthFoundationSet::new(
+            "foundation-set-002",
+            "Ters sıralanmış temeller",
+        )
+        .with_foundations(vec![
+            risale_foundation(),
+            quran_foundation(),
+        ]);
 
-        assert!(foundation.interpretation_requires_review());
-        assert!(foundation.requires_rasterast_review);
-        assert!(foundation.requires_mudebbir_decision);
+        assert!(!invalid_set.preserves_foundation_order());
+        assert!(!invalid_set.is_complete());
     }
 }
+
+
+
+
+
 
 
