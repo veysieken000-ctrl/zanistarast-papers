@@ -117,48 +117,56 @@ pub struct PublicationRequest {
     mudebbir_approved: bool,
 }
 
-impl PublicationRequest {
-    pub fn new(
-        target: PublicationTarget,
-        package: PublicationPackage,
-        metadata: PublicationMetadata,
-    ) -> Self {
-        Self {
-            target,
-            package,
-            metadata,
-            mudebbir_approved: false,
-        }
+/// Yayın isteğinin neden hazır olmadığını bildirir.
+///
+/// Bütün koşullar sağlanmışsa None döner.
+pub fn validation_error(
+    &self,
+) -> Option<PublicationError> {
+    if !self.package.is_ready_for_publication() {
+        return Some(
+            PublicationError::IncompletePackage,
+        );
     }
 
-    /// Bu belirli yayın isteğine Müdebbir yayın onayı verir.
-    pub fn approve_by_mudebbir(&mut self) {
-        self.mudebbir_approved = true;
+    if !self.metadata.is_complete() {
+        return Some(
+            PublicationError::IncompleteMetadata,
+        );
     }
 
-    /// Yayın isteğinin Müdebbir tarafından onaylanıp
-    /// onaylanmadığını bildirir.
-    pub fn is_approved_by_mudebbir(&self) -> bool {
-        self.mudebbir_approved
+    if !self.is_approved_by_mudebbir() {
+        return Some(
+            PublicationError::MissingMudebbirApproval,
+        );
     }
 
-    /// Paket, metadata ve açık Müdebbir yayın onayının
-    /// birlikte tamamlanmasını zorunlu kılar.
-    pub fn is_ready(&self) -> bool {
-        self.package.is_ready_for_publication()
-            && self.metadata.is_complete()
-            && self.is_approved_by_mudebbir()
-    }
+    None
 }
 
-/// Bir yayın işleminin sonucunu temsil eder.
+/// Yayın isteğinin yayınlanmaya hazır olup olmadığını bildirir.
+pub fn is_ready(&self) -> bool {
+    self.validation_error().is_none()
+}
+
+
+/// Yayın işleminin başarısız olma nedenleri.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum PublicationError {
+    IncompletePackage,
+    IncompleteMetadata,
+    MissingMudebbirApproval,
+    ProviderFailure(String),
+}
+
+/// Yayın işleminin sonucu.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationResult {
     pub target: PublicationTarget,
     pub success: bool,
     pub identifier: Option<String>,
+    pub error: Option<PublicationError>,
 }
-
 impl PublicationResult {
     pub fn success(
         target: PublicationTarget,
@@ -168,14 +176,19 @@ impl PublicationResult {
             target,
             success: true,
             identifier: Some(identifier.into()),
+            error: None,
         }
     }
 
-    pub fn failure(target: PublicationTarget) -> Self {
+    pub fn failure(
+        target: PublicationTarget,
+        error: PublicationError,
+    ) -> Self {
         Self {
             target,
             success: false,
             identifier: None,
+            error: Some(error),
         }
     }
 }
