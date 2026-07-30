@@ -142,6 +142,7 @@ pub use proof_path::{
     ProofPathKind,
     ProofPathSet,
     ProofStatus,
+    RisaleMethodBinding,
 };
 
 pub use quran_analysis::{
