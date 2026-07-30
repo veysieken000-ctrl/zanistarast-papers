@@ -122,7 +122,6 @@ pub enum QuranAnalysisLimitationKind {
     ScopeError,
     Unknown,
 }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuranVerseReference {
     pub surah_number: u16,
@@ -284,7 +283,6 @@ impl QuranAnalysisLimitation {
         !self.proposed_correction.trim().is_empty()
     }
 }
-
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct QuranAnalysisStatement {
     pub statement_id: String,
@@ -443,8 +441,7 @@ impl QuranAnalysis {
             requires_mudebbir_decision: true,
         }
     }
-
-    pub fn with_status(
+ pub fn with_status(
         mut self,
         status: QuranAnalysisStatus,
     ) -> Self {
@@ -599,8 +596,7 @@ impl QuranAnalysis {
             .iter()
             .all(|item| !item.trim().is_empty())
     }
-
-    pub fn has_revealed_statement(&self) -> bool {
+ pub fn has_revealed_statement(&self) -> bool {
         self.statements
             .iter()
             .any(|statement| statement.status.is_revealed())
@@ -780,7 +776,6 @@ impl QuranAnalysisSet {
             && self.invalid_analyses().is_empty()
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -955,6 +950,3 @@ mod tests {
         );
     }
 }
-
-
-
