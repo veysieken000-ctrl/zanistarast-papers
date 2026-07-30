@@ -1034,21 +1034,55 @@ mod tests {
         );
     }
 
-    #[test]
-    fn publication_result_can_represent_failure() {
-        let result = PublicationResult::failure(
-            PublicationTarget::Zenodo,
-        );
+   #[test]
+fn publication_result_can_represent_failure() {
+    let result = PublicationResult::failure(
+        PublicationTarget::Zenodo,
+        PublicationError::MissingMudebbirApproval,
+    );
 
-        assert!(!result.success);
+    assert!(!result.success);
 
-        assert_eq!(
-            result.target,
-            PublicationTarget::Zenodo,
-        );
+    assert_eq!(
+        result.target,
+        PublicationTarget::Zenodo,
+    );
 
-        assert_eq!(result.identifier, None);
-    }
+    assert_eq!(result.identifier, None);
+
+    assert_eq!(
+        result.error,
+        Some(
+            PublicationError::MissingMudebbirApproval,
+        ),
+    );
+}
+#[test]
+fn publication_request_reports_validation_error() {
+    let request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        PublicationPackage {
+            title: "Rasterast".to_string(),
+            latex_source: "latex".to_string(),
+            pdf_bytes: b"%PDF".to_vec(),
+            bibtex_source: None,
+        },
+        PublicationMetadata::new(
+            "Rasterast",
+            vec!["Veysi yê MALA SAF".to_string()],
+            "Abstract",
+            Vec::new(),
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        ),
+    );
+
+    assert_eq!(
+        request.validation_error(),
+        Some(PublicationError::IncompletePackage),
+    );
+}
 
     #[test]
     fn publication_metadata_reports_complete_state() {
