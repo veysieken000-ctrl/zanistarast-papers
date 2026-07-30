@@ -56,6 +56,7 @@ pub mod article_relation;
 pub mod linear_development;
 pub mod circular_development;
 pub mod core_periphery;
+pub mod development_synthesis;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -107,6 +108,18 @@ pub use core_periphery::{
     ReasoningDirection,
     ReasoningResult,
 };
+
+pub use development_synthesis::{
+    DevelopmentAgreementStatus,
+    DevelopmentRasterastAssessment,
+    DevelopmentSynthesisMetadata,
+    DevelopmentSynthesisReport,
+    SynthesisAgreement,
+    SynthesisContradiction,
+    SynthesisDifference,
+};
+
+
 
 
 
