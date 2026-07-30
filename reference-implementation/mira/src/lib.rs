@@ -185,7 +185,15 @@ pub use academic_runner::{
     VerifiedAcademicRunnerOutput,
 };
 
-
+pub use publication_approval::{
+    ApprovalReason,
+    DefaultPublicationApprovalService,
+    PublicationApprovalDecision,
+    PublicationApprovalError,
+    PublicationApprovalRecord,
+    PublicationApprovalService,
+    PublicationApprovalValidation,
+};
 
 
 
