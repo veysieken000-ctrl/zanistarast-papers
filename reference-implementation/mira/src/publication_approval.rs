@@ -322,33 +322,41 @@ mod tests {
         )
     }
 
-    fn approved_request() -> PublicationRequest {
-        let mut request = PublicationRequest::new(
-            PublicationTarget::Zenodo,
-            complete_package(),
-            complete_metadata(),
-        );
+    fn test_request_id() -> Uuid {
+    Uuid::from_u128(
+        0x12345678_1234_5678_1234_567812345678,
+    )
+}
 
-        request.approve_by_mudebbir();
+fn approved_request() -> PublicationRequest {
+    let mut request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        complete_package(),
+        complete_metadata(),
+    );
 
-        request
-    }
+    request.id = test_request_id();
+    request.approve_by_mudebbir();
 
-    fn approval_record(
-        decision: PublicationApprovalDecision,
-    ) -> PublicationApprovalRecord {
-        PublicationApprovalRecord::new(
-            Uuid::new_v4(),
-            PublicationTarget::Zenodo,
-            decision,
-            vec![
-                ApprovalReason::AcademicQualityVerified,
-                ApprovalReason::RasterastVerified,
-            ],
-            "Müdebbir",
-            None,
-        )
-    }
+    request
+}
+
+fn approval_record(
+    decision: PublicationApprovalDecision,
+) -> PublicationApprovalRecord {
+    PublicationApprovalRecord::new(
+        test_request_id(),
+        PublicationTarget::Zenodo,
+        decision,
+        vec![
+            ApprovalReason::AcademicQualityVerified,
+            ApprovalReason::RasterastVerified,
+        ],
+        "Müdebbir",
+        None,
+    )
+}
+
 
     #[test]
     fn approval_record_is_valid() {
