@@ -683,6 +683,26 @@ mod tests {
         assert_eq!(result.error, None);
     }
 
+#[test]
+fn publication_requests_have_unique_identifiers() {
+    let first_request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        complete_package(),
+        complete_metadata(),
+    );
+
+    let second_request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        complete_package(),
+        complete_metadata(),
+    );
+
+    assert_ne!(
+        first_request.id,
+        second_request.id,
+    );
+}
+    
     #[test]
     fn publication_result_represents_failure() {
         let result = PublicationResult::failure(
@@ -902,26 +922,6 @@ mod tests {
                 "Temporary directory must be removed.",
             );
     }
-}
-
-#[test]
-fn publication_requests_have_unique_identifiers() {
-    let first_request = PublicationRequest::new(
-        PublicationTarget::Zenodo,
-        complete_package(),
-        complete_metadata(),
-    );
-
-    let second_request = PublicationRequest::new(
-        PublicationTarget::Zenodo,
-        complete_package(),
-        complete_metadata(),
-    );
-
-    assert_ne!(
-        first_request.id,
-        second_request.id,
-    );
 }
 
 
