@@ -1,4 +1,5 @@
 use crate::academic_output::AcademicOutput;
+use uuid::Uuid;
 
 /// Akademik çalışmanın yayınlanabilir dosyalarını taşır.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -117,6 +118,7 @@ pub enum PublicationError {
 /// Gerçek yayınlama işlemi ayrıca açık Müdebbir onayı gerektirir.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PublicationRequest {
+    pub id: Uuid,
     pub target: PublicationTarget,
     pub package: PublicationPackage,
     pub metadata: PublicationMetadata,
@@ -130,11 +132,12 @@ impl PublicationRequest {
         metadata: PublicationMetadata,
     ) -> Self {
         Self {
-            target,
-            package,
-            metadata,
-            mudebbir_approved: false,
-        }
+    id: Uuid::new_v4(),
+    target,
+    package,
+    metadata,
+    mudebbir_approved: false,
+}
     }
 
     /// Bu yayın isteğini Müdebbir onaylar.
@@ -901,7 +904,25 @@ mod tests {
     }
 }
 
+#[test]
+fn publication_requests_have_unique_identifiers() {
+    let first_request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        complete_package(),
+        complete_metadata(),
+    );
 
+    let second_request = PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        complete_package(),
+        complete_metadata(),
+    );
+
+    assert_ne!(
+        first_request.id,
+        second_request.id,
+    );
+}
 
 
 
