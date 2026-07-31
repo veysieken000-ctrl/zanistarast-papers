@@ -433,10 +433,11 @@ fn approval_record(
 
     #[test]
     fn validation_fails_without_reasons() {
-        let request = approved_request();
+       let request = approved_request();
 
-        let record = PublicationApprovalRecord::new(
-            Uuid::new_v4(),
+let record = PublicationApprovalRecord::new(
+    request.id,
+
             PublicationTarget::Zenodo,
             PublicationApprovalDecision::Approved,
             Vec::new(),
@@ -461,7 +462,7 @@ fn approval_record(
         let request = approved_request();
 
         let record = PublicationApprovalRecord::new(
-            Uuid::new_v4(),
+    request.id,
             PublicationTarget::Zenodo,
             PublicationApprovalDecision::Approved,
             vec![
@@ -515,7 +516,7 @@ fn approval_record(
         let request = approved_request();
 
         let record = PublicationApprovalRecord::new(
-            Uuid::new_v4(),
+    request.id,
             PublicationTarget::Zenodo,
             PublicationApprovalDecision::Approved,
             Vec::new(),
@@ -756,8 +757,8 @@ fn approval_record(
     fn rejected_record_can_be_valid() {
         let request = approved_request();
 
-        let record = PublicationApprovalRecord::new(
-            Uuid::new_v4(),
+      let record = PublicationApprovalRecord::new(
+    request.id, 
             PublicationTarget::Zenodo,
             PublicationApprovalDecision::Rejected,
             vec![
