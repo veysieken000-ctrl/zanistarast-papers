@@ -198,6 +198,11 @@ impl PublicationApprovalRecord {
             );
         }
 
+        if self.request_id != request.id {
+        return PublicationApprovalValidation::failure(
+        PublicationApprovalError::InvalidRequest,
+    );
+}
         if !self.has_valid_decider() {
             return PublicationApprovalValidation::failure(
                 PublicationApprovalError::MissingMudebbir,
