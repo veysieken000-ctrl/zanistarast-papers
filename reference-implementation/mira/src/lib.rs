@@ -62,6 +62,7 @@ pub mod proof_path;
 pub mod quran_analysis;
 pub mod risale_method;
 pub mod publication_approval;
+pub mod file_hash;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -195,7 +196,10 @@ pub use publication_approval::{
     PublicationApprovalValidation,
 };
 
-
+pub use file_hash::{
+    FileHashRecord,
+    FileHashRole,
+};
 
 
 
