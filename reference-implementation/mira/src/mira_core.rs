@@ -8,6 +8,8 @@ use crate::academic_runner::{
 };
 use crate::source_verification_report::SourceVerificationReport;
 
+use crate::task_academic_output::TaskPublicationRequestLink;
+
 use crate::{
     MiraRecommendation,
     MiraRiskLevel,
@@ -31,6 +33,7 @@ pub struct MiraCore {
     tasks: Vec<MiraTask>,
     rasterast_reports: Vec<RasterastReport>,
     academic_outputs: Vec<TaskAcademicOutput>,
+    publication_request_links: Vec<TaskPublicationRequestLink>,
     recommendations: Vec<MiraRecommendation>,
     mudebbir_decisions: Vec<MudebbirDecisionRecord>,
 }
@@ -41,6 +44,7 @@ impl MiraCore {
             tasks: Vec::new(),
             rasterast_reports: Vec::new(),
             academic_outputs: Vec::new(),
+            publication_request_links: Vec::new(),
             recommendations: Vec::new(),
             mudebbir_decisions: Vec::new(),
         }
@@ -81,6 +85,65 @@ impl MiraCore {
         &self.academic_outputs
     }
 
+    /// Mira görevi ile yayın isteği arasındaki bağlantıyı kaydeder.
+///
+/// Görev Mira içinde kayıtlı değilse veya aynı yayın isteği
+/// daha önce bağlanmışsa kayıt oluşturulmaz.
+pub fn register_publication_request_link(
+    &mut self,
+    link: TaskPublicationRequestLink,
+) -> bool {
+    if self.find_task(link.task_id).is_none() {
+        return false;
+    }
+
+    if self
+        .publication_request_links
+        .iter()
+        .any(|stored| {
+            stored.publication_request_id
+                == link.publication_request_id
+        })
+    {
+        return false;
+    }
+
+    self.publication_request_links.push(link);
+    true
+}
+
+/// Kayıtlı görev–yayın isteği bağlantılarını
+/// salt okunur olarak döndürür.
+pub fn publication_request_links(
+    &self,
+) -> &[TaskPublicationRequestLink] {
+    &self.publication_request_links
+}
+
+/// Belirtilen yayın isteğine ait görev bağlantısını bulur.
+pub fn publication_request_link(
+    &self,
+    publication_request_id: Uuid,
+) -> Option<&TaskPublicationRequestLink> {
+    self.publication_request_links
+        .iter()
+        .find(|link| {
+            link.publication_request_id
+                == publication_request_id
+        })
+}
+
+/// Belirtilen Mira görevine bağlı yayın isteklerini döndürür.
+pub fn publication_request_links_for_task(
+    &self,
+    task_id: Uuid,
+) -> Vec<&TaskPublicationRequestLink> {
+    self.publication_request_links
+        .iter()
+        .filter(|link| link.task_id == task_id)
+        .collect()
+}
+    
     /// Oluşturulmuş görevi planlama aşamasına geçirir.
     pub fn start_planning(
         &mut self,
@@ -1084,4 +1147,109 @@ mod tests {
             MudebbirDecision::Approved,
         );
     }
+
+#[test]
+fn mira_stores_publication_request_link_for_registered_task() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn makalesini yayın için hazırla",
+        "Onaylı akademik çıktıyı yayın isteğine dönüştür.",
+    );
+
+    let publication_request_id = Uuid::new_v4();
+
+    let link = TaskPublicationRequestLink::new(
+        task_id,
+        publication_request_id,
+    );
+
+    assert!(
+        mira.register_publication_request_link(link)
+    );
+
+    assert_eq!(
+        mira.publication_request_links().len(),
+        1,
+    );
+
+    let stored = mira
+        .publication_request_link(
+            publication_request_id,
+        )
+        .expect(
+            "Yayın isteğine ait görev bağlantısı bulunmalıdır.",
+        );
+
+    assert_eq!(stored.task_id, task_id);
+    assert_eq!(
+        stored.publication_request_id,
+        publication_request_id,
+    );
+}
+
+#[test]
+fn mira_rejects_link_for_unknown_task() {
+    let mut mira = MiraCore::new();
+
+    let link = TaskPublicationRequestLink::new(
+        Uuid::new_v4(),
+        Uuid::new_v4(),
+    );
+
+    assert!(
+        !mira.register_publication_request_link(link)
+    );
+
+    assert!(
+        mira.publication_request_links().is_empty()
+    );
+}
+
+#[test]
+fn mira_rejects_duplicate_publication_request_link() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Rasterast makalesini yayın için hazırla",
+        "Yayın isteğini Mira görevine bağla.",
+    );
+
+    let publication_request_id = Uuid::new_v4();
+
+    let first_link = TaskPublicationRequestLink::new(
+        task_id,
+        publication_request_id,
+    );
+
+    let duplicate_link = TaskPublicationRequestLink::new(
+        task_id,
+        publication_request_id,
+    );
+
+    assert!(
+        mira.register_publication_request_link(
+            first_link,
+        )
+    );
+
+    assert!(
+        !mira.register_publication_request_link(
+            duplicate_link,
+        )
+    );
+
+    assert_eq!(
+        mira.publication_request_links().len(),
+        1,
+    );
+
+    assert_eq!(
+        mira
+            .publication_request_links_for_task(task_id)
+            .len(),
+        1,
+    );
+}
+
 }
