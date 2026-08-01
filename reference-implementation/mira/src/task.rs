@@ -14,6 +14,15 @@ pub enum MiraTaskStatus {
     Approved,
     Rejected,
     Completed,
+
+    /// Tamamlanmış akademik çalışmanın dış yayını
+    /// Müdebbir tarafından onaylanmıştır.
+    PublicationApproved,
+
+    /// Tamamlanmış akademik çalışmanın dış yayını
+    /// Müdebbir tarafından reddedilmiştir.
+    PublicationRejected,
+
     Failed,
 }
 
