@@ -17,6 +17,7 @@ use crate::{
     MiraTaskStatus,
     MudebbirDecision,
     MudebbirDecisionRecord,
+    PublicationApprovalDecision,
     PublicationApprovalRecord,
     RasterastReport,
     TaskAcademicOutput,
@@ -171,16 +172,19 @@ pub fn publication_request_links_for_task(
 /// Karara ait yayın isteği bir Mira görevine bağlı değilse
 /// veya aynı yayın isteği için daha önce karar kaydedilmişse
 /// işlem başarısız olur.
+///
+/// Onay kararı görevi `PublicationApproved`, ret kararı ise
+/// `PublicationRejected` durumuna geçirir.
 pub fn attach_publication_approval_record(
     &mut self,
     record: PublicationApprovalRecord,
 ) -> bool {
-    if self
+    let Some(task_id) = self
         .publication_request_link(record.request_id)
-        .is_none()
-    {
+        .map(|link| link.task_id)
+    else {
         return false;
-    }
+    };
 
     if self
         .publication_approval_records
@@ -191,6 +195,21 @@ pub fn attach_publication_approval_record(
     {
         return false;
     }
+
+    let next_status = match record.decision {
+        PublicationApprovalDecision::Approved => {
+            MiraTaskStatus::PublicationApproved
+        }
+        PublicationApprovalDecision::Rejected => {
+            MiraTaskStatus::PublicationRejected
+        }
+    };
+
+    let Some(task) = self.find_task_mut(task_id) else {
+        return false;
+    };
+
+    task.update_status(next_status);
 
     self.publication_approval_records.push(record);
     true
@@ -627,7 +646,6 @@ pub fn publication_approvals_for_task(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::PublicationApprovalDecision;
     use crate::publication_package::{
     PublicationMetadata,
     PublicationPackage,
@@ -1489,6 +1507,15 @@ fn mira_attaches_publication_approval_to_linked_task() {
             .len(),
         1,
     );
+let task = mira
+    .find_task(task_id)
+    .expect("Yayın kararına bağlı görev bulunmalıdır.");
+
+assert_eq!(
+    task.status,
+    MiraTaskStatus::PublicationApproved,
+);
+
 }
 
 #[test]
@@ -1554,6 +1581,51 @@ fn mira_rejects_duplicate_publication_approval() {
     assert_eq!(
         mira.publication_approval_records().len(),
         1,
+    );
+}
+#[test]
+fn rejected_publication_decision_stops_linked_task() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn yayın kararını değerlendir",
+        "Ret kararında yayın görevini durdur.",
+    );
+
+    let request = complete_publication_request();
+
+    assert!(
+        mira.link_publication_request_to_task(
+            task_id,
+            &request,
+        )
+    );
+
+    let record = publication_approval_record(
+        &request,
+        PublicationApprovalDecision::Rejected,
+    );
+
+    assert!(
+        mira.attach_publication_approval_record(record)
+    );
+
+    let task = mira
+        .find_task(task_id)
+        .expect("Reddedilen yayın görevi bulunmalıdır.");
+
+    assert_eq!(
+        task.status,
+        MiraTaskStatus::PublicationRejected,
+    );
+
+    let stored = mira
+        .publication_approval_for_request(request.id)
+        .expect("Müdebbir ret kararı saklanmalıdır.");
+
+    assert_eq!(
+        stored.decision,
+        PublicationApprovalDecision::Rejected,
     );
 }
 
