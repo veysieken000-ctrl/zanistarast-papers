@@ -91,32 +91,7 @@ pub fn from_file_sha256(
         digest,
         recorded_at: SystemTime::now(),
     })
-}
-
-/// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
-    pub fn from_file_sha256(
-        path: impl Into<PathBuf>,
-        role: FileHashRole,
-    ) -> std::io::Result<Self> {
-        use sha2::{Digest, Sha256};
-        use std::fs;
-
-        let path = path.into();
-        let bytes = fs::read(&path)?;
-
-        let mut hasher = Sha256::new();
-        hasher.update(bytes);
-
-        let digest = format!("{:x}", hasher.finalize());
-
-        Ok(Self {
-            path,
-            role,
-            algorithm: "SHA-256".to_string(),
-            digest,
-            recorded_at: SystemTime::now(),
-        })
-    }
+   }
  }
 
 #[cfg(test)]
