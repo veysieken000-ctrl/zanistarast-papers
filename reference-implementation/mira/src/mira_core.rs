@@ -107,7 +107,6 @@ pub fn link_publication_request_to_task(
 ///
 /// Görev Mira içinde kayıtlı değilse veya aynı yayın isteği
 /// daha önce bağlanmışsa kayıt oluşturulmaz.
-
     pub fn register_publication_request_link(
     &mut self,
     link: TaskPublicationRequestLink,
