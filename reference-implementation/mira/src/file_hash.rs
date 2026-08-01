@@ -193,3 +193,30 @@ mod tests {
             .expect("temporary file should be removed");
     }
 }
+#[test]
+fn sha256_returns_different_hashes_for_different_files() {
+    use std::fs;
+
+    let temp_dir = std::env::temp_dir();
+
+    let file1 = temp_dir.join("mira_hash_test_1.txt");
+    let file2 = temp_dir.join("mira_hash_test_2.txt");
+
+    fs::write(&file1, b"Hebun").unwrap();
+    fs::write(&file2, b"Rabun").unwrap();
+
+    let hash1 =
+        FileHashRecord::from_file_sha256(&file1, FileHashRole::Original)
+            .unwrap();
+
+    let hash2 =
+        FileHashRecord::from_file_sha256(&file2, FileHashRole::Original)
+            .unwrap();
+
+    assert_ne!(hash1.digest, hash2.digest);
+
+    let _ = fs::remove_file(file1);
+    let _ = fs::remove_file(file2);
+}
+
+
