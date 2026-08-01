@@ -66,6 +66,30 @@ impl FileHashRecord {
         self.role == FileHashRole::Revised
     }
 }
+/// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
+    pub fn from_file_sha256(
+        path: impl Into<PathBuf>,
+        role: FileHashRole,
+    ) -> std::io::Result<Self> {
+        use sha2::{Digest, Sha256};
+        use std::fs;
+
+        let path = path.into();
+        let bytes = fs::read(&path)?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+
+        let digest = format!("{:x}", hasher.finalize());
+
+        Ok(Self {
+            path,
+            role,
+            algorithm: "SHA-256".to_string(),
+            digest,
+            recorded_at: SystemTime::now(),
+        })
+    }
 
 #[cfg(test)]
 mod tests {
@@ -139,6 +163,33 @@ mod tests {
         );
     }
 }
+
+#[test]
+fn creates_sha256_hash_record_from_file() {
+    use std::fs;
+
+    let temp_dir = std::env::temp_dir();
+    let file_path = temp_dir.join("mira_hash_test.txt");
+
+    fs::write(&file_path, b"Rasterast")
+        .expect("temporary file should be created");
+
+    let record = FileHashRecord::from_file_sha256(
+        &file_path,
+        FileHashRole::Original,
+    )
+    .expect("hash should be computed");
+
+    assert!(record.is_complete());
+    assert!(record.is_original());
+    assert_eq!(record.algorithm, "SHA-256");
+    assert!(!record.digest.is_empty());
+
+    fs::remove_file(file_path)
+        .expect("temporary file should be removed");
+}
+
+
 
 
 
