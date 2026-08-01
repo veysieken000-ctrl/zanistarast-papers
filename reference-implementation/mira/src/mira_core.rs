@@ -7,7 +7,7 @@ use crate::academic_runner::{
     VerifiedAcademicRunnerOutput,
 };
 use crate::source_verification_report::SourceVerificationReport;
-
+use crate::publication_package::PublicationRequest;
 use crate::task_academic_output::TaskPublicationRequestLink;
 
 use crate::{
@@ -85,11 +85,30 @@ impl MiraCore {
         &self.academic_outputs
     }
 
-    /// Mira görevi ile yayın isteği arasındaki bağlantıyı kaydeder.
+/// Gerçek bir yayın isteğini kayıtlı Mira görevine bağlar.
+///
+/// Görev Mira içinde kayıtlı değilse veya yayın isteği
+/// daha önce başka bir bağlantıyla kaydedilmişse işlem
+/// başarısız olur.
+pub fn link_publication_request_to_task(
+    &mut self,
+    task_id: Uuid,
+    request: &PublicationRequest,
+) -> bool {
+    let link = TaskPublicationRequestLink::new(
+        task_id,
+        request.id,
+    );
+
+    self.register_publication_request_link(link)
+}
+    
+/// Mira görevi ile yayın isteği arasındaki bağlantıyı kaydeder.
 ///
 /// Görev Mira içinde kayıtlı değilse veya aynı yayın isteği
 /// daha önce bağlanmışsa kayıt oluşturulmaz.
-pub fn register_publication_request_link(
+
+    pub fn register_publication_request_link(
     &mut self,
     link: TaskPublicationRequestLink,
 ) -> bool {
@@ -536,6 +555,12 @@ pub fn publication_request_links_for_task(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::publication_package::{
+    PublicationMetadata,
+    PublicationPackage,
+    PublicationRequest,
+    PublicationTarget,
+};
 
     use crate::citation_reference_matcher::
         CitationReferenceMatchReport;
@@ -560,6 +585,35 @@ mod tests {
             )
     }
 
+    fn complete_publication_request() -> PublicationRequest {
+    PublicationRequest::new(
+        PublicationTarget::Zenodo,
+        PublicationPackage {
+            title: "Hebûn".to_string(),
+            latex_source:
+                "\\documentclass{article}".to_string(),
+            pdf_bytes: b"%PDF-1.7\n".to_vec(),
+            bibtex_source: Some(
+                "@article{hebun2026}".to_string(),
+            ),
+        },
+        PublicationMetadata::new(
+            "Hebûn",
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+            "Hebûn için akademik yayın taslağı.",
+            vec![
+                "Hebûn".to_string(),
+                "Zanistarast".to_string(),
+            ],
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        ),
+    )
+}
+    
     fn verified_rasterast_report(
         task_id: Uuid,
     ) -> RasterastReport {
@@ -1249,6 +1303,54 @@ fn mira_rejects_duplicate_publication_request_link() {
             .publication_request_links_for_task(task_id)
             .len(),
         1,
+    );
+}
+#[test]
+fn mira_links_real_publication_request_to_registered_task() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn yayın isteğini hazırla",
+        "Akademik çıktıyı yayın isteğine dönüştür.",
+    );
+
+    let request = complete_publication_request();
+
+    assert!(
+        mira.link_publication_request_to_task(
+            task_id,
+            &request,
+        )
+    );
+
+    let stored = mira
+        .publication_request_link(request.id)
+        .expect(
+            "Gerçek yayın isteği Mira görevine bağlı olmalıdır.",
+        );
+
+    assert_eq!(stored.task_id, task_id);
+    assert_eq!(
+        stored.publication_request_id,
+        request.id,
+    );
+}
+
+#[test]
+fn mira_does_not_link_publication_request_to_unknown_task() {
+    let mut mira = MiraCore::new();
+
+    let request = complete_publication_request();
+
+    assert!(
+        !mira.link_publication_request_to_task(
+            Uuid::new_v4(),
+            &request,
+        )
+    );
+
+    assert!(
+        mira.publication_request_links().is_empty()
     );
 }
 
