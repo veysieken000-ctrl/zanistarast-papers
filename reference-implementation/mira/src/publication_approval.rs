@@ -150,6 +150,7 @@ impl PublicationApprovalRecord {
             && self.has_valid_decider()
     }
 }
+
 /// Yayın onay sürecinde oluşabilecek doğrulama hataları.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationApprovalError {
@@ -157,6 +158,7 @@ pub enum PublicationApprovalError {
     TargetMismatch,
     MissingMudebbir,
     MissingReasons,
+    PublicationRejected,
     InvalidDecision,
 }
 
@@ -257,16 +259,23 @@ impl PublicationApprovalService
         let validation = record.validate(request);
 
         if !validation.valid {
-            return Err(
-                validation
-                    .error
-                    .unwrap_or(
-                        PublicationApprovalError::InvalidDecision,
-                    ),
-            );
-        }
+    return Err(
+        validation
+            .error
+            .unwrap_or(
+                PublicationApprovalError::InvalidDecision,
+            ),
+    );
+}
 
-        Ok(record)
+if !record.permits_publication() {
+    return Err(
+        PublicationApprovalError::PublicationRejected,
+    );
+}
+
+Ok(record)
+
     }
 }
 
@@ -549,6 +558,40 @@ let record = PublicationApprovalRecord::new(
         assert!(approved.permits_publication());
     }
 
+   #[test]
+fn default_service_blocks_rejected_decision() {
+    let request = approved_request();
+
+    let record = PublicationApprovalRecord::new(
+        request.id,
+        request.target,
+        PublicationApprovalDecision::Rejected,
+        vec![
+            ApprovalReason::InsufficientEvidence,
+            ApprovalReason::RasterastRejected,
+        ],
+        "Müdebbir",
+        Some(
+            "Kanıtlar güçlendirilmeden yayınlanamaz."
+                .to_string(),
+        ),
+    );
+
+    let service =
+        DefaultPublicationApprovalService;
+
+    let result =
+        service.approve(&request, record);
+
+    assert_eq!(
+        result,
+        Err(
+            PublicationApprovalError::
+                PublicationRejected,
+        ),
+    );
+}
+    
     #[test]
     fn default_service_rejects_invalid_record() {
         let request = approved_request();
