@@ -117,6 +117,7 @@ pub fn from_file_sha256(
             recorded_at: SystemTime::now(),
         })
     }
+ }
 
 #[cfg(test)]
 mod tests {
