@@ -63,8 +63,11 @@ impl FileHashRecord {
 
     /// Kaydın yeni sürümü temsil edip etmediğini bildirir.
     pub fn is_revised(&self) -> bool {
-        self.role == FileHashRole::Revised
-    }
+    self.role == FileHashRole::Revised
+}
+
+pub fn from_file_sha256(
+
 /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
 pub fn from_file_sha256(
     path: impl Into<PathBuf>,
@@ -89,9 +92,6 @@ pub fn from_file_sha256(
         recorded_at: SystemTime::now(),
     })
 }
-
-}
-
 
 /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
     pub fn from_file_sha256(
