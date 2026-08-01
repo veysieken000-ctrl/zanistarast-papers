@@ -11,6 +11,7 @@ serde_json.workspace = true
 chrono.workspace = true
 uuid.workspace = true
 thiserror.workspace = true
+sha2 = "0.10"
 
 zanistarast-core = { path = "../core" }
 zanistarast-ai = { path = "../ai" }
