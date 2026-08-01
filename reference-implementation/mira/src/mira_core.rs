@@ -17,7 +17,6 @@ use crate::{
     MiraTaskStatus,
     MudebbirDecision,
     MudebbirDecisionRecord,
-    PublicationApprovalDecision,
     PublicationApprovalRecord,
     RasterastReport,
     TaskAcademicOutput,
@@ -628,6 +627,7 @@ pub fn publication_approvals_for_task(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::PublicationApprovalDecision;
     use crate::publication_package::{
     PublicationMetadata,
     PublicationPackage,
