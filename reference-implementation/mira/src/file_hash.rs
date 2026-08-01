@@ -85,7 +85,7 @@ pub fn from_file_sha256(
     let bytes = fs::read(&path)?;
 
     let mut hasher = Sha256::new();
-    hasher.update(bytes);
+    hasher.update(&bytes);
 
     let digest = format!("{:x}", hasher.finalize());
 
@@ -96,7 +96,6 @@ pub fn from_file_sha256(
         digest,
         recorded_at: SystemTime::now(),
     })
-}
 }
 
 #[cfg(test)]
