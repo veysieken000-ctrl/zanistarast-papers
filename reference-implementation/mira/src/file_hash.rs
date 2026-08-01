@@ -68,6 +68,11 @@ impl FileHashRecord {
 
 pub fn from_file_sha256(
 
+/// Kaydın yeni sürümü temsil edip etmediğini bildirir.
+pub fn is_revised(&self) -> bool {
+    self.role == FileHashRole::Revised
+}
+
 /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
 pub fn from_file_sha256(
     path: impl Into<PathBuf>,
@@ -91,8 +96,8 @@ pub fn from_file_sha256(
         digest,
         recorded_at: SystemTime::now(),
     })
-   }
- }
+}
+}
 
 #[cfg(test)]
 mod tests {
