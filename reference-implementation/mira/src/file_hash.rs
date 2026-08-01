@@ -38,7 +38,7 @@ impl FileHashRecord {
             digest: digest.into(),
             recorded_at,
         }
-   } 
+    }
 
     /// Hash kaydının zorunlu alanlarının eksiksiz
     /// olup olmadığını bildirir.
@@ -63,39 +63,33 @@ impl FileHashRecord {
 
     /// Kaydın yeni sürümü temsil edip etmediğini bildirir.
     pub fn is_revised(&self) -> bool {
-    self.role == FileHashRole::Revised
-}
+        self.role == FileHashRole::Revised
+    }
 
-pub fn from_file_sha256(
+    /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
+    pub fn from_file_sha256(
+        path: impl Into<PathBuf>,
+        role: FileHashRole,
+    ) -> std::io::Result<Self> {
+        use sha2::{Digest, Sha256};
+        use std::fs;
 
-/// Kaydın yeni sürümü temsil edip etmediğini bildirir.
-pub fn is_revised(&self) -> bool {
-    self.role == FileHashRole::Revised
-}
+        let path = path.into();
+        let bytes = fs::read(&path)?;
 
-/// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
-pub fn from_file_sha256(
-    path: impl Into<PathBuf>,
-    role: FileHashRole,
-) -> std::io::Result<Self> {
-    use sha2::{Digest, Sha256};
-    use std::fs;
+        let mut hasher = Sha256::new();
+        hasher.update(&bytes);
 
-    let path = path.into();
-    let bytes = fs::read(&path)?;
+        let digest = format!("{:x}", hasher.finalize());
 
-    let mut hasher = Sha256::new();
-    hasher.update(&bytes);
-
-    let digest = format!("{:x}", hasher.finalize());
-
-    Ok(Self {
-        path,
-        role,
-        algorithm: "SHA-256".to_string(),
-        digest,
-        recorded_at: SystemTime::now(),
-    })
+        Ok(Self {
+            path,
+            role,
+            algorithm: "SHA-256".to_string(),
+            digest,
+            recorded_at: SystemTime::now(),
+        })
+    }
 }
 
 #[cfg(test)]
@@ -169,34 +163,33 @@ mod tests {
             )
         );
     }
+
+    #[test]
+    fn creates_sha256_hash_record_from_file() {
+        use std::fs;
+
+        let file_path = std::env::temp_dir().join(
+            format!(
+                "mira-hash-test-{}.txt",
+                std::process::id(),
+            ),
+        );
+
+        fs::write(&file_path, b"Rasterast")
+            .expect("temporary file should be created");
+
+        let record = FileHashRecord::from_file_sha256(
+            &file_path,
+            FileHashRole::Original,
+        )
+        .expect("hash should be computed");
+
+        assert!(record.is_complete());
+        assert!(record.is_original());
+        assert_eq!(record.algorithm, "SHA-256");
+        assert_eq!(record.digest.len(), 64);
+
+        fs::remove_file(&file_path)
+            .expect("temporary file should be removed");
+    }
 }
-
-#[test]
-fn creates_sha256_hash_record_from_file() {
-    use std::fs;
-
-    let temp_dir = std::env::temp_dir();
-    let file_path = temp_dir.join("mira_hash_test.txt");
-
-    fs::write(&file_path, b"Rasterast")
-        .expect("temporary file should be created");
-
-    let record = FileHashRecord::from_file_sha256(
-        &file_path,
-        FileHashRole::Original,
-    )
-    .expect("hash should be computed");
-
-    assert!(record.is_complete());
-    assert!(record.is_original());
-    assert_eq!(record.algorithm, "SHA-256");
-    assert!(!record.digest.is_empty());
-
-    fs::remove_file(file_path)
-        .expect("temporary file should be removed");
-}
-
-
-
-
-
