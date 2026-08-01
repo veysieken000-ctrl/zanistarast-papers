@@ -154,6 +154,7 @@ impl PublicationApprovalRecord {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationApprovalError {
     InvalidRequest,
+    TargetMismatch,
     MissingMudebbir,
     MissingReasons,
     InvalidDecision,
@@ -203,6 +204,14 @@ impl PublicationApprovalRecord {
         PublicationApprovalError::InvalidRequest,
     );
 }
+       
+     if self.target != request.target {
+    return PublicationApprovalValidation::failure(
+        PublicationApprovalError::TargetMismatch,
+    );
+}
+   
+        
         if !self.has_valid_decider() {
             return PublicationApprovalValidation::failure(
                 PublicationApprovalError::MissingMudebbir,
@@ -407,7 +416,36 @@ fn approval_record(
         assert!(validation.valid);
         assert_eq!(validation.error, None);
     }
-#[test]
+
+    #[test]
+fn validation_rejects_mismatched_publication_target() {
+    let request = approved_request();
+
+    let record = PublicationApprovalRecord::new(
+        request.id,
+        PublicationTarget::Arxiv,
+        PublicationApprovalDecision::Approved,
+        vec![
+            ApprovalReason::AcademicQualityVerified,
+            ApprovalReason::RasterastVerified,
+        ],
+        "Müdebbir",
+        None,
+    );
+
+    let validation = record.validate(&request);
+
+    assert!(!validation.valid);
+
+    assert_eq!(
+        validation.error,
+        Some(
+            PublicationApprovalError::TargetMismatch,
+        ),
+    );
+}
+    
+    #[test]
     fn validation_fails_for_invalid_request() {
         let request = PublicationRequest::new(
             PublicationTarget::Zenodo,
