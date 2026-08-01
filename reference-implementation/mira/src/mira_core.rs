@@ -17,6 +17,8 @@ use crate::{
     MiraTaskStatus,
     MudebbirDecision,
     MudebbirDecisionRecord,
+    PublicationApprovalDecision,
+    PublicationApprovalRecord,
     RasterastReport,
     TaskAcademicOutput,
 };
@@ -34,6 +36,7 @@ pub struct MiraCore {
     rasterast_reports: Vec<RasterastReport>,
     academic_outputs: Vec<TaskAcademicOutput>,
     publication_request_links: Vec<TaskPublicationRequestLink>,
+    publication_approval_records: Vec<PublicationApprovalRecord>,
     recommendations: Vec<MiraRecommendation>,
     mudebbir_decisions: Vec<MudebbirDecisionRecord>,
 }
@@ -45,6 +48,7 @@ impl MiraCore {
             rasterast_reports: Vec::new(),
             academic_outputs: Vec::new(),
             publication_request_links: Vec::new(),
+            publication_approval_records: Vec::new(),
             recommendations: Vec::new(),
             mudebbir_decisions: Vec::new(),
         }
@@ -161,7 +165,77 @@ pub fn publication_request_links_for_task(
         .filter(|link| link.task_id == task_id)
         .collect()
 }
-    
+
+/// Müdebbir yayın kararını, yayın isteği üzerinden
+/// kayıtlı Mira görevine bağlayarak saklar.
+///
+/// Karara ait yayın isteği bir Mira görevine bağlı değilse
+/// veya aynı yayın isteği için daha önce karar kaydedilmişse
+/// işlem başarısız olur.
+pub fn attach_publication_approval_record(
+    &mut self,
+    record: PublicationApprovalRecord,
+) -> bool {
+    if self
+        .publication_request_link(record.request_id)
+        .is_none()
+    {
+        return false;
+    }
+
+    if self
+        .publication_approval_records
+        .iter()
+        .any(|stored| {
+            stored.request_id == record.request_id
+        })
+    {
+        return false;
+    }
+
+    self.publication_approval_records.push(record);
+    true
+}
+
+/// Kayıtlı Müdebbir yayın kararlarını salt okunur döndürür.
+pub fn publication_approval_records(
+    &self,
+) -> &[PublicationApprovalRecord] {
+    &self.publication_approval_records
+}
+
+/// Belirtilen yayın isteğine ait Müdebbir kararını bulur.
+pub fn publication_approval_for_request(
+    &self,
+    publication_request_id: Uuid,
+) -> Option<&PublicationApprovalRecord> {
+    self.publication_approval_records
+        .iter()
+        .find(|record| {
+            record.request_id
+                == publication_request_id
+        })
+}
+
+/// Belirtilen Mira görevine ait yayın kararlarını döndürür.
+pub fn publication_approvals_for_task(
+    &self,
+    task_id: Uuid,
+) -> Vec<&PublicationApprovalRecord> {
+    let request_ids: Vec<Uuid> = self
+        .publication_request_links_for_task(task_id)
+        .iter()
+        .map(|link| link.publication_request_id)
+        .collect();
+
+    self.publication_approval_records
+        .iter()
+        .filter(|record| {
+            request_ids.contains(&record.request_id)
+        })
+        .collect()
+}
+  
     /// Oluşturulmuş görevi planlama aşamasına geçirir.
     pub fn start_planning(
         &mut self,
@@ -610,6 +684,24 @@ mod tests {
             "CC-BY-4.0",
             "1.0.0",
         ),
+    )
+}
+
+fn publication_approval_record(
+    request: &PublicationRequest,
+    decision: PublicationApprovalDecision,
+) -> PublicationApprovalRecord {
+    PublicationApprovalRecord::new(
+        request.id,
+        request.target,
+        decision,
+        vec![
+            crate::ApprovalReason::
+                AcademicQualityVerified,
+            crate::ApprovalReason::RasterastVerified,
+        ],
+        "Müdebbir",
+        None,
     )
 }
     
@@ -1350,6 +1442,118 @@ fn mira_does_not_link_publication_request_to_unknown_task() {
 
     assert!(
         mira.publication_request_links().is_empty()
+    );
+}
+#[test]
+fn mira_attaches_publication_approval_to_linked_task() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Hebûn yayın kararını kaydet",
+        "Müdebbir yayın kararını göreve bağla.",
+    );
+
+    let request = complete_publication_request();
+
+    assert!(
+        mira.link_publication_request_to_task(
+            task_id,
+            &request,
+        )
+    );
+
+    let record = publication_approval_record(
+        &request,
+        PublicationApprovalDecision::Approved,
+    );
+
+    assert!(
+        mira.attach_publication_approval_record(record)
+    );
+
+    let stored = mira
+        .publication_approval_for_request(request.id)
+        .expect(
+            "Yayın isteğine ait Müdebbir kararı bulunmalıdır.",
+        );
+
+    assert_eq!(stored.request_id, request.id);
+    assert_eq!(
+        stored.decision,
+        PublicationApprovalDecision::Approved,
+    );
+
+    assert_eq!(
+        mira
+            .publication_approvals_for_task(task_id)
+            .len(),
+        1,
+    );
+}
+
+#[test]
+fn mira_rejects_approval_for_unlinked_request() {
+    let mut mira = MiraCore::new();
+
+    let request = complete_publication_request();
+
+    let record = publication_approval_record(
+        &request,
+        PublicationApprovalDecision::Approved,
+    );
+
+    assert!(
+        !mira.attach_publication_approval_record(record)
+    );
+
+    assert!(
+        mira.publication_approval_records().is_empty()
+    );
+}
+
+#[test]
+fn mira_rejects_duplicate_publication_approval() {
+    let mut mira = MiraCore::new();
+
+    let task_id = mira.register_academic_task(
+        "Rasterast yayın kararını kaydet",
+        "Tek yayın isteği için tek karar kaydı oluştur.",
+    );
+
+    let request = complete_publication_request();
+
+    assert!(
+        mira.link_publication_request_to_task(
+            task_id,
+            &request,
+        )
+    );
+
+    let first_record = publication_approval_record(
+        &request,
+        PublicationApprovalDecision::Approved,
+    );
+
+    let duplicate_record = publication_approval_record(
+        &request,
+        PublicationApprovalDecision::Rejected,
+    );
+
+    assert!(
+        mira.attach_publication_approval_record(
+            first_record,
+        )
+    );
+
+    assert!(
+        !mira.attach_publication_approval_record(
+            duplicate_record,
+        )
+    );
+
+    assert_eq!(
+        mira.publication_approval_records().len(),
+        1,
     );
 }
 
