@@ -83,7 +83,6 @@ pub fn verify_current_file_sha256(
         verified_at,
     ))
 }
-    }
 
     /// Orijinal dosyanın değişmeden korunduğunu bildirir.
     pub fn is_intact(&self) -> bool {
