@@ -19,6 +19,30 @@ pub enum FileLineChangeKind {
     Unchanged,
 }
 
+/// Diff raporunun sürüm çiftiyle güvenlik
+/// doğrulama sonucunu belirtir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileDiffSecurityStatus {
+    /// Diff raporu, dosya yolları ve hash sonuçları
+    /// sürüm çiftiyle tamamen uyumludur.
+    Verified,
+
+    /// Sürüm çifti geçerli değildir.
+    InvalidVersionPair,
+
+    /// Diff raporundaki dosya yolları sürüm
+    /// çiftindeki yollarla eşleşmemektedir.
+    PathMismatch,
+
+    /// Diff raporundaki satır değişiklik kayıtları
+    /// kendi içinde tutarlı değildir.
+    InconsistentDiff,
+
+    /// Hash karşılaştırması ile diff sonucu
+    /// birbiriyle çelişmektedir.
+    HashDiffMismatch,
+}
+
 /// Bir dosya sürümündeki tek satır değişikliğini temsil eder.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct FileLineChange {
@@ -459,6 +483,38 @@ pub fn matches_version_pair(
     }
 
     false
+}
+
+    /// Diff raporunu sürüm çifti, dosya yolları,
+/// hash karşılaştırması ve satır kayıtları üzerinden
+/// ayrıntılı olarak doğrular.
+pub fn security_status(
+    &self,
+    pair: &FileVersionPair,
+) -> FileDiffSecurityStatus {
+    if !pair.is_matched() {
+        return FileDiffSecurityStatus::InvalidVersionPair;
+    }
+
+    if self.original_path != pair.original.path
+        || self.revised_path != pair.revised.path
+    {
+        return FileDiffSecurityStatus::PathMismatch;
+    }
+
+    if !self.is_consistent() {
+        return FileDiffSecurityStatus::InconsistentDiff;
+    }
+
+    let hash_and_diff_agree =
+        (pair.content_identical() && !self.has_changes())
+            || (pair.content_changed() && self.has_changes());
+
+    if !hash_and_diff_agree {
+        return FileDiffSecurityStatus::HashDiffMismatch;
+    }
+
+    FileDiffSecurityStatus::Verified
 }
 
     /// Eklenen satırların sayısını döndürür.
@@ -1490,6 +1546,155 @@ fn diff_report_rejects_unrelated_version_pair() {
     fs::remove_file(&other_revised_path)
         .expect("other revised file should be removed");
 }
+
+#[test]
+fn security_status_verifies_matching_diff_and_version_pair() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-security-diff-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-security-diff-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nRasterast\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nNew line\nRasterast\n",
+    )
+    .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("version pair should be created");
+
+    let report = FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect("diff report should be created");
+
+    assert_eq!(
+        report.security_status(&pair),
+        FileDiffSecurityStatus::Verified,
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn security_status_reports_path_mismatch() {
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = FileVersionPair::new(
+        original,
+        revised,
+        SystemTime::now(),
+    );
+
+    let report = FileDiffReport::new(
+        "articles/other.md",
+        "articles/other-v2.md",
+        vec![
+            FileLineChange::new(
+                FileLineChangeKind::Modified,
+                Some(1),
+                Some(1),
+                Some("Old".to_string()),
+                Some("New".to_string()),
+            ),
+        ],
+        SystemTime::now(),
+    );
+
+    assert_eq!(
+        report.security_status(&pair),
+        FileDiffSecurityStatus::PathMismatch,
+    );
+}
+
+#[test]
+fn security_status_reports_hash_diff_mismatch() {
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let revised = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let pair = FileVersionPair::new(
+        original,
+        revised,
+        SystemTime::now(),
+    );
+
+    let report = FileDiffReport::new(
+        "articles/hebun.md",
+        "articles/hebun-v2.md",
+        vec![
+            FileLineChange::new(
+                FileLineChangeKind::Modified,
+                Some(1),
+                Some(1),
+                Some("Old".to_string()),
+                Some("New".to_string()),
+            ),
+        ],
+        SystemTime::now(),
+    );
+
+    assert!(pair.content_identical());
+    assert!(report.has_changes());
+
+    assert_eq!(
+        report.security_status(&pair),
+        FileDiffSecurityStatus::HashDiffMismatch,
+    );
+}
+
 
 
 
