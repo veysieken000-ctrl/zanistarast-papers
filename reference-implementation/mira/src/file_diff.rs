@@ -435,6 +435,32 @@ pub fn from_version_pair_lcs(
     )
 }
 
+    /// Diff raporunun doğrulanmış sürüm çifti, dosya yolları
+/// ve hash karşılaştırma sonucuyla tutarlı olup olmadığını
+/// bildirir.
+pub fn matches_version_pair(
+    &self,
+    pair: &FileVersionPair,
+) -> bool {
+    if !pair.is_matched()
+        || !self.is_consistent()
+        || self.original_path != pair.original.path
+        || self.revised_path != pair.revised.path
+    {
+        return false;
+    }
+
+    if pair.content_identical() {
+        return !self.has_changes();
+    }
+
+    if pair.content_changed() {
+        return self.has_changes();
+    }
+
+    false
+}
+
     /// Eklenen satırların sayısını döndürür.
     pub fn added_count(&self) -> usize {
         self.changes
@@ -1281,6 +1307,190 @@ fn rejects_lcs_diff_for_invalid_version_pair() {
         std::io::ErrorKind::InvalidInput,
     );
 }
+
+#[test]
+fn changed_diff_matches_changed_version_pair() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nRasterast\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nNew line\nRasterast\n",
+    )
+    .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("version pair should be created");
+
+    let report = FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect("diff report should be created");
+
+    assert!(pair.content_changed());
+    assert!(report.has_changes());
+    assert!(report.matches_version_pair(&pair));
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn unchanged_diff_matches_identical_version_pair() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-identical-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-identical-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&original_path, "Hebun\nRasterast\n")
+        .expect("original file should be created");
+
+    fs::write(&revised_path, "Hebun\nRasterast\n")
+        .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("identical version pair should be created");
+
+    let report = FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect("identical diff report should be created");
+
+    assert!(pair.content_identical());
+    assert!(!report.has_changes());
+    assert!(report.matches_version_pair(&pair));
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn diff_report_rejects_unrelated_version_pair() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-unrelated-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-unrelated-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let other_original_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-other-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let other_revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-cross-check-other-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&original_path, "Hebun\n")
+        .expect("original file should be created");
+
+    fs::write(&revised_path, "Hebun revised\n")
+        .expect("revised file should be created");
+
+    fs::write(&other_original_path, "Rasterast\n")
+        .expect("other original file should be created");
+
+    fs::write(&other_revised_path, "Rasterast revised\n")
+        .expect("other revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("version pair should be created");
+
+    let unrelated_pair = FileVersionPair::from_files_sha256(
+        &other_original_path,
+        &other_revised_path,
+        SystemTime::now(),
+    )
+    .expect("unrelated version pair should be created");
+
+    let report = FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect("diff report should be created");
+
+    assert!(!report.matches_version_pair(
+        &unrelated_pair,
+    ));
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+
+    fs::remove_file(&other_original_path)
+        .expect("other original file should be removed");
+
+    fs::remove_file(&other_revised_path)
+        .expect("other revised file should be removed");
+}
+
 
 
 
