@@ -142,6 +142,8 @@ impl TruthLogEntry {
     }
 }
 
+Expose Truth Log entry models
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -257,6 +259,151 @@ mod tests {
             )
         );
     }
+#[test]
+fn truth_log_stores_complete_entry() {
+    let mut truth_log = TruthLog::new();
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Orijinal hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    let entry_id = entry.id;
+
+    assert!(truth_log.append(entry));
+    assert_eq!(truth_log.len(), 1);
+    assert!(!truth_log.is_empty());
+
+    assert!(
+        truth_log.find(entry_id).is_some()
+    );
+}
+#[test]
+fn truth_log_rejects_incomplete_entry() {
+    let mut truth_log = TruthLog::new();
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::DiffReportGenerated,
+        TruthLogSeverity::Information,
+        None,
+        None,
+        "",
+        SystemTime::now(),
+    );
+
+    assert!(!truth_log.append(entry));
+    assert!(truth_log.is_empty());
+}
+
+#[test]
+fn truth_log_rejects_duplicate_entry_id() {
+    let mut truth_log = TruthLog::new();
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::FileIntegrityVerified,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Dosya bütünlüğü doğrulandı.",
+        SystemTime::now(),
+    );
+
+    let duplicate = entry.clone();
+
+    assert!(truth_log.append(entry));
+    assert!(!truth_log.append(duplicate));
+    assert_eq!(truth_log.len(), 1);
+}
+
+#[test]
+fn truth_log_filters_entries_by_subject_and_file() {
+    let mut truth_log = TruthLog::new();
+    let subject_id = Uuid::new_v4();
+
+    let related = TruthLogEntry::new(
+        TruthLogEventKind::DiffSecurityVerified,
+        TruthLogSeverity::Information,
+        Some(subject_id),
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Diff güvenlik doğrulamasından geçti.",
+        SystemTime::now(),
+    );
+
+    let unrelated = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        Some(Uuid::new_v4()),
+        Some(PathBuf::from(
+            "articles/rasterast.md",
+        )),
+        "Başka dosyanın hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.append(related));
+    assert!(truth_log.append(unrelated));
+
+    assert_eq!(
+        truth_log
+            .entries_for_subject(subject_id)
+            .len(),
+        1,
+    );
+
+    assert_eq!(
+        truth_log
+            .entries_for_file(
+                "articles/hebun.md",
+            )
+            .len(),
+        1,
+    );
+}
+
+#[test]
+fn truth_log_returns_critical_security_entries() {
+    let mut truth_log = TruthLog::new();
+
+    let critical = TruthLogEntry::new(
+        TruthLogEventKind::FileModificationDetected,
+        TruthLogSeverity::Critical,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Orijinal dosyada değişiklik tespit edildi.",
+        SystemTime::now(),
+    );
+
+    let information = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.append(critical));
+    assert!(truth_log.append(information));
+
+    assert_eq!(
+        truth_log.critical_entries().len(),
+        1,
+    );
+ }
 }
 
 
