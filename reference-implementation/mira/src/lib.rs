@@ -217,6 +217,7 @@ pub use file_version_pair::{
 
 pub use file_diff::{
     FileDiffReport,
+    FileDiffSecurityStatus,
     FileLineChange,
     FileLineChangeKind,
 };
