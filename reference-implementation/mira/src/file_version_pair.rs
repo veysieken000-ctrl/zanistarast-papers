@@ -69,6 +69,30 @@ impl FileVersionPair {
         }
     }
 
+    /// Orijinal ve revize dosyaları diskten okuyup
+/// SHA-256 kayıtlarını oluşturarak sürüm çiftini üretir.
+pub fn from_files_sha256(
+    original_path: impl AsRef<Path>,
+    revised_path: impl AsRef<Path>,
+    matched_at: SystemTime,
+) -> std::io::Result<Self> {
+    let original = FileHashRecord::from_file_sha256(
+        original_path.as_ref(),
+        FileHashRole::Original,
+    )?;
+
+    let revised = FileHashRecord::from_file_sha256(
+        revised_path.as_ref(),
+        FileHashRole::Revised,
+    )?;
+
+    Ok(Self::new(
+        original,
+        revised,
+        matched_at,
+    ))
+}
+
     /// Kayıtların geçerli bir orijinal–revize sürüm
     /// çifti oluşturduğunu bildirir.
     pub fn is_matched(&self) -> bool {
@@ -317,7 +341,99 @@ mod tests {
 
         assert!(pair.requires_review());
     }
+#[test]
+fn creates_changed_version_pair_from_files() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-version-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-version-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&original_path, b"Hebun original")
+        .expect("original file should be created");
+
+    fs::write(&revised_path, b"Hebun revised")
+        .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("file version pair should be created");
+
+    assert!(pair.is_matched());
+    assert!(pair.content_changed());
+    assert!(!pair.content_identical());
+
+    assert!(
+        pair.belongs_to_paths(
+            &original_path,
+            &revised_path,
+        )
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
 }
+
+}
+
+#[test]
+fn creates_identical_version_pair_from_files() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-version-identical-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-version-identical-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&original_path, b"Rasterast")
+        .expect("original file should be created");
+
+    fs::write(&revised_path, b"Rasterast")
+        .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("identical file version pair should be created");
+
+    assert!(pair.is_matched());
+    assert!(pair.content_identical());
+    assert!(!pair.content_changed());
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
 
 
 
