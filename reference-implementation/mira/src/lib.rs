@@ -66,6 +66,7 @@ pub mod file_hash;
 pub mod file_integrity;
 pub mod file_version_pair;
 pub mod file_diff;
+pub mod truth_log;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -221,6 +222,13 @@ pub use file_diff::{
     FileLineChange,
     FileLineChangeKind,
 };
+
+pub use truth_log::{
+    TruthLogEntry,
+    TruthLogEventKind,
+    TruthLogSeverity,
+};
+
 
 
 
