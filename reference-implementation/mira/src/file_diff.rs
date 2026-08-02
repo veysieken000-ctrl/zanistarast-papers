@@ -243,6 +243,65 @@ pub fn from_version_pair(
             .count()
     }
 
+    /// Diff raporundaki bütün satır değişiklik
+/// kayıtlarının toplam sayısını döndürür.
+pub fn total_change_count(&self) -> usize {
+    self.changes.len()
+}
+
+/// Değişiklik türlerine göre hesaplanan toplam
+/// satır kaydı sayısını döndürür.
+pub fn classified_change_count(&self) -> usize {
+    self.added_count()
+        + self.removed_count()
+        + self.modified_count()
+        + self.unchanged_count()
+}
+
+/// Tek bir satır değişiklik kaydının türü ile
+/// satır numarası ve içerik alanlarının uyumlu
+/// olup olmadığını bildirir.
+fn is_change_consistent(
+    change: &FileLineChange,
+) -> bool {
+    match change.kind {
+        FileLineChangeKind::Added => {
+            change.original_line_number.is_none()
+                && change.revised_line_number.is_some()
+                && change.original_content.is_none()
+                && change.revised_content.is_some()
+        }
+
+        FileLineChangeKind::Removed => {
+            change.original_line_number.is_some()
+                && change.revised_line_number.is_none()
+                && change.original_content.is_some()
+                && change.revised_content.is_none()
+        }
+
+        FileLineChangeKind::Modified
+        | FileLineChangeKind::Unchanged => {
+            change.original_line_number.is_some()
+                && change.revised_line_number.is_some()
+                && change.original_content.is_some()
+                && change.revised_content.is_some()
+        }
+    }
+}
+
+    /// Diff raporunun yollarının, sınıflandırma toplamlarının
+/// ve bütün satır değişiklik kayıtlarının tutarlı
+/// olup olmadığını bildirir.
+pub fn is_consistent(&self) -> bool {
+    self.is_complete()
+        && self.total_change_count()
+            == self.classified_change_count()
+        && self
+            .changes
+            .iter()
+            .all(Self::is_change_consistent)
+}
+    
     /// Raporda herhangi bir içerik değişikliği bulunup
     /// bulunmadığını bildirir.
     pub fn has_changes(&self) -> bool {
@@ -627,6 +686,103 @@ fn rejects_diff_for_invalid_version_pair() {
             .kind(),
         std::io::ErrorKind::InvalidInput,
     );
+}
+
+#[test]
+fn complete_diff_report_is_consistent() {
+    let changes = vec![
+        FileLineChange::new(
+            FileLineChangeKind::Unchanged,
+            Some(1),
+            Some(1),
+            Some("Hebun".to_string()),
+            Some("Hebun".to_string()),
+        ),
+        FileLineChange::new(
+            FileLineChangeKind::Modified,
+            Some(2),
+            Some(2),
+            Some("Old line".to_string()),
+            Some("New line".to_string()),
+        ),
+        FileLineChange::new(
+            FileLineChangeKind::Added,
+            None,
+            Some(3),
+            None,
+            Some("Added line".to_string()),
+        ),
+        FileLineChange::new(
+            FileLineChangeKind::Removed,
+            Some(4),
+            None,
+            Some("Removed line".to_string()),
+            None,
+        ),
+    ];
+
+    let report = FileDiffReport::new(
+        "articles/hebun.md",
+        "articles/hebun-v2.md",
+        changes,
+        SystemTime::now(),
+    );
+
+    assert_eq!(report.total_change_count(), 4);
+
+    assert_eq!(
+        report.classified_change_count(),
+        4,
+    );
+
+    assert!(report.is_consistent());
+}
+
+
+
+
+#[test]
+fn inconsistent_added_line_record_is_rejected() {
+    let changes = vec![
+        FileLineChange::new(
+            FileLineChangeKind::Added,
+            Some(1),
+            Some(1),
+            Some("Invalid original content".to_string()),
+            Some("Added line".to_string()),
+        ),
+    ];
+
+    let report = FileDiffReport::new(
+        "articles/hebun.md",
+        "articles/hebun-v2.md",
+        changes,
+        SystemTime::now(),
+    );
+
+    assert!(!report.is_consistent());
+}
+
+#[test]
+fn inconsistent_removed_line_record_is_rejected() {
+    let changes = vec![
+        FileLineChange::new(
+            FileLineChangeKind::Removed,
+            Some(1),
+            Some(1),
+            Some("Removed line".to_string()),
+            Some("Invalid revised content".to_string()),
+        ),
+    ];
+
+    let report = FileDiffReport::new(
+        "articles/hebun.md",
+        "articles/hebun-v2.md",
+        changes,
+        SystemTime::now(),
+    );
+
+    assert!(!report.is_consistent());
 }
 
 
