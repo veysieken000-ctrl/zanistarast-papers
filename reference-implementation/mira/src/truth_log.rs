@@ -142,6 +142,111 @@ impl TruthLogEntry {
     }
 }
 
+/// Güvenlik ve doğrulama olaylarının sıralı
+/// Truth Log koleksiyonunu temsil eder.
+#[derive(Debug, Clone, Default)]
+pub struct TruthLog {
+    entries: Vec<TruthLogEntry>,
+}
+
+impl TruthLog {
+    /// Boş bir Truth Log oluşturur.
+    pub fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+        }
+    }
+
+    /// Eksiksiz ve daha önce kaydedilmemiş bir
+    /// Truth Log olayını koleksiyona ekler.
+    pub fn append(
+        &mut self,
+        entry: TruthLogEntry,
+    ) -> bool {
+        if !entry.is_complete() {
+            return false;
+        }
+
+        if self
+            .entries
+            .iter()
+            .any(|stored| stored.id == entry.id)
+        {
+            return false;
+        }
+
+        self.entries.push(entry);
+        true
+    }
+
+    /// Bütün kayıtları salt okunur biçimde döndürür.
+    pub fn entries(&self) -> &[TruthLogEntry] {
+        &self.entries
+    }
+
+    /// Kayıt sayısını döndürür.
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// Truth Log’un boş olup olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Kimliğine göre bir kayıt bulur.
+    pub fn find(
+        &self,
+        entry_id: Uuid,
+    ) -> Option<&TruthLogEntry> {
+        self.entries
+            .iter()
+            .find(|entry| entry.id == entry_id)
+    }
+
+    /// Konu kimliğine bağlı kayıtları döndürür.
+    pub fn entries_for_subject(
+        &self,
+        subject_id: Uuid,
+    ) -> Vec<&TruthLogEntry> {
+        self.entries
+            .iter()
+            .filter(|entry| {
+                entry.belongs_to_subject(subject_id)
+            })
+            .collect()
+    }
+
+    /// Dosya yoluna bağlı kayıtları döndürür.
+    pub fn entries_for_file(
+        &self,
+        file_path: impl Into<PathBuf>,
+    ) -> Vec<&TruthLogEntry> {
+        let file_path = file_path.into();
+
+        self.entries
+            .iter()
+            .filter(|entry| {
+                entry
+                    .file_path
+                    .as_ref()
+                    .is_some_and(|stored| {
+                        stored == &file_path
+                    })
+            })
+            .collect()
+    }
+
+    /// Kritik güvenlik kayıtlarını döndürür.
+    pub fn critical_entries(
+        &self,
+    ) -> Vec<&TruthLogEntry> {
+        self.entries
+            .iter()
+            .filter(|entry| entry.is_critical())
+            .collect()
+    }
+}
 #[cfg(test)]
 mod tests {
     use super::*;
