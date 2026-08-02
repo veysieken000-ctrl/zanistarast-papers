@@ -224,10 +224,13 @@ pub use file_diff::{
 };
 
 pub use truth_log::{
+    TruthLog,
     TruthLogEntry,
     TruthLogEventKind,
     TruthLogSeverity,
 };
+
+
 
 
 
