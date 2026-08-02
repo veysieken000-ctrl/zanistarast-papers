@@ -94,7 +94,174 @@ impl FileDiffReport {
         }
     }
 
-    /// İki UTF-8 metin dosyasını satır satır karşılaştırarak
+    /// İki satır listesinin en uzun ortak alt dizisini
+/// hesaplamak için dinamik programlama tablosu oluşturur.
+fn build_lcs_table(
+    original_lines: &[&str],
+    revised_lines: &[&str],
+) -> Vec<Vec<usize>> {
+    let original_count = original_lines.len();
+    let revised_count = revised_lines.len();
+
+    let mut table = vec![
+        vec![0; revised_count + 1];
+        original_count + 1
+    ];
+
+    for original_index in (0..original_count).rev() {
+        for revised_index in (0..revised_count).rev() {
+            table[original_index][revised_index] =
+                if original_lines[original_index]
+                    == revised_lines[revised_index]
+                {
+                    table[original_index + 1]
+                        [revised_index + 1]
+                        + 1
+                } else {
+                    table[original_index + 1]
+                        [revised_index]
+                        .max(
+                            table[original_index]
+                                [revised_index + 1],
+                        )
+                };
+        }
+    }
+
+    table
+}
+
+/// LCS tablosunu kullanarak eklenen, kaldırılan,
+/// değiştirilen ve değişmeden kalan satırları çıkarır.
+fn classify_lines_with_lcs(
+    original_lines: &[&str],
+    revised_lines: &[&str],
+) -> Vec<FileLineChange> {
+    let table = Self::build_lcs_table(
+        original_lines,
+        revised_lines,
+    );
+
+    let mut changes = Vec::new();
+    let mut original_index = 0;
+    let mut revised_index = 0;
+
+    while original_index < original_lines.len()
+        && revised_index < revised_lines.len()
+    {
+        if original_lines[original_index]
+            == revised_lines[revised_index]
+        {
+            changes.push(FileLineChange::new(
+                FileLineChangeKind::Unchanged,
+                Some(original_index + 1),
+                Some(revised_index + 1),
+                Some(
+                    original_lines[original_index]
+                        .to_string(),
+                ),
+                Some(
+                    revised_lines[revised_index]
+                        .to_string(),
+                ),
+            ));
+
+            original_index += 1;
+            revised_index += 1;
+        } else {
+            let removing_preserves_more =
+                table[original_index + 1]
+                    [revised_index]
+                    > table[original_index]
+                        [revised_index + 1];
+
+            let adding_preserves_more =
+                table[original_index + 1]
+                    [revised_index]
+                    < table[original_index]
+                        [revised_index + 1];
+
+            if removing_preserves_more {
+                changes.push(FileLineChange::new(
+                    FileLineChangeKind::Removed,
+                    Some(original_index + 1),
+                    None,
+                    Some(
+                        original_lines[original_index]
+                            .to_string(),
+                    ),
+                    None,
+                ));
+
+                original_index += 1;
+            } else if adding_preserves_more {
+                changes.push(FileLineChange::new(
+                    FileLineChangeKind::Added,
+                    None,
+                    Some(revised_index + 1),
+                    None,
+                    Some(
+                        revised_lines[revised_index]
+                            .to_string(),
+                    ),
+                ));
+
+                revised_index += 1;
+            } else {
+                changes.push(FileLineChange::new(
+                    FileLineChangeKind::Modified,
+                    Some(original_index + 1),
+                    Some(revised_index + 1),
+                    Some(
+                        original_lines[original_index]
+                            .to_string(),
+                    ),
+                    Some(
+                        revised_lines[revised_index]
+                            .to_string(),
+                    ),
+                ));
+
+                original_index += 1;
+                revised_index += 1;
+            }
+        }
+    }
+
+    while original_index < original_lines.len() {
+        changes.push(FileLineChange::new(
+            FileLineChangeKind::Removed,
+            Some(original_index + 1),
+            None,
+            Some(
+                original_lines[original_index]
+                    .to_string(),
+            ),
+            None,
+        ));
+
+        original_index += 1;
+    }
+
+    while revised_index < revised_lines.len() {
+        changes.push(FileLineChange::new(
+            FileLineChangeKind::Added,
+            None,
+            Some(revised_index + 1),
+            None,
+            Some(
+                revised_lines[revised_index]
+                    .to_string(),
+            ),
+        ));
+
+        revised_index += 1;
+    }
+
+    changes
+}
+
+/// İki UTF-8 metin dosyasını satır satır karşılaştırarak
 /// diff raporu oluşturur.
 ///
 /// Aynı sıradaki eşit satırlar `Unchanged`, farklı satırlar
@@ -188,6 +355,41 @@ pub fn from_text_files(
     ))
 }
 
+/// İki UTF-8 metin dosyasını LCS tabanlı olarak
+/// karşılaştırıp satır kaymalarını koruyan diff raporu üretir.
+pub fn from_text_files_lcs(
+    original_path: impl Into<PathBuf>,
+    revised_path: impl Into<PathBuf>,
+    generated_at: SystemTime,
+) -> std::io::Result<Self> {
+    let original_path = original_path.into();
+    let revised_path = revised_path.into();
+
+    let original_text =
+        std::fs::read_to_string(&original_path)?;
+
+    let revised_text =
+        std::fs::read_to_string(&revised_path)?;
+
+    let original_lines: Vec<&str> =
+        original_text.lines().collect();
+
+    let revised_lines: Vec<&str> =
+        revised_text.lines().collect();
+
+    let changes = Self::classify_lines_with_lcs(
+        &original_lines,
+        &revised_lines,
+    );
+
+    Ok(Self::new(
+        original_path,
+        revised_path,
+        changes,
+        generated_at,
+    ))
+}
+ 
 /// Doğrulanmış orijinal–revize sürüm çiftine bağlı
 /// metin diff raporu oluşturur.
 ///
@@ -784,5 +986,141 @@ fn inconsistent_removed_line_record_is_rejected() {
 
     assert!(!report.is_consistent());
 }
+
+#[test]
+fn lcs_diff_detects_inserted_line_without_shifting_following_lines() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-lcs-insert-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-lcs-insert-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nRabun\nRasterast\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nNew line\nRabun\nRasterast\n",
+    )
+    .expect("revised file should be created");
+
+    let report = FileDiffReport::from_text_files_lcs(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("LCS diff should be generated");
+
+    assert!(report.is_complete());
+    assert!(report.is_consistent());
+
+    assert_eq!(report.added_count(), 1);
+    assert_eq!(report.removed_count(), 0);
+    assert_eq!(report.modified_count(), 0);
+    assert_eq!(report.unchanged_count(), 3);
+
+    let added = report
+        .changes
+        .iter()
+        .find(|change| change.is_added())
+        .expect("inserted line should be detected");
+
+    assert_eq!(
+        added.revised_line_number,
+        Some(2),
+    );
+
+    assert_eq!(
+        added.revised_content.as_deref(),
+        Some("New line"),
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn lcs_diff_detects_removed_line_without_shifting_following_lines() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-lcs-remove-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-lcs-remove-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nRemoved line\nRabun\nRasterast\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nRabun\nRasterast\n",
+    )
+    .expect("revised file should be created");
+
+    let report = FileDiffReport::from_text_files_lcs(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("LCS diff should be generated");
+
+    assert!(report.is_consistent());
+
+    assert_eq!(report.added_count(), 0);
+    assert_eq!(report.removed_count(), 1);
+    assert_eq!(report.modified_count(), 0);
+    assert_eq!(report.unchanged_count(), 3);
+
+    let removed = report
+        .changes
+        .iter()
+        .find(|change| change.is_removed())
+        .expect("removed line should be detected");
+
+    assert_eq!(
+        removed.original_line_number,
+        Some(2),
+    );
+
+    assert_eq!(
+        removed.original_content.as_deref(),
+        Some("Removed line"),
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
 
 
