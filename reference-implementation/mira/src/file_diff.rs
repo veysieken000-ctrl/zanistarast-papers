@@ -92,6 +92,100 @@ impl FileDiffReport {
         }
     }
 
+    /// İki UTF-8 metin dosyasını satır satır karşılaştırarak
+/// diff raporu oluşturur.
+///
+/// Aynı sıradaki eşit satırlar `Unchanged`, farklı satırlar
+/// `Modified`, yalnızca revize dosyada bulunan satırlar
+/// `Added`, yalnızca orijinal dosyada bulunan satırlar
+/// `Removed` olarak kaydedilir.
+pub fn from_text_files(
+    original_path: impl Into<PathBuf>,
+    revised_path: impl Into<PathBuf>,
+    generated_at: SystemTime,
+) -> std::io::Result<Self> {
+    let original_path = original_path.into();
+    let revised_path = revised_path.into();
+
+    let original_text =
+        std::fs::read_to_string(&original_path)?;
+
+    let revised_text =
+        std::fs::read_to_string(&revised_path)?;
+
+    let original_lines: Vec<&str> =
+        original_text.lines().collect();
+
+    let revised_lines: Vec<&str> =
+        revised_text.lines().collect();
+
+    let maximum_line_count =
+        original_lines.len().max(revised_lines.len());
+
+    let mut changes =
+        Vec::with_capacity(maximum_line_count);
+
+    for index in 0..maximum_line_count {
+        let original_line = original_lines.get(index);
+        let revised_line = revised_lines.get(index);
+
+        let change = match (original_line, revised_line) {
+            (Some(original), Some(revised))
+                if original == revised =>
+            {
+                FileLineChange::new(
+                    FileLineChangeKind::Unchanged,
+                    Some(index + 1),
+                    Some(index + 1),
+                    Some((*original).to_string()),
+                    Some((*revised).to_string()),
+                )
+            }
+
+            (Some(original), Some(revised)) => {
+                FileLineChange::new(
+                    FileLineChangeKind::Modified,
+                    Some(index + 1),
+                    Some(index + 1),
+                    Some((*original).to_string()),
+                    Some((*revised).to_string()),
+                )
+            }
+
+            (None, Some(revised)) => {
+                FileLineChange::new(
+                    FileLineChangeKind::Added,
+                    None,
+                    Some(index + 1),
+                    None,
+                    Some((*revised).to_string()),
+                )
+            }
+
+            (Some(original), None) => {
+                FileLineChange::new(
+                    FileLineChangeKind::Removed,
+                    Some(index + 1),
+                    None,
+                    Some((*original).to_string()),
+                    None,
+                )
+            }
+
+            (None, None) => continue,
+        };
+
+        changes.push(change);
+    }
+
+    Ok(Self::new(
+        original_path,
+        revised_path,
+        changes,
+        generated_at,
+    ))
+}
+
     /// Eklenen satırların sayısını döndürür.
     pub fn added_count(&self) -> usize {
         self.changes
@@ -257,5 +351,138 @@ mod tests {
         assert!(removed.is_removed());
         assert!(modified.is_modified());
     }
+#[test]
+fn creates_diff_report_from_text_files() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-diff-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-diff-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nOriginal line\nRemoved line\n",
+    )
+    .expect("original text file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nRevised line\nAdded line\nExtra line\n",
+    )
+    .expect("revised text file should be created");
+
+    let report = FileDiffReport::from_text_files(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("text file diff report should be created");
+
+    assert!(report.is_complete());
+    assert!(report.has_changes());
+
+    assert_eq!(report.unchanged_count(), 1);
+    assert_eq!(report.modified_count(), 2);
+    assert_eq!(report.added_count(), 1);
+    assert_eq!(report.removed_count(), 0);
+
+    assert_eq!(
+        report.changes[0].kind,
+        FileLineChangeKind::Unchanged,
+    );
+
+    assert_eq!(
+        report.changes[1].kind,
+        FileLineChangeKind::Modified,
+    );
+
+    assert_eq!(
+        report.changes[3].kind,
+        FileLineChangeKind::Added,
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original text file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised text file should be removed");
 }
+
+}
+
+#[test]
+fn detects_removed_trailing_lines_from_text_files() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-diff-removed-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-diff-removed-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nSecond line\nRemoved line\n",
+    )
+    .expect("original text file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nSecond line\n",
+    )
+    .expect("revised text file should be created");
+
+    let report = FileDiffReport::from_text_files(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("removed line diff should be created");
+
+    assert_eq!(report.unchanged_count(), 2);
+    assert_eq!(report.removed_count(), 1);
+    assert_eq!(report.added_count(), 0);
+    assert_eq!(report.modified_count(), 0);
+
+    let removed = report
+        .changes
+        .iter()
+        .find(|change| change.is_removed())
+        .expect("removed line should be recorded");
+
+    assert_eq!(
+        removed.original_line_number,
+        Some(3),
+    );
+
+    assert_eq!(
+        removed.original_content.as_deref(),
+        Some("Removed line"),
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original text file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised text file should be removed");
+}
+
 
