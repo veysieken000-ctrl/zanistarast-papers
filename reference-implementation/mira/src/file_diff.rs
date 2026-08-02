@@ -1,6 +1,8 @@
 use std::path::PathBuf;
 use std::time::SystemTime;
 
+use crate::FileVersionPair;
+
 /// Bir metin satırında belirlenen değişiklik türünü gösterir.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum FileLineChangeKind {
@@ -141,6 +143,29 @@ pub fn from_text_files(
                     Some((*revised).to_string()),
                 )
             }
+
+            /// Doğrulanmış orijinal–revize sürüm çiftine bağlı
+/// metin diff raporu oluşturur.
+///
+/// Sürüm çifti geçerli değilse veya kayıtlı dosya yolları
+/// okunamıyorsa rapor oluşturulmaz.
+pub fn from_version_pair(
+    pair: &FileVersionPair,
+    generated_at: SystemTime,
+) -> std::io::Result<Self> {
+    if !pair.is_matched() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "file version pair must be matched",
+        ));
+    }
+
+    Self::from_text_files(
+        pair.original.path.clone(),
+        pair.revised.path.clone(),
+        generated_at,
+    )
+}
 
             (Some(original), Some(revised)) => {
                 FileLineChange::new(
@@ -483,6 +508,125 @@ fn detects_removed_trailing_lines_from_text_files() {
 
     fs::remove_file(&revised_path)
         .expect("revised text file should be removed");
+}
+
+#[test]
+fn creates_diff_report_from_matched_version_pair() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-pair-diff-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-pair-diff-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nOriginal line\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nRevised line\nNew line\n",
+    )
+    .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("version pair should be created");
+
+    assert!(pair.is_matched());
+
+    let report = FileDiffReport::from_version_pair(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect(
+        "diff report should be created from matched pair",
+    );
+
+    assert!(report.is_complete());
+    assert!(report.has_changes());
+    assert_eq!(report.unchanged_count(), 1);
+    assert_eq!(report.modified_count(), 1);
+    assert_eq!(report.added_count(), 1);
+
+    assert_eq!(
+        report.original_path,
+        original_path,
+    );
+
+    assert_eq!(
+        report.revised_path,
+        revised_path,
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn rejects_diff_for_invalid_version_pair() {
+    use crate::{
+        FileHashRecord,
+        FileHashRole,
+        FileVersionPair,
+    };
+
+    let invalid_original = FileHashRecord::new(
+        "articles/hebun.md",
+        FileHashRole::Revised,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = FileHashRecord::new(
+        "articles/hebun-v2.md",
+        FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = FileVersionPair::new(
+        invalid_original,
+        revised,
+        SystemTime::now(),
+    );
+
+    assert!(!pair.is_matched());
+
+    let result = FileDiffReport::from_version_pair(
+        &pair,
+        SystemTime::now(),
+    );
+
+    assert!(result.is_err());
+
+    assert_eq!(
+        result
+            .expect_err(
+                "invalid pair should not create a diff",
+            )
+            .kind(),
+        std::io::ErrorKind::InvalidInput,
+    );
 }
 
 
