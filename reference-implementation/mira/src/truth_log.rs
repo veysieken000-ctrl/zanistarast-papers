@@ -142,8 +142,6 @@ impl TruthLogEntry {
     }
 }
 
-Expose Truth Log entry models
-
 #[cfg(test)]
 mod tests {
     use super::*;
