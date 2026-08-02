@@ -63,6 +63,7 @@ pub mod quran_analysis;
 pub mod risale_method;
 pub mod publication_approval;
 pub mod file_hash;
+pub mod file_integrity;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -201,6 +202,13 @@ pub use file_hash::{
     FileHashRecord,
     FileHashRole,
 };
+
+pub use file_integrity::{
+    FileIntegrityReport,
+    FileIntegrityStatus,
+};
+
+
 
 
 
