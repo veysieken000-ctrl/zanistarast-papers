@@ -66,6 +66,19 @@ impl FileHashRecord {
         self.role == FileHashRole::Revised
     }
 
+    /// İki hash kaydının aynı algoritma ve aynı özet
+/// üzerinden aynı dosya içeriğini temsil edip
+/// etmediğini bildirir.
+pub fn has_same_content_as(
+    &self,
+    other: &FileHashRecord,
+) -> bool {
+    self.algorithm
+        .eq_ignore_ascii_case(&other.algorithm)
+        && self.digest == other.digest
+}
+
+    
     /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
     pub fn from_file_sha256(
         path: impl Into<PathBuf>,
@@ -217,6 +230,69 @@ fn sha256_returns_different_hashes_for_different_files() {
 
     let _ = fs::remove_file(file1);
     let _ = fs::remove_file(file2);
+}
+
+#[test]
+fn compares_original_and_revised_file_content_hashes() {
+    use std::fs;
+
+    let temp_directory = std::env::temp_dir();
+
+    let original_path = temp_directory.join(
+        format!(
+            "mira-original-hash-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = temp_directory.join(
+        format!(
+            "mira-revised-hash-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&original_path, b"Hebun")
+        .expect("original test file should be created");
+
+    fs::write(&revised_path, b"Hebun")
+        .expect("revised test file should be created");
+
+    let original = FileHashRecord::from_file_sha256(
+        &original_path,
+        FileHashRole::Original,
+    )
+    .expect("original hash should be computed");
+
+    let revised = FileHashRecord::from_file_sha256(
+        &revised_path,
+        FileHashRole::Revised,
+    )
+    .expect("revised hash should be computed");
+
+    assert!(original.has_same_content_as(&revised));
+
+    fs::write(&revised_path, b"Hebun revised")
+        .expect("revised test file should be updated");
+
+    let changed_revised =
+        FileHashRecord::from_file_sha256(
+            &revised_path,
+            FileHashRole::Revised,
+        )
+        .expect("changed hash should be computed");
+
+    assert!(
+        !original.has_same_content_as(
+            &changed_revised,
+        )
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original test file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised test file should be removed");
 }
 
 
