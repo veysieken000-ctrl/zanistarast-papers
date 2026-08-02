@@ -259,6 +259,7 @@ mod tests {
             )
         );
     }
+   
 #[test]
 fn truth_log_stores_complete_entry() {
     let mut truth_log = TruthLog::new();
@@ -283,6 +284,7 @@ fn truth_log_stores_complete_entry() {
     assert!(
         truth_log.find(entry_id).is_some()
     );
+}
 }
 #[test]
 fn truth_log_rejects_incomplete_entry() {
@@ -404,6 +406,6 @@ fn truth_log_returns_critical_security_entries() {
         1,
     );
  }
-}
+
 
 
