@@ -197,9 +197,14 @@ pub use publication_approval::{
 };
 
 pub use file_hash::{
+    FileHashComparison,
     FileHashRecord,
     FileHashRole,
 };
+
+
+
+
 
 
 
