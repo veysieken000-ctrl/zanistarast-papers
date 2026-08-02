@@ -144,29 +144,6 @@ pub fn from_text_files(
                 )
             }
 
-            /// Doğrulanmış orijinal–revize sürüm çiftine bağlı
-/// metin diff raporu oluşturur.
-///
-/// Sürüm çifti geçerli değilse veya kayıtlı dosya yolları
-/// okunamıyorsa rapor oluşturulmaz.
-pub fn from_version_pair(
-    pair: &FileVersionPair,
-    generated_at: SystemTime,
-) -> std::io::Result<Self> {
-    if !pair.is_matched() {
-        return Err(std::io::Error::new(
-            std::io::ErrorKind::InvalidInput,
-            "file version pair must be matched",
-        ));
-    }
-
-    Self::from_text_files(
-        pair.original.path.clone(),
-        pair.revised.path.clone(),
-        generated_at,
-    )
-}
-
             (Some(original), Some(revised)) => {
                 FileLineChange::new(
                     FileLineChangeKind::Modified,
@@ -209,6 +186,29 @@ pub fn from_version_pair(
         changes,
         generated_at,
     ))
+}
+
+/// Doğrulanmış orijinal–revize sürüm çiftine bağlı
+/// metin diff raporu oluşturur.
+///
+/// Sürüm çifti geçerli değilse veya kayıtlı dosya yolları
+/// okunamıyorsa rapor oluşturulmaz.
+pub fn from_version_pair(
+    pair: &FileVersionPair,
+    generated_at: SystemTime,
+) -> std::io::Result<Self> {
+    if !pair.is_matched() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "file version pair must be matched",
+        ));
+    }
+
+    Self::from_text_files(
+        pair.original.path.clone(),
+        pair.revised.path.clone(),
+        generated_at,
+    )
 }
 
     /// Eklenen satırların sayısını döndürür.
