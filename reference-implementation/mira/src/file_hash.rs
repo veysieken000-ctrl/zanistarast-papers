@@ -11,6 +11,19 @@ pub enum FileHashRole {
     Revised,
 }
 
+/// İki dosya hash kaydının karşılaştırma sonucunu belirtir.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FileHashComparison {
+    /// Aynı algoritma ve aynı özet kullanılmıştır.
+    Identical,
+
+    /// Aynı algoritma kullanılmış fakat özetler farklıdır.
+    Changed,
+
+    /// Kayıtlar farklı hash algoritmaları kullanmaktadır.
+    AlgorithmMismatch,
+}
+
 /// Bir dosyanın bütünlük doğrulamasında kullanılacak
 /// hash kaydını temsil eder.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -78,7 +91,26 @@ pub fn has_same_content_as(
         && self.digest == other.digest
 }
 
-    
+    /// İki hash kaydını algoritma ve özet değerlerine göre
+/// karşılaştırarak ayrıntılı sonucu döndürür.
+pub fn compare_with(
+    &self,
+    other: &FileHashRecord,
+) -> FileHashComparison {
+    if !self
+        .algorithm
+        .eq_ignore_ascii_case(&other.algorithm)
+    {
+        return FileHashComparison::AlgorithmMismatch;
+    }
+
+    if self.digest == other.digest {
+        FileHashComparison::Identical
+    } else {
+        FileHashComparison::Changed
+    }
+}
+
     /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
     pub fn from_file_sha256(
         path: impl Into<PathBuf>,
@@ -293,6 +325,78 @@ fn compares_original_and_revised_file_content_hashes() {
 
     fs::remove_file(&revised_path)
         .expect("revised test file should be removed");
+}
+
+#[test]
+fn hash_comparison_reports_identical_content() {
+    let original = FileHashRecord::new(
+        "articles/hebun.md",
+        FileHashRole::Original,
+        "SHA-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let revised = FileHashRecord::new(
+        "articles/hebun-v2.md",
+        FileHashRole::Revised,
+        "sha-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    assert_eq!(
+        original.compare_with(&revised),
+        FileHashComparison::Identical,
+    );
+}
+
+#[test]
+fn hash_comparison_reports_changed_content() {
+    let original = FileHashRecord::new(
+        "articles/hebun.md",
+        FileHashRole::Original,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = FileHashRecord::new(
+        "articles/hebun-v2.md",
+        FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    assert_eq!(
+        original.compare_with(&revised),
+        FileHashComparison::Changed,
+    );
+}
+
+#[test]
+fn hash_comparison_reports_algorithm_mismatch() {
+    let original = FileHashRecord::new(
+        "articles/hebun.md",
+        FileHashRole::Original,
+        "SHA-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let revised = FileHashRecord::new(
+        "articles/hebun-v2.md",
+        FileHashRole::Revised,
+        "SHA-512",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    assert_eq!(
+        original.compare_with(&revised),
+        FileHashComparison::AlgorithmMismatch,
+    );
 }
 
 
