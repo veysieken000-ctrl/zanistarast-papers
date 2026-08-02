@@ -107,26 +107,6 @@ pub fn has_same_content_as(
         && self.digest == other.digest
 }
 
-    /// İki hash kaydını algoritma ve özet değerlerine göre
-/// karşılaştırarak ayrıntılı sonucu döndürür.
-pub fn compare_with(
-    &self,
-    other: &FileHashRecord,
-) -> FileHashComparison {
-    if !self
-        .algorithm
-        .eq_ignore_ascii_case(&other.algorithm)
-    {
-        return FileHashComparison::AlgorithmMismatch;
-    }
-
-    if self.digest == other.digest {
-        FileHashComparison::Identical
-    } else {
-        FileHashComparison::Changed
-    }
-}
-
     /// Dosyanın SHA-256 özetini hesaplayarak yeni bir hash kaydı oluşturur.
     pub fn from_file_sha256(
         path: impl Into<PathBuf>,
