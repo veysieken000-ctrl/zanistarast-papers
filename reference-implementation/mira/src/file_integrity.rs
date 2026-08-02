@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::time::SystemTime;
 
 use crate::{
@@ -64,6 +65,24 @@ impl FileIntegrityReport {
             status,
             verified_at,
         }
+    /// Kayıtlı orijinal hash kaydını, dosyanın güncel
+/// SHA-256 özetiyle karşılaştırarak bütünlük raporu üretir.
+pub fn verify_current_file_sha256(
+    original: FileHashRecord,
+    current_path: impl AsRef<Path>,
+    verified_at: SystemTime,
+) -> std::io::Result<Self> {
+    let current = FileHashRecord::from_file_sha256(
+        current_path.as_ref(),
+        FileHashRole::Revised,
+    )?;
+
+    Ok(Self::verify(
+        original,
+        current,
+        verified_at,
+    ))
+}
     }
 
     /// Orijinal dosyanın değişmeden korunduğunu bildirir.
@@ -246,7 +265,96 @@ mod tests {
 
         assert!(report.requires_review());
     }
+#[test]
+fn verifies_intact_current_file_from_disk() {
+    use std::fs;
+
+    let file_path = std::env::temp_dir().join(
+        format!(
+            "mira-integrity-intact-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&file_path, b"Hebun")
+        .expect("temporary file should be created");
+
+    let original = FileHashRecord::from_file_sha256(
+        &file_path,
+        FileHashRole::Original,
+    )
+    .expect("original hash should be computed");
+
+    let report =
+        FileIntegrityReport::verify_current_file_sha256(
+            original,
+            &file_path,
+            SystemTime::now(),
+        )
+        .expect(
+            "current file integrity should be verified",
+        );
+
+    assert_eq!(
+        report.status,
+        FileIntegrityStatus::Intact,
+    );
+
+    assert!(report.is_intact());
+    assert!(!report.requires_review());
+
+    fs::remove_file(&file_path)
+        .expect("temporary file should be removed");
 }
+
+}
+
+#[test]
+fn detects_modified_current_file_from_disk() {
+    use std::fs;
+
+    let file_path = std::env::temp_dir().join(
+        format!(
+            "mira-integrity-modified-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(&file_path, b"Hebun original")
+        .expect("original test file should be created");
+
+    let original = FileHashRecord::from_file_sha256(
+        &file_path,
+        FileHashRole::Original,
+    )
+    .expect("original hash should be computed");
+
+    fs::write(&file_path, b"Hebun changed")
+        .expect("test file should be modified");
+
+    let report =
+        FileIntegrityReport::verify_current_file_sha256(
+            original,
+            &file_path,
+            SystemTime::now(),
+        )
+        .expect(
+            "modified file integrity should be verified",
+        );
+
+    assert_eq!(
+        report.status,
+        FileIntegrityStatus::Modified,
+    );
+
+    assert!(report.is_modified());
+    assert!(report.requires_review());
+
+    fs::remove_file(&file_path)
+        .expect("temporary file should be removed");
+}
+
+
 
 
 
