@@ -61,6 +61,22 @@ impl FileHashRecord {
             && !self.digest.trim().is_empty()
     }
 
+    /// İki hash kaydını karşılaştırır.
+pub fn compare_with(
+    &self,
+    other: &Self,
+) -> FileHashComparison {
+    if !self.algorithm.eq_ignore_ascii_case(&other.algorithm) {
+        return FileHashComparison::AlgorithmMismatch;
+    }
+
+    if self.digest == other.digest {
+        FileHashComparison::Identical
+    } else {
+        FileHashComparison::Changed
+    }
+}
+
     /// Kaydın belirtilen dosyaya ait olup olmadığını bildirir.
     pub fn belongs_to_path(
         &self,
