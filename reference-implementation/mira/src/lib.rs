@@ -65,6 +65,7 @@ pub mod publication_approval;
 pub mod file_hash;
 pub mod file_integrity;
 pub mod file_version_pair;
+pub mod file_diff;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -214,7 +215,11 @@ pub use file_version_pair::{
     FileVersionPairStatus,
 };
 
-
+pub use file_diff::{
+    FileDiffReport,
+    FileLineChange,
+    FileLineChangeKind,
+};
 
 
 
