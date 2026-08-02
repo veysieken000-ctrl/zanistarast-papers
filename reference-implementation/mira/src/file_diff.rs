@@ -395,7 +395,7 @@ pub fn from_text_files_lcs(
 ///
 /// Sürüm çifti geçerli değilse veya kayıtlı dosya yolları
 /// okunamıyorsa rapor oluşturulmaz.
-pub fn from_version_pair(
+    pub fn from_version_pair(
     pair: &FileVersionPair,
     generated_at: SystemTime,
 ) -> std::io::Result<Self> {
@@ -407,6 +407,28 @@ pub fn from_version_pair(
     }
 
     Self::from_text_files(
+        pair.original.path.clone(),
+        pair.revised.path.clone(),
+        generated_at,
+    )
+}
+
+    /// Doğrulanmış orijinal–revize sürüm çiftinden
+/// LCS tabanlı gelişmiş metin diff raporu oluşturur.
+///
+/// Geçersiz sürüm çiftleri kabul edilmez.
+pub fn from_version_pair_lcs(
+    pair: &FileVersionPair,
+    generated_at: SystemTime,
+) -> std::io::Result<Self> {
+    if !pair.is_matched() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidInput,
+            "file version pair must be matched",
+        ));
+    }
+
+    Self::from_text_files_lcs(
         pair.original.path.clone(),
         pair.revised.path.clone(),
         generated_at,
@@ -1120,6 +1142,144 @@ fn lcs_diff_detects_removed_line_without_shifting_following_lines() {
 
     fs::remove_file(&revised_path)
         .expect("revised file should be removed");
+}
+
+#[test]
+fn creates_lcs_diff_from_matched_version_pair() {
+    use std::fs;
+
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "mira-pair-lcs-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "mira-pair-lcs-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nRabun\nRasterast\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nNew line\nRabun\nRasterast\n",
+    )
+    .expect("revised file should be created");
+
+    let pair = FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("version pair should be created");
+
+    assert!(pair.is_matched());
+
+    let report = FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect(
+        "LCS diff should be created from matched pair",
+    );
+
+    assert!(report.is_complete());
+    assert!(report.is_consistent());
+    assert!(report.has_changes());
+
+    assert_eq!(report.added_count(), 1);
+    assert_eq!(report.removed_count(), 0);
+    assert_eq!(report.modified_count(), 0);
+    assert_eq!(report.unchanged_count(), 3);
+
+    let added = report
+        .changes
+        .iter()
+        .find(|change| change.is_added())
+        .expect("added line should be recorded");
+
+    assert_eq!(
+        added.revised_line_number,
+        Some(2),
+    );
+
+    assert_eq!(
+        added.revised_content.as_deref(),
+        Some("New line"),
+    );
+
+    assert_eq!(
+        report.original_path,
+        original_path,
+    );
+
+    assert_eq!(
+        report.revised_path,
+        revised_path,
+    );
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn rejects_lcs_diff_for_invalid_version_pair() {
+    use crate::{
+        FileHashRecord,
+        FileHashRole,
+        FileVersionPair,
+    };
+
+    let invalid_original = FileHashRecord::new(
+        "articles/hebun.md",
+        FileHashRole::Revised,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = FileHashRecord::new(
+        "articles/hebun-v2.md",
+        FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = FileVersionPair::new(
+        invalid_original,
+        revised,
+        SystemTime::now(),
+    );
+
+    assert!(!pair.is_matched());
+
+    let result = FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    );
+
+    assert!(result.is_err());
+
+    assert_eq!(
+        result
+            .expect_err(
+                "invalid pair should not create an LCS diff",
+            )
+            .kind(),
+        std::io::ErrorKind::InvalidInput,
+    );
 }
 
 
