@@ -209,11 +209,31 @@ impl RepositoryGraph {
     pub fn is_empty(&self) -> bool {
         self.relations.is_empty()
     }
+/// Eksiksiz ve daha önce kaydedilmemiş bir
+/// depo ilişkisini grafa ekler.
 pub fn add_relation(
     &mut self,
     relation: RepositoryRelation,
-) {
+) -> bool {
+    if relation.source_repository
+        == relation.target_repository
+        || relation.evidence.trim().is_empty()
+    {
+        return false;
+    }
+
+    if self.relations.iter().any(|stored| {
+        stored.source_repository
+            == relation.source_repository
+            && stored.target_repository
+                == relation.target_repository
+            && stored.kind == relation.kind
+    }) {
+        return false;
+    }
+
     self.relations.push(relation);
+    true
 }
 
 }
@@ -1122,6 +1142,54 @@ fn scanner_builds_repository_memory_with_source_identity() {
         fs::remove_dir_all(second_root)
             .expect("second repository should be removed");
     }
+#[test]
+fn repository_graph_rejects_invalid_and_duplicate_relations() {
+    let source_repository = uuid::Uuid::new_v4();
+    let target_repository = uuid::Uuid::new_v4();
+
+    let mut graph = RepositoryGraph::default();
+
+    assert!(graph.add_relation(
+        RepositoryRelation {
+            source_repository,
+            target_repository,
+            kind: RepositoryRelationKind::References,
+            evidence: "README.md references the target repository."
+                .to_string(),
+        },
+    ));
+
+    assert!(!graph.add_relation(
+        RepositoryRelation {
+            source_repository,
+            target_repository,
+            kind: RepositoryRelationKind::References,
+            evidence: "Duplicate evidence."
+                .to_string(),
+        },
+    ));
+
+    assert!(!graph.add_relation(
+        RepositoryRelation {
+            source_repository,
+            target_repository: source_repository,
+            kind: RepositoryRelationKind::DependsOn,
+            evidence: "Self relation."
+                .to_string(),
+        },
+    ));
+
+    assert!(!graph.add_relation(
+        RepositoryRelation {
+            source_repository,
+            target_repository,
+            kind: RepositoryRelationKind::Extends,
+            evidence: " ".to_string(),
+        },
+    ));
+
+    assert_eq!(graph.relation_count(), 1);
+}
 
 }
 
