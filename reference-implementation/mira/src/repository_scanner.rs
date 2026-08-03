@@ -296,20 +296,6 @@ pub fn scan_multiple(
 
     inventories
 }
-pub fn scan_multiple(
-    &self,
-    repositories: &[RepositoryRoot],
-) -> io::Result<Vec<RepositoryFileInventory>> {
-    let mut inventories = Vec::new();
-
-    for repository in repositories {
-        inventories.push(
-            self.scan_inventory(repository)?
-        );
-    }
-
-    Ok(inventories)
-}
 
 }
 
