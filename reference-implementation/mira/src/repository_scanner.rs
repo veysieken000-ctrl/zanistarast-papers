@@ -19,6 +19,28 @@ pub struct RepositoryFile {
     pub size_bytes: u64,
 }
 
+/// Bir metin dosyasının salt okunur içerik tarama sonucudur.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepositoryTextContent {
+    pub relative_path: PathBuf,
+    pub content: String,
+    pub line_count: usize,
+    pub character_count: usize,
+}
+
+impl RepositoryTextContent {
+    /// İçerik kaydının zorunlu alanlarının eksiksiz
+    /// olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.relative_path.as_os_str().is_empty()
+    }
+
+    /// Dosyanın boş olup olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.content.is_empty()
+    }
+}
+
 /// Salt okunur repository taramasının sonucu.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryScanReport {
@@ -49,6 +71,71 @@ impl RepositoryScanner {
         Self
     }
 
+   /// Depo kökü içindeki tek bir UTF-8 metin dosyasını
+/// salt okunur biçimde içerik düzeyinde tarar.
+pub fn read_text_content(
+    &self,
+    repository: &RepositoryRoot,
+    relative_path: impl AsRef<Path>,
+) -> io::Result<RepositoryTextContent> {
+    if !repository.is_complete()
+        || !repository.read_only
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "repository must be complete and read-only",
+        ));
+    }
+
+    let root = repository.root_path.canonicalize()?;
+    let relative_path = relative_path.as_ref();
+
+    if relative_path.as_os_str().is_empty()
+        || relative_path.is_absolute()
+    {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "relative file path is required",
+        ));
+    }
+
+    let file_path = root.join(relative_path);
+    let canonical_file_path = file_path.canonicalize()?;
+
+    if !canonical_file_path.starts_with(&root) {
+        return Err(io::Error::new(
+            io::ErrorKind::PermissionDenied,
+            "file path is outside repository root",
+        ));
+    }
+
+    if !canonical_file_path.is_file() {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidInput,
+            "repository entry is not a file",
+        ));
+    }
+
+    let bytes = fs::read(&canonical_file_path)?;
+
+    let content = String::from_utf8(bytes).map_err(|_| {
+        io::Error::new(
+            io::ErrorKind::InvalidData,
+            "repository file is not valid UTF-8 text",
+        )
+    })?;
+
+    let line_count = content.lines().count();
+    let character_count = content.chars().count();
+
+    Ok(RepositoryTextContent {
+        relative_path: relative_path.to_path_buf(),
+        content,
+        line_count,
+        character_count,
+    })
+}
+ 
     /// Verilen kök klasörü salt okunur biçimde tarar.
     pub fn scan(&self, root: impl AsRef<Path>) -> io::Result<RepositoryScanReport> {
         let root = root.as_ref().canonicalize()?;
@@ -448,6 +535,60 @@ fn scanner_scans_multiple_repositories() {
         scanner.scan_multiple(&repositories);
 
     assert!(inventories.is_empty());
+}
+#[test]
+fn scanner_reads_utf8_file_content_without_modification() {
+    let test_root = std::env::temp_dir().join(
+        format!(
+            "zanistarast-mira-content-{}",
+            uuid::Uuid::new_v4(),
+        ),
+    );
+
+    fs::create_dir_all(&test_root)
+        .expect("test repository should be created");
+
+    let file_path = test_root.join("hebun.md");
+    let original_content = "Hebûn\nZanabûn\nRasterast";
+
+    fs::write(
+        &file_path,
+        original_content.as_bytes(),
+    )
+    .expect("test text file should be written");
+
+    let repository = RepositoryRoot::new(
+        "zanistarast-content-test",
+        &test_root,
+    );
+
+    let scanner = RepositoryScanner::new();
+
+    let scanned = scanner
+        .read_text_content(
+            &repository,
+            "hebun.md",
+        )
+        .expect("UTF-8 content should be scanned");
+
+    assert!(scanned.is_complete());
+    assert!(!scanned.is_empty());
+    assert_eq!(scanned.relative_path, PathBuf::from("hebun.md"));
+    assert_eq!(scanned.content, original_content);
+    assert_eq!(scanned.line_count, 3);
+    assert_eq!(
+        scanned.character_count,
+        original_content.chars().count(),
+    );
+
+    assert_eq!(
+        fs::read_to_string(&file_path)
+            .expect("source file should remain readable"),
+        original_content,
+    );
+
+    fs::remove_dir_all(&test_root)
+        .expect("test repository should be removed");
 }
 
 }
