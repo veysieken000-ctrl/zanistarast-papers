@@ -636,7 +636,7 @@ pub fn record_file_version_pair(
     self.append(entry)
 }
 
-
+}
 #[cfg(test)]
 mod tests {
     use super::*;
