@@ -95,53 +95,7 @@ impl TruthLogEntry {
             chain_digest: String::new(),
             created_at,
         }
-    /// Müdebbir kararını Truth Log olayına dönüştürerek kaydeder.
-pub fn record_mudebbir_decision(
-    &mut self,
-    record: &crate::MudebbirDecisionRecord,
-    created_at: SystemTime,
-) -> bool {
-    let (
-        severity,
-        message,
-    ) = match record.decision {
-        crate::MudebbirDecision::Pending => (
-            TruthLogSeverity::Information,
-            "Müdebbir kararı bekleniyor.",
-        ),
-
-        crate::MudebbirDecision::Approved => (
-            TruthLogSeverity::Information,
-            "Müdebbir güvenli sürüm oluşturulmasını onayladı.",
-        ),
-
-        crate::MudebbirDecision::Rejected => (
-            TruthLogSeverity::Critical,
-            "Müdebbir güvenli sürüm oluşturulmasını reddetti.",
-        ),
-
-        crate::MudebbirDecision::RevisionRequested => (
-            TruthLogSeverity::Warning,
-            "Müdebbir düzeltme ve yeniden değerlendirme istedi.",
-        ),
-    };
-
-    let entry = TruthLogEntry::new(
-        TruthLogEventKind::MudebbirDecisionRecorded,
-        severity,
-        Some(record.task_id),
-        None,
-        message,
-        created_at,
-    )
-    .with_evidence(vec![
-        format!("decision={:?}", record.decision),
-        format!("decided_at={}", record.decided_at),
-    ]);
-
-    self.append(entry)
-}
-
+    
     }
 
     /// Olay kaydına doğrulama kanıtları ekler.
@@ -709,6 +663,52 @@ pub fn record_file_version_pair(
             "revised_algorithm={}",
             pair.revised.algorithm,
         ),
+    ]);
+
+    self.append(entry)
+}
+/// Müdebbir kararını Truth Log olayına dönüştürerek kaydeder.
+pub fn record_mudebbir_decision(
+    &mut self,
+    record: &crate::MudebbirDecisionRecord,
+    created_at: SystemTime,
+) -> bool {
+    let (
+        severity,
+        message,
+    ) = match record.decision {
+        crate::MudebbirDecision::Pending => (
+            TruthLogSeverity::Information,
+            "Müdebbir kararı bekleniyor.",
+        ),
+
+        crate::MudebbirDecision::Approved => (
+            TruthLogSeverity::Information,
+            "Müdebbir güvenli sürüm oluşturulmasını onayladı.",
+        ),
+
+        crate::MudebbirDecision::Rejected => (
+            TruthLogSeverity::Critical,
+            "Müdebbir güvenli sürüm oluşturulmasını reddetti.",
+        ),
+
+        crate::MudebbirDecision::RevisionRequested => (
+            TruthLogSeverity::Warning,
+            "Müdebbir düzeltme ve yeniden değerlendirme istedi.",
+        ),
+    };
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::MudebbirDecisionRecorded,
+        severity,
+        Some(record.task_id),
+        None,
+        message,
+        created_at,
+    )
+    .with_evidence(vec![
+        format!("decision={:?}", record.decision),
+        format!("decided_at={}", record.decided_at),
     ]);
 
     self.append(entry)
