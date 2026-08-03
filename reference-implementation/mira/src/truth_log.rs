@@ -276,6 +276,68 @@ pub fn latest_chain_digest(
         .map(|entry| entry.chain_digest.as_str())
 }
 
+   /// Doğrulanmış Truth Log zincirini yeni bir dosyaya
+/// güvenli biçimde aktarır.
+///
+/// Zincir geçersizse aktarım yapılmaz. Mevcut bir dosyanın
+/// üzerine kesinlikle yazılmaz.
+pub fn export_snapshot(
+    &self,
+    output_path: impl AsRef<std::path::Path>,
+) -> std::io::Result<()> {
+    use std::fs::OpenOptions;
+    use std::io::Write;
+
+    if !self.verify_chain() {
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::InvalidData,
+            "Truth Log chain verification failed",
+        ));
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(output_path)?;
+
+    writeln!(file, "ZANISTARAST_TRUTH_LOG_V1")?;
+    writeln!(file, "entry_count={}", self.entries.len())?;
+
+    for entry in &self.entries {
+        let subject_id = entry
+            .subject_id
+            .map(|id| id.to_string())
+            .unwrap_or_else(|| "-".to_string());
+
+        let file_path = entry
+            .file_path
+            .as_ref()
+            .map(|path| path.display().to_string())
+            .unwrap_or_else(|| "-".to_string());
+
+        let previous_digest = entry
+            .previous_chain_digest
+            .as_deref()
+            .unwrap_or("-");
+
+        writeln!(
+            file,
+            "entry\tid={}\tevent={:?}\tseverity={:?}\tsubject={}\tfile={}\tmessage={}\tevidence={}\tprevious_digest={}\tchain_digest={}",
+            entry.id,
+            entry.event_kind,
+            entry.severity,
+            subject_id,
+            file_path,
+            entry.message.replace('\t', " "),
+            entry.evidence.join("|").replace('\t', " "),
+            previous_digest,
+            entry.chain_digest,
+        )?;
+    }
+
+    file.flush()
+}
+
     /// Bütün kayıtları salt okunur biçimde döndürür.
     pub fn entries(&self) -> &[TruthLogEntry] {
         &self.entries
@@ -1482,6 +1544,83 @@ fn truth_log_detects_modified_entry() {
         "Sonradan değiştirilmiş kayıt.".to_string();
 
     assert!(!truth_log.verify_chain());
+}
+
+#[test]
+fn truth_log_exports_verified_snapshot_without_overwrite() {
+    use std::fs;
+
+    let mut truth_log = TruthLog::new();
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from("articles/hebun.md")),
+        "Orijinal hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.append(entry));
+    assert!(truth_log.verify_chain());
+
+    let output_path = std::env::temp_dir().join(
+        format!(
+            "truth-log-snapshot-{}.log",
+            Uuid::new_v4(),
+        ),
+    );
+
+    truth_log
+        .export_snapshot(&output_path)
+        .expect("verified Truth Log should be exported");
+
+    let content = fs::read_to_string(&output_path)
+        .expect("snapshot should be readable");
+
+    assert!(content.contains("ZANISTARAST_TRUTH_LOG_V1"));
+    assert!(content.contains("entry_count=1"));
+    assert!(content.contains("chain_digest="));
+
+    assert!(
+        truth_log.export_snapshot(&output_path).is_err(),
+        "existing snapshot must not be overwritten",
+    );
+
+    fs::remove_file(output_path)
+        .expect("temporary snapshot should be removed");
+}
+
+#[test]
+fn truth_log_rejects_export_of_modified_chain() {
+    let mut truth_log = TruthLog::new();
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from("articles/hebun.md")),
+        "Orijinal hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.append(entry));
+    assert!(truth_log.verify_chain());
+
+    truth_log.entries[0].message =
+        "Sonradan değiştirilmiş kayıt.".to_string();
+
+    assert!(!truth_log.verify_chain());
+
+    let output_path = std::env::temp_dir().join(
+        format!(
+            "invalid-truth-log-snapshot-{}.log",
+            Uuid::new_v4(),
+        ),
+    );
+
+    assert!(truth_log.export_snapshot(&output_path).is_err());
+    assert!(!output_path.exists());
 }
 
 
