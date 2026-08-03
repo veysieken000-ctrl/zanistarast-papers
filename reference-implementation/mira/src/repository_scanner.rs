@@ -81,6 +81,71 @@ impl RepositoryMemory {
     pub fn is_empty(&self) -> bool {
         self.documents.is_empty()
     }
+/// Belirtilen depo kimliğine ait hafıza belgelerini döndürür.
+    pub fn documents_for_repository(
+        &self,
+        repository_id: uuid::Uuid,
+    ) -> Vec<&RepositoryMemoryDocument> {
+        self.documents
+            .iter()
+            .filter(|document| {
+                document.repository_id == repository_id
+            })
+            .collect()
+    }
+
+    /// Belirtilen depo adına ait hafıza belgelerini döndürür.
+    pub fn documents_for_repository_name(
+        &self,
+        repository_name: &str,
+    ) -> Vec<&RepositoryMemoryDocument> {
+        self.documents
+            .iter()
+            .filter(|document| {
+                document.repository_name == repository_name
+            })
+            .collect()
+    }
+
+    /// Depo kimliği ve göreli dosya yoluyla tek bir
+    /// hafıza belgesi bulur.
+    pub fn find_document(
+        &self,
+        repository_id: uuid::Uuid,
+        relative_path: impl AsRef<Path>,
+    ) -> Option<&RepositoryMemoryDocument> {
+        self.documents.iter().find(|document| {
+            document.repository_id == repository_id
+                && document.text.relative_path
+                    == relative_path.as_ref()
+        })
+    }
+
+    /// Metin içeriğinde büyük-küçük harf duyarsız
+    /// arama yapar.
+    ///
+    /// Boş sorgular sonuç üretmez.
+    pub fn search_text(
+        &self,
+        query: &str,
+    ) -> Vec<&RepositoryMemoryDocument> {
+        let query = query.trim().to_lowercase();
+
+        if query.is_empty() {
+            return Vec::new();
+        }
+
+        self.documents
+            .iter()
+            .filter(|document| {
+                document
+                    .text
+                    .content
+                    .to_lowercase()
+                    .contains(&query)
+            })
+            .collect()
+    }
 }
 /// Salt okunur repository taramasının sonucu.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -879,6 +944,129 @@ fn scanner_builds_repository_memory_with_source_identity() {
     fs::remove_dir_all(&test_root)
         .expect("test repository should be removed");
 }
+#[test]
+    fn repository_memory_can_be_queried_by_source_path_and_text() {
+        let first_root = std::env::temp_dir().join(
+            format!(
+                "zanistarast-memory-first-{}",
+                uuid::Uuid::new_v4(),
+            ),
+        );
+
+        let second_root = std::env::temp_dir().join(
+            format!(
+                "zanistarast-memory-second-{}",
+                uuid::Uuid::new_v4(),
+            ),
+        );
+
+        fs::create_dir_all(&first_root)
+            .expect("first repository should be created");
+
+        fs::create_dir_all(&second_root)
+            .expect("second repository should be created");
+
+        fs::write(
+            first_root.join("README.md"),
+            "Hebûn ve Zanabûn araştırması",
+        )
+        .expect("first document should be written");
+
+        fs::write(
+            second_root.join("README.md"),
+            "Rasterast doğrulama sistemi",
+        )
+        .expect("second document should be written");
+
+        let first_repository = RepositoryRoot::new(
+            "hebun-zanabun",
+            &first_root,
+        );
+
+        let second_repository = RepositoryRoot::new(
+            "rasterast",
+            &second_root,
+        );
+
+        let first_repository_id = first_repository.id;
+        let second_repository_id = second_repository.id;
+
+        let scanner = RepositoryScanner::new();
+
+        let memory = scanner
+            .build_memory(&[
+                first_repository,
+                second_repository,
+            ])
+            .expect("project memory should be built");
+
+        assert_eq!(memory.document_count(), 2);
+
+        assert_eq!(
+            memory
+                .documents_for_repository(
+                    first_repository_id,
+                )
+                .len(),
+            1,
+        );
+
+        assert_eq!(
+            memory
+                .documents_for_repository_name(
+                    "rasterast",
+                )
+                .len(),
+            1,
+        );
+
+        let first_document = memory
+            .find_document(
+                first_repository_id,
+                Path::new("README.md"),
+            )
+            .expect("first document should be found");
+
+        assert_eq!(
+            first_document.repository_name,
+            "hebun-zanabun",
+        );
+
+        assert_eq!(
+            first_document.text.content,
+            "Hebûn ve Zanabûn araştırması",
+        );
+
+        let second_document = memory
+            .find_document(
+                second_repository_id,
+                Path::new("README.md"),
+            )
+            .expect("second document should be found");
+
+        assert_eq!(
+            second_document.text.content,
+            "Rasterast doğrulama sistemi",
+        );
+
+        let search_results =
+            memory.search_text("RASTERAST");
+
+        assert_eq!(search_results.len(), 1);
+
+        assert_eq!(
+            search_results[0].repository_name,
+            "rasterast",
+        );
+
+        assert!(memory.search_text(" ").is_empty());
+
+        fs::remove_dir_all(first_root)
+            .expect("first repository should be removed");
+
+        fs::remove_dir_all(second_root)
+            .expect("second repository should be removed");
+    }
 
 }
 
