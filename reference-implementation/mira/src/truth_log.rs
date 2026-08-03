@@ -673,12 +673,12 @@ pub fn record_mudebbir_decision(
     record: &crate::MudebbirDecisionRecord,
     created_at: SystemTime,
 ) -> bool {
+     if record.decision == crate::MudebbirDecision::Pending {
+    return false;
+}
     let (
         severity,
         message,
-    if record.decision == crate::MudebbirDecision::Pending {
-    return false;
-}
     ) = match record.decision {
         crate::MudebbirDecision::Pending => (
             TruthLogSeverity::Information,
