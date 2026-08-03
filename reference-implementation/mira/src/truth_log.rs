@@ -632,6 +632,8 @@ fn truth_log_records_revised_hash_event() {
         )
     );
 }
+}
+    
 #[test]
 fn truth_log_rejects_incomplete_hash_record() {
     let mut truth_log = TruthLog::new();
@@ -653,7 +655,7 @@ fn truth_log_rejects_incomplete_hash_record() {
     assert!(truth_log.is_empty());
 }
 
-}
+
 
 
 
