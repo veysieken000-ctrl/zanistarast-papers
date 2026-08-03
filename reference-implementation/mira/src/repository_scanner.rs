@@ -315,7 +315,6 @@ pub fn add_relation(
         added_count
     }
 
-}
  /// Belirtilen depodan çıkan ilişkileri döndürür.
     pub fn relations_from(
         &self,
@@ -371,7 +370,7 @@ pub fn add_relation(
                 && relation.kind == kind
         })
     }
-
+}
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
 /// Bu tarayıcı:
