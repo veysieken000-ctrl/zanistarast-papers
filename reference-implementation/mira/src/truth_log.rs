@@ -294,6 +294,75 @@ pub fn record_file_hash(
     self.append(entry)
 }
 
+   /// Dosya bütünlük doğrulama sonucunu Truth Log olayına
+/// dönüştürerek koleksiyona ekler.
+pub fn record_file_integrity(
+    &mut self,
+    report: &crate::FileIntegrityReport,
+    subject_id: Option<Uuid>,
+    created_at: SystemTime,
+) -> bool {
+    let (
+        event_kind,
+        severity,
+        message,
+    ) = match report.status {
+        crate::FileIntegrityStatus::Intact => (
+            TruthLogEventKind::FileIntegrityVerified,
+            TruthLogSeverity::Information,
+            "Orijinal dosyanın bütünlüğü doğrulandı.",
+        ),
+
+        crate::FileIntegrityStatus::Modified => (
+            TruthLogEventKind::FileModificationDetected,
+            TruthLogSeverity::Critical,
+            "Orijinal dosyada içerik değişikliği tespit edildi.",
+        ),
+
+        crate::FileIntegrityStatus::AlgorithmMismatch => (
+            TruthLogEventKind::FileModificationDetected,
+            TruthLogSeverity::Warning,
+            "Hash algoritmaları arasında uyuşmazlık tespit edildi.",
+        ),
+
+        crate::FileIntegrityStatus::InvalidRecord => (
+            TruthLogEventKind::FileModificationDetected,
+            TruthLogSeverity::Critical,
+            "Dosya bütünlük doğrulamasında geçersiz hash kaydı bulundu.",
+        ),
+    };
+
+    let entry = TruthLogEntry::new(
+        event_kind,
+        severity,
+        subject_id,
+        Some(report.original.path.clone()),
+        message,
+        created_at,
+    )
+    .with_evidence(vec![
+        format!("status={:?}", report.status),
+        format!(
+            "original_algorithm={}",
+            report.original.algorithm,
+        ),
+        format!(
+            "original_digest={}",
+            report.original.digest,
+        ),
+        format!(
+            "current_algorithm={}",
+            report.current.algorithm,
+        ),
+        format!(
+            "current_digest={}",
+            report.current.digest,
+        ),
+    ]);
+
+    self.append(entry)
+}
+ 
 }
 
 #[cfg(test)]
@@ -615,6 +684,168 @@ fn truth_log_rejects_incomplete_hash_record() {
 
     assert!(truth_log.is_empty());
 }
+
+#[test]
+fn truth_log_records_verified_file_integrity() {
+    let mut truth_log = TruthLog::new();
+    let subject_id = Uuid::new_v4();
+
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let current = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Revised,
+        "sha-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let report = crate::FileIntegrityReport::verify(
+        original,
+        current,
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_file_integrity(
+        &report,
+        Some(subject_id),
+        SystemTime::now(),
+    ));
+
+    assert_eq!(truth_log.len(), 1);
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("integrity event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::FileIntegrityVerified,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Information,
+    );
+
+    assert!(entry.belongs_to_subject(subject_id));
+    assert!(entry.belongs_to_file("articles/hebun.md"));
+    assert!(!entry.is_critical());
+    assert_eq!(entry.evidence.len(), 5);
+}
+
+#[test]
+fn truth_log_records_critical_file_modification() {
+    let mut truth_log = TruthLog::new();
+
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let current = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "changed-digest",
+        SystemTime::now(),
+    );
+
+    let report = crate::FileIntegrityReport::verify(
+        original,
+        current,
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_file_integrity(
+        &report,
+        None,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("modification event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::FileModificationDetected,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Critical,
+    );
+
+    assert!(entry.is_critical());
+
+    assert_eq!(
+        truth_log.critical_entries().len(),
+        1,
+    );
+}
+
+#[test]
+fn truth_log_records_hash_algorithm_mismatch() {
+    let mut truth_log = TruthLog::new();
+
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let current = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Revised,
+        "SHA-512",
+        "same-digest",
+        SystemTime::now(),
+    );
+
+    let report = crate::FileIntegrityReport::verify(
+        original,
+        current,
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_file_integrity(
+        &report,
+        None,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("algorithm mismatch should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::FileModificationDetected,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Warning,
+    );
+
+    assert!(!entry.is_critical());
+}
+
 
 
 
