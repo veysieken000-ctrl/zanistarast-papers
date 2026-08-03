@@ -362,7 +362,93 @@ pub fn record_file_integrity(
 
     self.append(entry)
 }
- 
+
+    /// Diff raporunun sürüm çiftiyle güvenlik doğrulama
+/// sonucunu Truth Log olayına dönüştürerek kaydeder.
+pub fn record_diff_security(
+    &mut self,
+    report: &crate::FileDiffReport,
+    pair: &crate::FileVersionPair,
+    subject_id: Option<Uuid>,
+    created_at: SystemTime,
+) -> bool {
+    let status = report.security_status(pair);
+
+    let (
+        event_kind,
+        severity,
+        message,
+    ) = match status {
+        crate::FileDiffSecurityStatus::Verified => (
+            TruthLogEventKind::DiffSecurityVerified,
+            TruthLogSeverity::Information,
+            "Diff raporu güvenlik doğrulamasından geçti.",
+        ),
+
+        crate::FileDiffSecurityStatus::InvalidVersionPair => (
+            TruthLogEventKind::DiffSecurityRejected,
+            TruthLogSeverity::Warning,
+            "Diff raporu geçersiz sürüm çifti nedeniyle reddedildi.",
+        ),
+
+        crate::FileDiffSecurityStatus::PathMismatch => (
+            TruthLogEventKind::DiffSecurityRejected,
+            TruthLogSeverity::Critical,
+            "Diff raporu ile sürüm çifti dosya yolları eşleşmedi.",
+        ),
+
+        crate::FileDiffSecurityStatus::InconsistentDiff => (
+            TruthLogEventKind::DiffSecurityRejected,
+            TruthLogSeverity::Critical,
+            "Diff raporunun satır değişikliği kayıtları tutarsızdır.",
+        ),
+
+        crate::FileDiffSecurityStatus::HashDiffMismatch => (
+            TruthLogEventKind::DiffSecurityRejected,
+            TruthLogSeverity::Critical,
+            "Hash sonucu ile diff değişiklik sonucu çelişmektedir.",
+        ),
+    };
+
+    let entry = TruthLogEntry::new(
+        event_kind,
+        severity,
+        subject_id,
+        Some(report.original_path.clone()),
+        message,
+        created_at,
+    )
+    .with_evidence(vec![
+        format!("security_status={status:?}"),
+        format!(
+            "original_path={}",
+            report.original_path.display(),
+        ),
+        format!(
+            "revised_path={}",
+            report.revised_path.display(),
+        ),
+        format!(
+            "added_count={}",
+            report.added_count(),
+        ),
+        format!(
+            "removed_count={}",
+            report.removed_count(),
+        ),
+        format!(
+            "modified_count={}",
+            report.modified_count(),
+        ),
+        format!(
+            "unchanged_count={}",
+            report.unchanged_count(),
+        ),
+    ]);
+
+    self.append(entry)
+}
+
 }
 
 #[cfg(test)]
@@ -846,8 +932,208 @@ fn truth_log_records_hash_algorithm_mismatch() {
     assert!(!entry.is_critical());
 }
 
+#[test]
+fn truth_log_records_verified_diff_security() {
+    use std::fs;
 
+    let mut truth_log = TruthLog::new();
+    let subject_id = Uuid::new_v4();
 
+    let original_path = std::env::temp_dir().join(
+        format!(
+            "truth-log-diff-original-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    let revised_path = std::env::temp_dir().join(
+        format!(
+            "truth-log-diff-revised-{}.txt",
+            std::process::id(),
+        ),
+    );
+
+    fs::write(
+        &original_path,
+        "Hebun\nRasterast\n",
+    )
+    .expect("original file should be created");
+
+    fs::write(
+        &revised_path,
+        "Hebun\nNew line\nRasterast\n",
+    )
+    .expect("revised file should be created");
+
+    let pair = crate::FileVersionPair::from_files_sha256(
+        &original_path,
+        &revised_path,
+        SystemTime::now(),
+    )
+    .expect("version pair should be created");
+
+    let report = crate::FileDiffReport::from_version_pair_lcs(
+        &pair,
+        SystemTime::now(),
+    )
+    .expect("diff report should be created");
+
+    assert!(truth_log.record_diff_security(
+        &report,
+        &pair,
+        Some(subject_id),
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("diff security event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::DiffSecurityVerified,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Information,
+    );
+
+    assert!(entry.belongs_to_subject(subject_id));
+    assert!(!entry.is_critical());
+    assert_eq!(entry.evidence.len(), 7);
+
+    fs::remove_file(&original_path)
+        .expect("original file should be removed");
+
+    fs::remove_file(&revised_path)
+        .expect("revised file should be removed");
+}
+
+#[test]
+fn truth_log_records_critical_diff_path_mismatch() {
+    let mut truth_log = TruthLog::new();
+
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = crate::FileVersionPair::new(
+        original,
+        revised,
+        SystemTime::now(),
+    );
+
+    let report = crate::FileDiffReport::new(
+        "articles/other.md",
+        "articles/other-v2.md",
+        vec![
+            crate::FileLineChange::new(
+                crate::FileLineChangeKind::Modified,
+                Some(1),
+                Some(1),
+                Some("Old".to_string()),
+                Some("New".to_string()),
+            ),
+        ],
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_diff_security(
+        &report,
+        &pair,
+        None,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("path mismatch event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::DiffSecurityRejected,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Critical,
+    );
+
+    assert!(entry.is_critical());
+}
+
+#[test]
+fn truth_log_records_invalid_version_pair_warning() {
+    let mut truth_log = TruthLog::new();
+
+    let invalid_original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = crate::FileVersionPair::new(
+        invalid_original,
+        revised,
+        SystemTime::now(),
+    );
+
+    let report = crate::FileDiffReport::new(
+        "articles/hebun.md",
+        "articles/hebun-v2.md",
+        Vec::new(),
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_diff_security(
+        &report,
+        &pair,
+        None,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("invalid pair event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::DiffSecurityRejected,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Warning,
+    );
+
+    assert!(!entry.is_critical());
+}
 
 
 
