@@ -209,6 +209,7 @@ impl RepositoryGraph {
     pub fn is_empty(&self) -> bool {
         self.relations.is_empty()
     }
+    
 /// Eksiksiz ve daha önce kaydedilmemiş bir
 /// depo ilişkisini grafa ekler.
 pub fn add_relation(
@@ -235,7 +236,84 @@ pub fn add_relation(
     self.relations.push(relation);
     true
 }
+ /// Proje hafızasındaki metinlerde başka depo adlarının
+    /// geçmesini kanıt olarak kullanarak ilişkiler çıkarır.
+    pub fn infer_from_memory(
+        &mut self,
+        memory: &RepositoryMemory,
+    ) -> usize {
+        let mut repositories:
+            Vec<(uuid::Uuid, String)> = Vec::new();
 
+        for document in memory.iter() {
+            if !repositories.iter().any(
+                |(repository_id, _)| {
+                    *repository_id == document.repository_id
+                },
+            ) {
+                repositories.push((
+                    document.repository_id,
+                    document.repository_name.clone(),
+                ));
+            }
+        }
+
+        let mut added_count = 0;
+
+        for source_document in memory.iter() {
+            let content =
+                source_document.text.content.to_lowercase();
+
+            for (
+                target_repository_id,
+                target_repository_name,
+            ) in &repositories
+            {
+                if source_document.repository_id
+                    == *target_repository_id
+                {
+                    continue;
+                }
+
+                let normalized_target_name =
+                    target_repository_name.to_lowercase();
+
+                if normalized_target_name.is_empty()
+                    || !content.contains(
+                        &normalized_target_name,
+                    )
+                {
+                    continue;
+                }
+
+                let evidence = format!(
+                    "{}:{} references repository {}",
+                    source_document.repository_name,
+                    source_document
+                        .text
+                        .relative_path
+                        .display(),
+                    target_repository_name,
+                );
+
+                if self.add_relation(
+                    RepositoryRelation {
+                        source_repository:
+                            source_document.repository_id,
+                        target_repository:
+                            *target_repository_id,
+                        kind:
+                            RepositoryRelationKind::References,
+                        evidence,
+                    },
+                ) {
+                    added_count += 1;
+                }
+            }
+        }
+
+        added_count
+    }
 }
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
@@ -1190,6 +1268,90 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
 
     assert_eq!(graph.relation_count(), 1);
 }
+#[test]
+    fn repository_graph_infers_references_from_memory() {
+        let source_repository_id =
+            uuid::Uuid::new_v4();
+
+        let target_repository_id =
+            uuid::Uuid::new_v4();
+
+        let memory = RepositoryMemory {
+            documents: vec![
+                RepositoryMemoryDocument {
+                    repository_id:
+                        source_repository_id,
+                    repository_name:
+                        "zanistarast-papers"
+                            .to_string(),
+                    text: RepositoryTextContent {
+                        relative_path:
+                            PathBuf::from("README.md"),
+                        content:
+                            "This project uses zanistarast-ontology."
+                                .to_string(),
+                        line_count: 1,
+                        character_count: 39,
+                    },
+                },
+                RepositoryMemoryDocument {
+                    repository_id:
+                        target_repository_id,
+                    repository_name:
+                        "zanistarast-ontology"
+                            .to_string(),
+                    text: RepositoryTextContent {
+                        relative_path:
+                            PathBuf::from("README.md"),
+                        content:
+                            "Ontology definitions."
+                                .to_string(),
+                        line_count: 1,
+                        character_count: 21,
+                    },
+                },
+            ],
+        };
+
+        let mut graph = RepositoryGraph::default();
+
+        assert_eq!(
+            graph.infer_from_memory(&memory),
+            1,
+        );
+
+        assert_eq!(graph.relation_count(), 1);
+
+        let relation = &graph.relations[0];
+
+        assert_eq!(
+            relation.source_repository,
+            source_repository_id,
+        );
+
+        assert_eq!(
+            relation.target_repository,
+            target_repository_id,
+        );
+
+        assert_eq!(
+            relation.kind,
+            RepositoryRelationKind::References,
+        );
+
+        assert!(
+            relation
+                .evidence
+                .contains("README.md"),
+        );
+
+        assert_eq!(
+            graph.infer_from_memory(&memory),
+            0,
+        );
+
+        assert_eq!(graph.relation_count(), 1);
+    }
 
 }
 
