@@ -209,6 +209,13 @@ impl RepositoryGraph {
     pub fn is_empty(&self) -> bool {
         self.relations.is_empty()
     }
+pub fn add_relation(
+    &mut self,
+    relation: RepositoryRelation,
+) {
+    self.relations.push(relation);
+}
+
 }
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
