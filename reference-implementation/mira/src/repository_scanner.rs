@@ -178,6 +178,7 @@ pub struct RepositoryRelation {
     pub source_repository: uuid::Uuid,
     pub target_repository: uuid::Uuid,
     pub kind: RepositoryRelationKind,
+    pub source_line: usize,
     pub evidence: String,
 }
 
