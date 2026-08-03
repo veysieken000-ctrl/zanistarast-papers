@@ -235,21 +235,40 @@ pub fn append(
     self.entries.push(entry);
     true
 }
-        if !entry.is_complete() {
-            return false;
-        }
-
-        if self
-            .entries
-            .iter()
-            .any(|stored| stored.id == entry.id)
-        {
-            return false;
-        }
-
-        self.entries.push(entry);
-        true
+        /// Eksiksiz ve daha önce kaydedilmemiş bir
+/// Truth Log olayını zincire ekler.
+pub fn append(
+    &mut self,
+    mut entry: TruthLogEntry,
+) -> bool {
+    if !entry.is_complete() {
+        return false;
     }
+
+    if self
+        .entries
+        .iter()
+        .any(|stored| stored.id == entry.id)
+    {
+        return false;
+    }
+
+    let previous_chain_digest = self
+        .entries
+        .last()
+        .map(|stored| stored.chain_digest.clone());
+
+    entry.previous_chain_digest =
+        previous_chain_digest.clone();
+
+    entry.chain_digest = Self::calculate_chain_digest(
+        &entry,
+        previous_chain_digest.as_deref(),
+    );
+
+    self.entries.push(entry);
+    true
+}
 
     /// Truth Log kayıt zincirinin baştan sona
 /// değiştirilmeden korunduğunu doğrular.
