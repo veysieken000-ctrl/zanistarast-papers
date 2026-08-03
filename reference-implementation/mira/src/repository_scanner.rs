@@ -40,7 +40,22 @@ impl RepositoryTextContent {
         self.content.is_empty()
     }
 }
+ // Bir veya daha fazla depodan okunmuş metin içeriklerinin
+/// ortak proje hafızasını temsil eder.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepositoryMemory {
+    pub documents: Vec<RepositoryTextContent>,
+}
 
+impl RepositoryMemory {
+    pub fn document_count(&self) -> usize {
+        self.documents.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.documents.is_empty()
+    }
+}
 /// Salt okunur repository taramasının sonucu.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryScanReport {
@@ -184,22 +199,6 @@ pub fn build_memory(
     Ok(memory)
 }
 
-    // Bir veya daha fazla depodan okunmuş metin içeriklerinin
-/// ortak proje hafızasını temsil eder.
-#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RepositoryMemory {
-    pub documents: Vec<RepositoryTextContent>,
-}
-
-impl RepositoryMemory {
-    pub fn document_count(&self) -> usize {
-        self.documents.len()
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.documents.is_empty()
-    }
-}
 
 /// Bir dosya yolunun proje hafızasına alınabilecek
 /// desteklenen bir metin türü olup olmadığını bildirir.
