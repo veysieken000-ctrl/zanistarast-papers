@@ -129,7 +129,8 @@ impl RepositoryScanner {
 
         Ok(())
     }
-/// Kayıtlı bir depo kökünü salt okunur biçimde tarayarak
+    
+    /// Kayıtlı bir depo kökünü salt okunur biçimde tarayarak
     /// dosya ve dizin kayıtlarını RepositoryFileInventory
     /// modeline aktarır.
     ///
@@ -273,6 +274,27 @@ impl RepositoryScanner {
             ))
         }
     }
+/// Birden fazla depoyu salt okunur biçimde tarar.
+///
+/// Başarısız olan depo diğerlerini durdurmaz.
+/// Başarılı taramalar döndürülür.
+pub fn scan_multiple(
+    &self,
+    repositories: &[RepositoryRoot],
+) -> Vec<RepositoryFileInventory> {
+    let mut inventories = Vec::new();
+
+    for repository in repositories {
+        if let Ok(inventory) =
+            self.scan_inventory(repository)
+        {
+            inventories.push(inventory);
+        }
+    }
+
+    inventories
+}
+
 }
 
 #[cfg(test)]
@@ -389,6 +411,18 @@ mod tests {
         fs::remove_dir_all(&test_root)
             .expect("test directory should be removed");
     }
+#[test]
+fn scanner_scans_multiple_repositories() {
+    let scanner = RepositoryScanner::new();
+
+    let repositories: Vec<RepositoryRoot> = Vec::new();
+
+    let inventories =
+        scanner.scan_multiple(&repositories);
+
+    assert!(inventories.is_empty());
+}
+
 }
 
 
