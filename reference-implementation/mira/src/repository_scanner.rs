@@ -194,6 +194,22 @@ impl RepositoryScanReport {
     pub fn file_count(&self) -> usize {
         self.files.len()
     }
+
+}
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum RepositoryRelationKind {
+    References,
+    DependsOn,
+    Extends,
+    SharesConcepts,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RepositoryRelation {
+    pub source_repository: uuid::Uuid,
+    pub target_repository: uuid::Uuid,
+    pub kind: RepositoryRelationKind,
+    pub evidence: String,
 }
 
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
