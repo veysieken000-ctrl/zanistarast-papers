@@ -314,7 +314,64 @@ pub fn add_relation(
 
         added_count
     }
+
 }
+ /// Belirtilen depodan çıkan ilişkileri döndürür.
+    pub fn relations_from(
+        &self,
+        source_repository: uuid::Uuid,
+    ) -> Vec<&RepositoryRelation> {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.source_repository
+                    == source_repository
+            })
+            .collect()
+    }
+
+    /// Belirtilen depoya yönelen ilişkileri döndürür.
+    pub fn relations_to(
+        &self,
+        target_repository: uuid::Uuid,
+    ) -> Vec<&RepositoryRelation> {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.target_repository
+                    == target_repository
+            })
+            .collect()
+    }
+
+    /// Belirtilen türdeki depo ilişkilerini döndürür.
+    pub fn relations_of_kind(
+        &self,
+        kind: RepositoryRelationKind,
+    ) -> Vec<&RepositoryRelation> {
+        self.relations
+            .iter()
+            .filter(|relation| relation.kind == kind)
+            .collect()
+    }
+
+    /// Kaynak, hedef ve ilişki türüne göre tek bir
+    /// depo ilişkisi bulur.
+    pub fn find_relation(
+        &self,
+        source_repository: uuid::Uuid,
+        target_repository: uuid::Uuid,
+        kind: RepositoryRelationKind,
+    ) -> Option<&RepositoryRelation> {
+        self.relations.iter().find(|relation| {
+            relation.source_repository
+                == source_repository
+                && relation.target_repository
+                    == target_repository
+                && relation.kind == kind
+        })
+    }
+
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
 /// Bu tarayıcı:
@@ -1351,6 +1408,93 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
         );
 
         assert_eq!(graph.relation_count(), 1);
+    }
+ #[test]
+    fn repository_graph_relations_can_be_queried() {
+        let first_repository =
+            uuid::Uuid::new_v4();
+
+        let second_repository =
+            uuid::Uuid::new_v4();
+
+        let third_repository =
+            uuid::Uuid::new_v4();
+
+        let mut graph = RepositoryGraph::default();
+
+        assert!(graph.add_relation(
+            RepositoryRelation {
+                source_repository:
+                    first_repository,
+                target_repository:
+                    second_repository,
+                kind:
+                    RepositoryRelationKind::References,
+                evidence:
+                    "README.md references second repository."
+                        .to_string(),
+            },
+        ));
+
+        assert!(graph.add_relation(
+            RepositoryRelation {
+                source_repository:
+                    first_repository,
+                target_repository:
+                    third_repository,
+                kind:
+                    RepositoryRelationKind::DependsOn,
+                evidence:
+                    "Cargo.toml depends on third repository."
+                        .to_string(),
+            },
+        ));
+
+        assert_eq!(
+            graph
+                .relations_from(first_repository)
+                .len(),
+            2,
+        );
+
+        assert_eq!(
+            graph
+                .relations_to(second_repository)
+                .len(),
+            1,
+        );
+
+        assert_eq!(
+            graph
+                .relations_of_kind(
+                    RepositoryRelationKind::References,
+                )
+                .len(),
+            1,
+        );
+
+        let relation = graph
+            .find_relation(
+                first_repository,
+                third_repository,
+                RepositoryRelationKind::DependsOn,
+            )
+            .expect("dependency relation should be found");
+
+        assert_eq!(
+            relation.evidence,
+            "Cargo.toml depends on third repository.",
+        );
+
+        assert!(
+            graph
+                .find_relation(
+                    second_repository,
+                    first_repository,
+                    RepositoryRelationKind::Extends,
+                )
+                .is_none(),
+        );
     }
 
 }
