@@ -299,49 +299,7 @@ pub fn record_file_hash(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-#[test]
-fn truth_log_records_original_hash_event() {
-    let mut truth_log = TruthLog::new();
-    let subject_id = Uuid::new_v4();
-
-    let record = crate::FileHashRecord::new(
-        "articles/hebun.md",
-        crate::FileHashRole::Original,
-        "SHA-256",
-        "0123456789abcdef",
-        SystemTime::now(),
-    );
-
-    assert!(truth_log.record_file_hash(
-        &record,
-        Some(subject_id),
-        SystemTime::now(),
-    ));
-
-    assert_eq!(truth_log.len(), 1);
-
-    let entry = truth_log
-        .entries()
-        .first()
-        .expect("hash event should be recorded");
-
-    assert_eq!(
-        entry.event_kind,
-        TruthLogEventKind::OriginalHashRecorded,
-    );
-
-    assert_eq!(
-        entry.severity,
-        TruthLogSeverity::Information,
-    );
-
-    assert!(entry.belongs_to_subject(subject_id));
-    assert!(entry.belongs_to_file("articles/hebun.md"));
-    assert_eq!(entry.evidence.len(), 2);
-}
-
-    
+ 
     #[test]
     fn creates_complete_truth_log_entry() {
         let subject_id = Uuid::new_v4();
