@@ -146,7 +146,11 @@ impl RepositoryMemory {
             })
             .collect()
     }
+pub fn merge(&mut self, other: RepositoryMemory) {
+    self.documents.extend(other.documents);
 }
+}
+
 /// Salt okunur repository taramasının sonucu.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryScanReport {
