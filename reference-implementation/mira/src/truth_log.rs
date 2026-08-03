@@ -45,6 +45,8 @@ pub enum TruthLogEventKind {
 
     /// Müdebbir bir güvenlik veya sürüm kararını reddetmiştir.
     MudebbirRejected,
+    /// Müdebbir kararı Truth Log’a kaydedilmiştir.
+    MudebbirDecisionRecorded,
 }
 
 /// Truth Log olayının önem seviyesini belirtir.
@@ -93,6 +95,53 @@ impl TruthLogEntry {
             chain_digest: String::new(),
             created_at,
         }
+    /// Müdebbir kararını Truth Log olayına dönüştürerek kaydeder.
+pub fn record_mudebbir_decision(
+    &mut self,
+    record: &crate::MudebbirDecisionRecord,
+    created_at: SystemTime,
+) -> bool {
+    let (
+        severity,
+        message,
+    ) = match record.decision {
+        crate::MudebbirDecision::Pending => (
+            TruthLogSeverity::Information,
+            "Müdebbir kararı bekleniyor.",
+        ),
+
+        crate::MudebbirDecision::Approved => (
+            TruthLogSeverity::Information,
+            "Müdebbir güvenli sürüm oluşturulmasını onayladı.",
+        ),
+
+        crate::MudebbirDecision::Rejected => (
+            TruthLogSeverity::Critical,
+            "Müdebbir güvenli sürüm oluşturulmasını reddetti.",
+        ),
+
+        crate::MudebbirDecision::RevisionRequested => (
+            TruthLogSeverity::Warning,
+            "Müdebbir düzeltme ve yeniden değerlendirme istedi.",
+        ),
+    };
+
+    let entry = TruthLogEntry::new(
+        TruthLogEventKind::MudebbirDecisionRecorded,
+        severity,
+        Some(record.task_id),
+        None,
+        message,
+        created_at,
+    )
+    .with_evidence(vec![
+        format!("decision={:?}", record.decision),
+        format!("decided_at={}", record.decided_at),
+    ]);
+
+    self.append(entry)
+}
+
     }
 
     /// Olay kaydına doğrulama kanıtları ekler.
@@ -1621,6 +1670,78 @@ fn truth_log_rejects_export_of_modified_chain() {
 
     assert!(truth_log.export_snapshot(&output_path).is_err());
     assert!(!output_path.exists());
+}
+
+#[test]
+fn truth_log_records_approved_mudebbir_decision() {
+    let mut truth_log = TruthLog::new();
+    let task_id = Uuid::new_v4();
+
+    let record = crate::MudebbirDecisionRecord::new(
+        task_id,
+        crate::MudebbirDecision::Approved,
+    );
+
+    assert!(truth_log.record_mudebbir_decision(
+        &record,
+        SystemTime::now(),
+    ));
+
+    assert_eq!(truth_log.len(), 1);
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("Mudebbir decision should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::MudebbirDecisionRecorded,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Information,
+    );
+
+    assert!(entry.belongs_to_subject(task_id));
+    assert_eq!(entry.evidence.len(), 2);
+    assert!(truth_log.verify_chain());
+}
+
+#[test]
+fn truth_log_records_rejected_mudebbir_decision_as_critical() {
+    let mut truth_log = TruthLog::new();
+    let task_id = Uuid::new_v4();
+
+    let record = crate::MudebbirDecisionRecord::new(
+        task_id,
+        crate::MudebbirDecision::Rejected,
+    );
+
+    assert!(truth_log.record_mudebbir_decision(
+        &record,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("rejected decision should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::MudebbirDecisionRecorded,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Critical,
+    );
+
+    assert!(entry.is_critical());
+    assert_eq!(truth_log.critical_entries().len(), 1);
+    assert!(truth_log.verify_chain());
 }
 
 
