@@ -795,7 +795,8 @@ fn scanner_builds_repository_memory() {
         .build_memory(&[repository])
         .unwrap_or_default();
 
-    assert!(memory.document_count() >= 0);
+    assert_eq!(memory.document_count(), memory.documents.len());
+
 }
 
 }
