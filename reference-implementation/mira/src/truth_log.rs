@@ -676,6 +676,9 @@ pub fn record_mudebbir_decision(
     let (
         severity,
         message,
+    if record.decision == crate::MudebbirDecision::Pending {
+    return false;
+}
     ) = match record.decision {
         crate::MudebbirDecision::Pending => (
             TruthLogSeverity::Information,
