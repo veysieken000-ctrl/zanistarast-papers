@@ -22,6 +22,9 @@ pub enum TruthLogEventKind {
     /// Orijinal ve revize sürüm eşleştirilmiştir.
     FileVersionPairCreated,
 
+    /// Geçersiz dosya sürüm çifti reddedilmiştir.
+    FileVersionPairRejected,
+    
     /// Diff raporu oluşturulmuştur.
     DiffReportGenerated,
 
@@ -443,6 +446,63 @@ pub fn record_diff_security(
         format!(
             "unchanged_count={}",
             report.unchanged_count(),
+        ),
+    ]);
+
+    self.append(entry)
+}
+
+    /// Dosya sürüm çiftinin doğrulama sonucunu
+/// Truth Log olayına dönüştürerek kaydeder.
+pub fn record_file_version_pair(
+    &mut self,
+    pair: &crate::FileVersionPair,
+    subject_id: Option<Uuid>,
+    created_at: SystemTime,
+) -> bool {
+    let (
+        event_kind,
+        severity,
+        message,
+    ) = if pair.is_matched() {
+        (
+            TruthLogEventKind::FileVersionPairCreated,
+            TruthLogSeverity::Information,
+            "Doğrulanmış dosya sürüm çifti oluşturuldu.",
+        )
+    } else {
+        (
+            TruthLogEventKind::FileVersionPairRejected,
+            TruthLogSeverity::Warning,
+            "Geçersiz dosya sürüm çifti oluşturulmaya çalışıldı.",
+        )
+    };
+
+    let entry = TruthLogEntry::new(
+        event_kind,
+        severity,
+        subject_id,
+        Some(pair.original.path.clone()),
+        message,
+        created_at,
+    )
+    .with_evidence(vec![
+        format!(
+            "original_path={}",
+            pair.original.path.display(),
+        ),
+        format!(
+            "revised_path={}",
+            pair.revised.path.display(),
+        ),
+        format!("matched={}", pair.is_matched()),
+        format!(
+            "original_algorithm={}",
+            pair.original.algorithm,
+        ),
+        format!(
+            "revised_algorithm={}",
+            pair.revised.algorithm,
         ),
     ]);
 
@@ -1134,6 +1194,117 @@ fn truth_log_records_invalid_version_pair_warning() {
 
     assert!(!entry.is_critical());
 }
+
+#[test]
+fn truth_log_records_valid_file_version_pair() {
+    let mut truth_log = TruthLog::new();
+    let subject_id = Uuid::new_v4();
+
+    let original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = crate::FileVersionPair::new(
+        original,
+        revised,
+        SystemTime::now(),
+    );
+
+    assert!(pair.is_matched());
+
+    assert!(truth_log.record_file_version_pair(
+        &pair,
+        Some(subject_id),
+        SystemTime::now(),
+    ));
+
+    assert_eq!(truth_log.len(), 1);
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("version pair event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::FileVersionPairCreated,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Information,
+    );
+
+    assert!(entry.belongs_to_subject(subject_id));
+    assert!(entry.belongs_to_file("articles/hebun.md"));
+    assert_eq!(entry.evidence.len(), 5);
+}
+
+#[test]
+fn truth_log_records_invalid_file_version_pair() {
+    let mut truth_log = TruthLog::new();
+
+    let invalid_original = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "original-digest",
+        SystemTime::now(),
+    );
+
+    let revised = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "revised-digest",
+        SystemTime::now(),
+    );
+
+    let pair = crate::FileVersionPair::new(
+        invalid_original,
+        revised,
+        SystemTime::now(),
+    );
+
+    assert!(!pair.is_matched());
+
+    assert!(truth_log.record_file_version_pair(
+        &pair,
+        None,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("invalid version pair event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::FileVersionPairRejected,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Warning,
+    );
+
+    assert!(!entry.is_critical());
+    assert_eq!(entry.evidence.len(), 5);
+}
+
 
 
 
