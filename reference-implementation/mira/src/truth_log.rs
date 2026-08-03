@@ -235,7 +235,7 @@ pub fn append(
     self.entries.push(entry);
     true
 }
-        /// Eksiksiz ve daha önce kaydedilmemiş bir
+      /// Eksiksiz ve daha önce kaydedilmemiş bir
 /// Truth Log olayını zincire ekler.
 pub fn append(
     &mut self,
@@ -269,6 +269,8 @@ pub fn append(
     self.entries.push(entry);
     true
 }
+
+
 
     /// Truth Log kayıt zincirinin baştan sona
 /// değiştirilmeden korunduğunu doğrular.
