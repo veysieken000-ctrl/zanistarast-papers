@@ -66,6 +66,8 @@ pub struct TruthLogEntry {
     pub file_path: Option<PathBuf>,
     pub message: String,
     pub evidence: Vec<String>,
+    pub previous_chain_digest: Option<String>,
+    pub chain_digest: String,
     pub created_at: SystemTime,
 }
 
@@ -87,6 +89,8 @@ impl TruthLogEntry {
             file_path,
             message: message.into(),
             evidence: Vec::new(),
+            previous_chain_digest: None,
+            chain_digest: String::new(),
             created_at,
         }
     }
@@ -159,13 +163,78 @@ impl TruthLog {
             entries: Vec::new(),
         }
     }
-
+     
     /// Eksiksiz ve daha önce kaydedilmemiş bir
     /// Truth Log olayını koleksiyona ekler.
-    pub fn append(
-        &mut self,
-        entry: TruthLogEntry,
-    ) -> bool {
+    /// Truth Log kaydının zincir özetini SHA-256 ile hesaplar.
+fn calculate_chain_digest(
+    entry: &TruthLogEntry,
+    previous_chain_digest: Option<&str>,
+) -> String {
+    use sha2::{Digest, Sha256};
+
+    let mut hasher = Sha256::new();
+
+    hasher.update(entry.id.as_bytes());
+    hasher.update(format!("{:?}", entry.event_kind));
+    hasher.update(format!("{:?}", entry.severity));
+
+    if let Some(subject_id) = entry.subject_id {
+        hasher.update(subject_id.as_bytes());
+    }
+
+    if let Some(file_path) = &entry.file_path {
+        hasher.update(
+            file_path.to_string_lossy().as_bytes(),
+        );
+    }
+
+    hasher.update(entry.message.as_bytes());
+
+    for evidence in &entry.evidence {
+        hasher.update(evidence.as_bytes());
+    }
+
+    if let Some(previous_digest) = previous_chain_digest {
+        hasher.update(previous_digest.as_bytes());
+    }
+
+    format!("{:x}", hasher.finalize())
+}
+   /// Eksiksiz ve daha önce kaydedilmemiş bir
+/// Truth Log olayını zincire ekler.
+pub fn append(
+    &mut self,
+    mut entry: TruthLogEntry,
+) -> bool {
+    if !entry.is_complete() {
+        return false;
+    }
+
+    if self
+        .entries
+        .iter()
+        .any(|stored| stored.id == entry.id)
+    {
+        return false;
+    }
+
+    let previous_chain_digest = self
+        .entries
+        .last()
+        .map(|stored| stored.chain_digest.clone());
+
+    entry.previous_chain_digest =
+        previous_chain_digest.clone();
+
+    entry.chain_digest = Self::calculate_chain_digest(
+        &entry,
+        previous_chain_digest.as_deref(),
+    );
+
+    self.entries.push(entry);
+    true
+}
         if !entry.is_complete() {
             return false;
         }
@@ -181,6 +250,45 @@ impl TruthLog {
         self.entries.push(entry);
         true
     }
+
+    /// Truth Log kayıt zincirinin baştan sona
+/// değiştirilmeden korunduğunu doğrular.
+pub fn verify_chain(&self) -> bool {
+    let mut expected_previous_digest:
+        Option<&str> = None;
+
+    for entry in &self.entries {
+        if entry.previous_chain_digest.as_deref()
+            != expected_previous_digest
+        {
+            return false;
+        }
+
+        let expected_digest =
+            Self::calculate_chain_digest(
+                entry,
+                expected_previous_digest,
+            );
+
+        if entry.chain_digest != expected_digest {
+            return false;
+        }
+
+        expected_previous_digest =
+            Some(entry.chain_digest.as_str());
+    }
+
+    true
+}
+
+    /// Truth Log zincirinin son kayıt özetini döndürür.
+pub fn latest_chain_digest(
+    &self,
+) -> Option<&str> {
+    self.entries
+        .last()
+        .map(|entry| entry.chain_digest.as_str())
+}
 
     /// Bütün kayıtları salt okunur biçimde döndürür.
     pub fn entries(&self) -> &[TruthLogEntry] {
@@ -1305,6 +1413,91 @@ fn truth_log_records_invalid_file_version_pair() {
     assert_eq!(entry.evidence.len(), 5);
 }
 
+#[test]
+fn truth_log_builds_valid_immutable_chain() {
+    let mut truth_log = TruthLog::new();
+
+    let first = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Orijinal hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    let second = TruthLogEntry::new(
+        TruthLogEventKind::DiffReportGenerated,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Diff raporu oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.append(first));
+    assert!(truth_log.append(second));
+
+    assert!(truth_log.verify_chain());
+
+    let entries = truth_log.entries();
+
+    assert_eq!(entries.len(), 2);
+    assert!(entries[0].previous_chain_digest.is_none());
+
+    assert_eq!(
+        entries[1].previous_chain_digest.as_deref(),
+        Some(entries[0].chain_digest.as_str()),
+    );
+
+    assert_eq!(entries[0].chain_digest.len(), 64);
+    assert_eq!(entries[1].chain_digest.len(), 64);
+
+    assert_eq!(
+        truth_log.latest_chain_digest(),
+        Some(entries[1].chain_digest.as_str()),
+    );
+}
+
+#[test]
+fn truth_log_detects_modified_entry() {
+    let mut truth_log = TruthLog::new();
+
+    let first = TruthLogEntry::new(
+        TruthLogEventKind::OriginalHashRecorded,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Orijinal hash kaydı oluşturuldu.",
+        SystemTime::now(),
+    );
+
+    let second = TruthLogEntry::new(
+        TruthLogEventKind::DiffSecurityVerified,
+        TruthLogSeverity::Information,
+        None,
+        Some(PathBuf::from(
+            "articles/hebun.md",
+        )),
+        "Diff güvenlik doğrulamasından geçti.",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.append(first));
+    assert!(truth_log.append(second));
+    assert!(truth_log.verify_chain());
+
+    truth_log.entries[0].message =
+        "Sonradan değiştirilmiş kayıt.".to_string();
+
+    assert!(!truth_log.verify_chain());
+}
 
 
 
