@@ -67,6 +67,7 @@ pub mod file_integrity;
 pub mod file_version_pair;
 pub mod file_diff;
 pub mod truth_log;
+pub mod safe_file_version;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -228,6 +229,11 @@ pub use truth_log::{
     TruthLogEntry,
     TruthLogEventKind,
     TruthLogSeverity,
+};
+
+pub use safe_file_version::{
+    create_safe_file_version,
+    SafeFileVersionResult,
 };
 
 
