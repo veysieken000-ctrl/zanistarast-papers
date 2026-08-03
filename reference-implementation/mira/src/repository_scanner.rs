@@ -1445,7 +1445,9 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             RepositoryRelationKind::References,
         );
        
-        a assert_eq!(relation.source_line, 1);ssert!(
+        assert_eq!(relation.source_line, 1);
+
+assert!(
             relation
                 .evidence
                 .contains("README.md"),
