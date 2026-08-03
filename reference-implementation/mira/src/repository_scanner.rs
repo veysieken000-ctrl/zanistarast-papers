@@ -1,7 +1,15 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
+
+use crate::{
+    RepositoryEntryKind,
+    RepositoryFileInventory,
+    RepositoryFileRecord,
+    RepositoryRoot,
+};
 
 /// Repository taramasında bulunan tek bir dosyanın kaydı.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -121,6 +129,150 @@ impl RepositoryScanner {
 
         Ok(())
     }
+/// Kayıtlı bir depo kökünü salt okunur biçimde tarayarak
+    /// dosya ve dizin kayıtlarını RepositoryFileInventory
+    /// modeline aktarır.
+    ///
+    /// Normal dosyalar için SHA-256 özeti hesaplanır.
+    /// Sembolik bağlantılar takip edilmez.
+    pub fn scan_inventory(
+        &self,
+        repository: &RepositoryRoot,
+    ) -> io::Result<RepositoryFileInventory> {
+        if !repository.is_complete()
+            || !repository.read_only
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::PermissionDenied,
+                "repository must be complete and read-only",
+            ));
+        }
+
+        if !repository.root_path.is_dir() {
+            return Err(io::Error::new(
+                io::ErrorKind::NotFound,
+                "repository root directory was not found",
+            ));
+        }
+
+        let root = repository.root_path.canonicalize()?;
+        let mut inventory = RepositoryFileInventory::new();
+
+        Self::scan_inventory_directory(
+            repository,
+            &root,
+            &root,
+            &mut inventory,
+        )?;
+
+        Ok(inventory)
+    }
+
+    fn scan_inventory_directory(
+        repository: &RepositoryRoot,
+        root: &Path,
+        current: &Path,
+        inventory: &mut RepositoryFileInventory,
+    ) -> io::Result<()> {
+        let mut entries = fs::read_dir(current)?
+            .collect::<Result<Vec<_>, io::Error>>()?;
+
+        entries.sort_by_key(|entry| entry.path());
+
+        for entry in entries {
+            let path = entry.path();
+            let file_type = entry.file_type()?;
+
+            if file_type.is_symlink() {
+                continue;
+            }
+
+            let relative_path = path
+                .strip_prefix(root)
+                .map_err(|_| {
+                    io::Error::new(
+                        io::ErrorKind::InvalidData,
+                        "repository entry is outside root",
+                    )
+                })?
+                .to_path_buf();
+
+            let metadata = entry.metadata()?;
+
+            if file_type.is_dir() {
+                let record = RepositoryFileRecord::new(
+                    repository.id,
+                    relative_path,
+                    path.clone(),
+                    RepositoryEntryKind::Directory,
+                    0,
+                    metadata.modified().ok(),
+                );
+
+                Self::register_inventory_record(
+                    inventory,
+                    record,
+                )?;
+
+                Self::scan_inventory_directory(
+                    repository,
+                    root,
+                    &path,
+                    inventory,
+                )?;
+
+                continue;
+            }
+
+            if !file_type.is_file() {
+                continue;
+            }
+
+            let digest = Self::calculate_sha256(&path)?;
+
+            let record = RepositoryFileRecord::new(
+                repository.id,
+                relative_path,
+                path,
+                RepositoryEntryKind::File,
+                metadata.len(),
+                metadata.modified().ok(),
+            )
+            .with_sha256(digest);
+
+            Self::register_inventory_record(
+                inventory,
+                record,
+            )?;
+        }
+
+        Ok(())
+    }
+
+    fn calculate_sha256(
+        path: &Path,
+    ) -> io::Result<String> {
+        let bytes = fs::read(path)?;
+
+        let mut hasher = Sha256::new();
+        hasher.update(bytes);
+
+        Ok(format!("{:x}", hasher.finalize()))
+    }
+
+    fn register_inventory_record(
+        inventory: &mut RepositoryFileInventory,
+        record: RepositoryFileRecord,
+    ) -> io::Result<()> {
+        if inventory.register(record) {
+            Ok(())
+        } else {
+            Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "repository inventory record was rejected",
+            ))
+        }
+    }
 }
 
 #[cfg(test)]
@@ -150,6 +302,89 @@ mod tests {
         assert_eq!(report.file_count(), 2);
         assert_eq!(report.directory_count, 2);
         assert!(report.total_size_bytes > 0);
+
+        fs::remove_dir_all(&test_root)
+            .expect("test directory should be removed");
+    }
+#[test]
+    fn scanner_builds_hashed_repository_file_inventory() {
+        let test_root = std::env::temp_dir().join(
+            format!(
+                "zanistarast-mira-inventory-{}",
+                uuid::Uuid::new_v4(),
+            ),
+        );
+
+        let nested = test_root.join("src");
+        let source_path = nested.join("lib.rs");
+        let readme_path = test_root.join("README.md");
+
+        fs::create_dir_all(&nested)
+            .expect("test directory should be created");
+
+        fs::write(
+            &source_path,
+            b"pub fn hebun() {}",
+        )
+        .expect("source file should be written");
+
+        fs::write(
+            &readme_path,
+            b"# Zanistarast",
+        )
+        .expect("README should be written");
+
+        let original_source = fs::read(&source_path)
+            .expect("source file should be readable");
+
+        let repository = RepositoryRoot::new(
+            "zanistarast-test",
+            &test_root,
+        );
+
+        let scanner = RepositoryScanner::new();
+
+        let inventory = scanner
+            .scan_inventory(&repository)
+            .expect("repository inventory scan should succeed");
+
+        assert_eq!(inventory.file_count(), 2);
+        assert_eq!(inventory.directory_count(), 1);
+        assert_eq!(inventory.len(), 3);
+
+        let source_record = inventory
+            .find_by_relative_path(
+                repository.id,
+                "src/lib.rs",
+            )
+            .expect("source file should be inventoried");
+
+        assert!(source_record.is_file());
+        assert!(source_record.has_sha256());
+
+        assert_eq!(
+            source_record
+                .sha256_digest
+                .as_ref()
+                .expect("SHA-256 digest should exist")
+                .len(),
+            64,
+        );
+
+        let directory_record = inventory
+            .find_by_relative_path(
+                repository.id,
+                "src",
+            )
+            .expect("source directory should be inventoried");
+
+        assert!(directory_record.is_directory());
+
+        assert_eq!(
+            fs::read(&source_path)
+                .expect("source file should remain readable"),
+            original_source,
+        );
 
         fs::remove_dir_all(&test_root)
             .expect("test directory should be removed");
