@@ -149,6 +149,10 @@ impl RepositoryMemory {
 pub fn merge(&mut self, other: RepositoryMemory) {
     self.documents.extend(other.documents);
 }
+pub fn clear(&mut self) {
+    self.documents.clear();
+}
+
 }
 
 /// Salt okunur repository taramasının sonucu.
