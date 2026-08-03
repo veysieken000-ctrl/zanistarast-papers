@@ -304,13 +304,23 @@ pub fn scan_with_filter<F>(
 where
     F: Fn(&RepositoryFileRecord) -> bool,
 {
-    let mut inventory = self.scan_inventory(repository)?;
+    let inventory = self.scan_inventory(repository)?;
+    let mut filtered_inventory =
+        RepositoryFileInventory::new();
 
-    inventory.records.retain(|record| filter(record));
+    for record in inventory.records() {
+        if filter(record)
+            && !filtered_inventory.register(record.clone())
+        {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "filtered repository record was rejected",
+            ));
+        }
+    }
 
-    Ok(inventory)
+    Ok(filtered_inventory)
 }
-
 
 }
 
