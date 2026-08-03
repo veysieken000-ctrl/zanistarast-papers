@@ -294,6 +294,12 @@ pub fn record_file_hash(
     self.append(entry)
 }
 
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
 #[test]
 fn truth_log_records_original_hash_event() {
     let mut truth_log = TruthLog::new();
@@ -335,12 +341,7 @@ fn truth_log_records_original_hash_event() {
     assert_eq!(entry.evidence.len(), 2);
 }
 
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
+    
     #[test]
     fn creates_complete_truth_log_entry() {
         let subject_id = Uuid::new_v4();
