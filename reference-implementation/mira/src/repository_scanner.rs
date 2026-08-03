@@ -370,7 +370,19 @@ pub fn add_relation(
                 && relation.kind == kind
         })
     }
-
+pub fn has_relation(
+    &self,
+    source_repository: uuid::Uuid,
+    target_repository: uuid::Uuid,
+    kind: RepositoryRelationKind,
+) -> bool {
+    self.find_relation(
+        source_repository,
+        target_repository,
+        kind,
+    )
+    .is_some()
+}
 }
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
