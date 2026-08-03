@@ -246,7 +246,97 @@ impl TruthLog {
             .filter(|entry| entry.is_critical())
             .collect()
     }
+/// Bir dosya hash kaydını Truth Log olayına dönüştürerek
+/// koleksiyona ekler.
+///
+/// Eksik veya geçersiz hash kayıtları kabul edilmez.
+pub fn record_file_hash(
+    &mut self,
+    record: &crate::FileHashRecord,
+    subject_id: Option<Uuid>,
+    created_at: SystemTime,
+) -> bool {
+    if !record.is_complete() {
+        return false;
+    }
+
+    let event_kind = match record.role {
+        crate::FileHashRole::Original => {
+            TruthLogEventKind::OriginalHashRecorded
+        }
+        crate::FileHashRole::Revised => {
+            TruthLogEventKind::RevisedHashRecorded
+        }
+    };
+
+    let message = match record.role {
+        crate::FileHashRole::Original => {
+            "Orijinal dosya hash kaydı oluşturuldu."
+        }
+        crate::FileHashRole::Revised => {
+            "Revize dosya hash kaydı oluşturuldu."
+        }
+    };
+
+    let entry = TruthLogEntry::new(
+        event_kind,
+        TruthLogSeverity::Information,
+        subject_id,
+        Some(record.path.clone()),
+        message,
+        created_at,
+    )
+    .with_evidence(vec![
+        format!("algorithm={}", record.algorithm),
+        format!("digest={}", record.digest),
+    ]);
+
+    self.append(entry)
 }
+
+#[test]
+fn truth_log_records_original_hash_event() {
+    let mut truth_log = TruthLog::new();
+    let subject_id = Uuid::new_v4();
+
+    let record = crate::FileHashRecord::new(
+        "articles/hebun.md",
+        crate::FileHashRole::Original,
+        "SHA-256",
+        "0123456789abcdef",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_file_hash(
+        &record,
+        Some(subject_id),
+        SystemTime::now(),
+    ));
+
+    assert_eq!(truth_log.len(), 1);
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("hash event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::OriginalHashRecorded,
+    );
+
+    assert_eq!(
+        entry.severity,
+        TruthLogSeverity::Information,
+    );
+
+    assert!(entry.belongs_to_subject(subject_id));
+    assert!(entry.belongs_to_file("articles/hebun.md"));
+    assert_eq!(entry.evidence.len(), 2);
+}
+
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -508,7 +598,62 @@ fn truth_log_returns_critical_security_entries() {
         truth_log.critical_entries().len(),
         1,
     );
- }
+ #[test]
+fn truth_log_records_revised_hash_event() {
+    let mut truth_log = TruthLog::new();
+
+    let record = crate::FileHashRecord::new(
+        "articles/hebun-v2.md",
+        crate::FileHashRole::Revised,
+        "SHA-256",
+        "fedcba9876543210",
+        SystemTime::now(),
+    );
+
+    assert!(truth_log.record_file_hash(
+        &record,
+        None,
+        SystemTime::now(),
+    ));
+
+    let entry = truth_log
+        .entries()
+        .first()
+        .expect("revised hash event should be recorded");
+
+    assert_eq!(
+        entry.event_kind,
+        TruthLogEventKind::RevisedHashRecorded,
+    );
+
+    assert!(
+        entry.belongs_to_file(
+            "articles/hebun-v2.md",
+        )
+    );
+}
+#[test]
+fn truth_log_rejects_incomplete_hash_record() {
+    let mut truth_log = TruthLog::new();
+
+    let record = crate::FileHashRecord::new(
+        "",
+        crate::FileHashRole::Original,
+        "",
+        "",
+        SystemTime::now(),
+    );
+
+    assert!(!truth_log.record_file_hash(
+        &record,
+        None,
+        SystemTime::now(),
+    ));
+
+    assert!(truth_log.is_empty());
+}
+
+}
 
 
 
