@@ -196,22 +196,20 @@ impl RepositoryScanReport {
     }
 
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RepositoryRelationKind {
-    References,
-    DependsOn,
-    Extends,
-    SharesConcepts,
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub struct RepositoryGraph {
+    pub relations: Vec<RepositoryRelation>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RepositoryRelation {
-    pub source_repository: uuid::Uuid,
-    pub target_repository: uuid::Uuid,
-    pub kind: RepositoryRelationKind,
-    pub evidence: String,
-}
+impl RepositoryGraph {
+    pub fn relation_count(&self) -> usize {
+        self.relations.len()
+    }
 
+    pub fn is_empty(&self) -> bool {
+        self.relations.is_empty()
+    }
+}
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
 /// Bu tarayıcı:
