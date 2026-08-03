@@ -287,6 +287,17 @@ pub fn add_relation(
                     continue;
                 }
 
+                let source_line = source_document
+    .text
+    .content
+    .lines()
+    .position(|line| {
+        line.to_lowercase()
+            .contains(&normalized_target_name)
+    })
+    .map(|index| index + 1)
+    .unwrap_or(0);
+
                 let evidence = format!(
                     "{}:{} references repository {}",
                     source_document.repository_name,
@@ -1323,7 +1334,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository,
             kind: RepositoryRelationKind::References,
-            source_line: 0,
+            source_line,
             evidence: "README.md references the target repository."
                 .to_string(),
         },
@@ -1334,7 +1345,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository,
             kind: RepositoryRelationKind::References,
-            source_line: 0,
+            source_line,
             evidence: "Duplicate evidence."
                 .to_string(),
         },
@@ -1345,7 +1356,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository: source_repository,
             kind: RepositoryRelationKind::DependsOn,
-            source_line: 0,
+            source_line,
             evidence: "Self relation."
                 .to_string(),
         },
@@ -1356,7 +1367,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository,
             kind: RepositoryRelationKind::Extends,
-            source_line: 0,
+            source_line,
             evidence: " ".to_string(),
         },
     ));
@@ -1433,8 +1444,8 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             relation.kind,
             RepositoryRelationKind::References,
         );
-
-        assert!(
+       
+        a assert_eq!(relation.source_line, 1);ssert!(
             relation
                 .evidence
                 .contains("README.md"),
@@ -1468,7 +1479,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
                     second_repository,
                 kind:
                     RepositoryRelationKind::References,
-                source_line: 0,
+                source_line,
                 evidence:
                     "README.md references second repository."
                         .to_string(),
@@ -1483,7 +1494,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
                     third_repository,
                 kind:
                     RepositoryRelationKind::DependsOn,
-                source_line: 0,
+               source_line,
                 evidence:
                     "Cargo.toml depends on third repository."
                         .to_string(),
