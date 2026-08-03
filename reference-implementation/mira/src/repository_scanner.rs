@@ -135,6 +135,94 @@ pub fn read_text_content(
         character_count,
     })
 }
+
+   /// Depodaki desteklenen bütün metin dosyalarını
+/// salt okunur biçimde içerik düzeyinde tarar.
+///
+/// Geçerli metin uzantıları ile README, LICENSE,
+/// Dockerfile ve Makefile gibi uzantısız metin dosyaları
+/// okunur. Diğer dosya türleri atlanır.
+pub fn read_all_text_contents(
+    &self,
+    repository: &RepositoryRoot,
+) -> io::Result<Vec<RepositoryTextContent>> {
+    let inventory = self.scan_inventory(repository)?;
+    let mut contents = Vec::new();
+
+    for record in inventory.records() {
+        if !record.is_file()
+            || !Self::is_supported_text_path(
+                &record.relative_path,
+            )
+        {
+            continue;
+        }
+
+        let content = self.read_text_content(
+            repository,
+            &record.relative_path,
+        )?;
+
+        contents.push(content);
+    }
+
+    Ok(contents)
+}
+
+/// Bir dosya yolunun proje hafızasına alınabilecek
+/// desteklenen bir metin türü olup olmadığını bildirir.
+fn is_supported_text_path(
+    path: &Path,
+) -> bool {
+    let file_name = path
+        .file_name()
+        .and_then(|value| value.to_str())
+        .unwrap_or_default();
+
+    if matches!(
+        file_name,
+        "README"
+            | "LICENSE"
+            | "Dockerfile"
+            | "Makefile"
+            | "CITATION"
+            | "CHANGELOG"
+    ) {
+        return true;
+    }
+
+    let extension = path
+        .extension()
+        .and_then(|value| value.to_str())
+        .map(str::to_ascii_lowercase);
+
+    matches!(
+        extension.as_deref(),
+        Some(
+            "md"
+                | "txt"
+                | "rs"
+                | "toml"
+                | "json"
+                | "yaml"
+                | "yml"
+                | "xml"
+                | "csv"
+                | "tsv"
+                | "html"
+                | "css"
+                | "js"
+                | "ts"
+                | "py"
+                | "sh"
+                | "tex"
+                | "bib"
+                | "org"
+                | "rst"
+                | "sql"
+        )
+    )
+}
  
     /// Verilen kök klasörü salt okunur biçimde tarar.
     pub fn scan(&self, root: impl AsRef<Path>) -> io::Result<RepositoryScanReport> {
@@ -585,6 +673,79 @@ fn scanner_reads_utf8_file_content_without_modification() {
         fs::read_to_string(&file_path)
             .expect("source file should remain readable"),
         original_content,
+    );
+
+    fs::remove_dir_all(&test_root)
+        .expect("test repository should be removed");
+}
+#[test]
+fn scanner_reads_all_supported_text_files() {
+    let test_root = std::env::temp_dir().join(
+        format!(
+            "zanistarast-mira-all-content-{}",
+            uuid::Uuid::new_v4(),
+        ),
+    );
+
+    let source_directory = test_root.join("src");
+
+    fs::create_dir_all(&source_directory)
+        .expect("test repository should be created");
+
+    fs::write(
+        test_root.join("README.md"),
+        "# Zanistarast",
+    )
+    .expect("README should be written");
+
+    fs::write(
+        source_directory.join("lib.rs"),
+        "pub fn hebun() {}",
+    )
+    .expect("Rust source should be written");
+
+    fs::write(
+        test_root.join("image.png"),
+        [0_u8, 159, 146, 150],
+    )
+    .expect("binary file should be written");
+
+    let repository = RepositoryRoot::new(
+        "zanistarast-content-inventory",
+        &test_root,
+    );
+
+    let scanner = RepositoryScanner::new();
+
+    let contents = scanner
+        .read_all_text_contents(&repository)
+        .expect("supported text files should be read");
+
+    assert_eq!(contents.len(), 2);
+
+    assert!(contents.iter().any(|content| {
+        content.relative_path
+            == PathBuf::from("README.md")
+            && content.content == "# Zanistarast"
+    }));
+
+    assert!(contents.iter().any(|content| {
+        content.relative_path
+            == PathBuf::from("src/lib.rs")
+            && content.content == "pub fn hebun() {}"
+    }));
+
+    assert!(!contents.iter().any(|content| {
+        content.relative_path
+            == PathBuf::from("image.png")
+    }));
+
+    assert_eq!(
+        fs::read_to_string(
+            test_root.join("README.md"),
+        )
+        .expect("README should remain readable"),
+        "# Zanistarast",
     );
 
     fs::remove_dir_all(&test_root)
