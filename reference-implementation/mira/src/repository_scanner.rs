@@ -296,6 +296,21 @@ pub fn scan_multiple(
 
     inventories
 }
+pub fn scan_with_filter<F>(
+    &self,
+    repository: &RepositoryRoot,
+    filter: F,
+) -> io::Result<RepositoryFileInventory>
+where
+    F: Fn(&RepositoryFileRecord) -> bool,
+{
+    let mut inventory = self.scan_inventory(repository)?;
+
+    inventory.records.retain(|record| filter(record));
+
+    Ok(inventory)
+}
+
 
 }
 
