@@ -168,6 +168,38 @@ pub fn read_all_text_contents(
 
     Ok(contents)
 }
+pub fn build_memory(
+    &self,
+    repositories: &[RepositoryRoot],
+) -> io::Result<RepositoryMemory> {
+    let mut memory = RepositoryMemory::default();
+
+    for repository in repositories {
+        let documents =
+            self.read_all_text_contents(repository)?;
+
+        memory.documents.extend(documents);
+    }
+
+    Ok(memory)
+}
+
+    // Bir veya daha fazla depodan okunmuş metin içeriklerinin
+/// ortak proje hafızasını temsil eder.
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
+pub struct RepositoryMemory {
+    pub documents: Vec<RepositoryTextContent>,
+}
+
+impl RepositoryMemory {
+    pub fn document_count(&self) -> usize {
+        self.documents.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.documents.is_empty()
+    }
+}
 
 /// Bir dosya yolunun proje hafızasına alınabilecek
 /// desteklenen bir metin türü olup olmadığını bildirir.
@@ -750,6 +782,21 @@ fn scanner_reads_all_supported_text_files() {
 
     fs::remove_dir_all(&test_root)
         .expect("test repository should be removed");
+}
+#[test]
+fn scanner_builds_repository_memory() {
+    let repository = RepositoryRoot::new(
+        "memory-test",
+        std::env::temp_dir(),
+    );
+
+    let scanner = RepositoryScanner::new();
+
+    let memory = scanner
+        .build_memory(&[repository])
+        .unwrap_or_default();
+
+    assert!(memory.document_count() >= 0);
 }
 
 }
