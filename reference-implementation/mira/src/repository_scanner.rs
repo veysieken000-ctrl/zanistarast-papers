@@ -725,19 +725,19 @@ fn scanner_reads_all_supported_text_files() {
 
     assert!(contents.iter().any(|content| {
         content.relative_path
-            == PathBuf::from("README.md")
+            == Path::new("README.md")
             && content.content == "# Zanistarast"
     }));
 
     assert!(contents.iter().any(|content| {
         content.relative_path
-            == PathBuf::from("src/lib.rs")
+            == Path::new("src/lib.rs")
             && content.content == "pub fn hebun() {}"
     }));
 
     assert!(!contents.iter().any(|content| {
         content.relative_path
-            == PathBuf::from("image.png")
+            == Path::new("image.png")
     }));
 
     assert_eq!(
