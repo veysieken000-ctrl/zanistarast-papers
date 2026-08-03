@@ -383,6 +383,26 @@ pub fn has_relation(
     )
     .is_some()
 }
+pub fn relations_with_evidence(
+    &self,
+    query: &str,
+) -> Vec<&RepositoryRelation> {
+    let query = query.trim().to_lowercase();
+
+    if query.is_empty() {
+        return Vec::new();
+    }
+
+    self.relations
+        .iter()
+        .filter(|relation| {
+            relation
+                .evidence
+                .to_lowercase()
+                .contains(&query)
+        })
+        .collect()
+}
 }
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
 ///
