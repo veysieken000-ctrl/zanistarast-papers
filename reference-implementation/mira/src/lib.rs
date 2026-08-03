@@ -68,6 +68,7 @@ pub mod file_version_pair;
 pub mod file_diff;
 pub mod truth_log;
 pub mod safe_file_version;
+pub mod repository_inventory;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -236,7 +237,10 @@ pub use safe_file_version::{
     SafeFileVersionResult,
 };
 
-
+pub use repository_inventory::{
+    RepositoryInventory,
+    RepositoryRoot,
+};
 
 
 
