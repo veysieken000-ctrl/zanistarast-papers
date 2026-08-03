@@ -370,9 +370,6 @@ pub fn add_relation(
                 && relation.kind == kind
         })
     }
-pub fn relation_count(&self) -> usize {
-    self.relations.len()
-}
 
 }
 /// Depoyu yalnızca okuyarak dosya envanteri çıkarır.
