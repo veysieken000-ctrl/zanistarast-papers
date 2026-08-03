@@ -152,6 +152,12 @@ pub fn merge(&mut self, other: RepositoryMemory) {
 pub fn clear(&mut self) {
     self.documents.clear();
 }
+pub fn extend<I>(&mut self, documents: I)
+where
+    I: IntoIterator<Item = RepositoryMemoryDocument>,
+{
+    self.documents.extend(documents);
+}
 
 }
 
