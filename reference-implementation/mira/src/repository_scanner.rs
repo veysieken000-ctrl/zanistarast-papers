@@ -1334,7 +1334,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository,
             kind: RepositoryRelationKind::References,
-            source_line,
+            source_line: 0,
             evidence: "README.md references the target repository."
                 .to_string(),
         },
@@ -1345,7 +1345,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository,
             kind: RepositoryRelationKind::References,
-            source_line,
+            source_line: 0,
             evidence: "Duplicate evidence."
                 .to_string(),
         },
@@ -1356,7 +1356,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository: source_repository,
             kind: RepositoryRelationKind::DependsOn,
-            source_line,
+            source_line: 0,
             evidence: "Self relation."
                 .to_string(),
         },
@@ -1367,7 +1367,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             source_repository,
             target_repository,
             kind: RepositoryRelationKind::Extends,
-            source_line,
+            source_line: 0,
             evidence: " ".to_string(),
         },
     ));
@@ -1481,7 +1481,7 @@ assert!(
                     second_repository,
                 kind:
                     RepositoryRelationKind::References,
-                source_line,
+                source_line: 0,
                 evidence:
                     "README.md references second repository."
                         .to_string(),
@@ -1496,7 +1496,7 @@ assert!(
                     third_repository,
                 kind:
                     RepositoryRelationKind::DependsOn,
-               source_line,
+                source_line: 0,
                 evidence:
                     "Cargo.toml depends on third repository."
                         .to_string(),
