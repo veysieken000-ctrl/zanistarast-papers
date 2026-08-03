@@ -305,6 +305,7 @@ pub fn add_relation(
                             *target_repository_id,
                         kind:
                             RepositoryRelationKind::References,
+                        source_line: 0,
                         evidence,
                     },
                 ) {
