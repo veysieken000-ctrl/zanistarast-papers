@@ -158,7 +158,12 @@ where
 {
     self.documents.extend(documents);
 }
-
+pub fn iter(
+    &self,
+) -> impl Iterator<Item = &RepositoryMemoryDocument> {
+    self.documents.iter()
+}
+    
 }
 
 /// Salt okunur repository taramasının sonucu.
