@@ -40,11 +40,37 @@ impl RepositoryTextContent {
         self.content.is_empty()
     }
 }
- // Bir veya daha fazla depodan okunmuş metin içeriklerinin
+
+/// Proje hafızasına alınmış ve kaynak deposuyla
+/// ilişkilendirilmiş tek bir metin belgesidir.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct RepositoryMemoryDocument {
+    pub repository_id: uuid::Uuid,
+    pub repository_name: String,
+    pub text: RepositoryTextContent,
+}
+
+impl RepositoryMemoryDocument {
+    /// Hafıza belgesinin zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.repository_name.trim().is_empty()
+            && self.text.is_complete()
+    }
+}
+
+// Bir veya daha fazla depodan okunmuş metin içeriklerinin
 /// ortak proje hafızasını temsil eder.
 #[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryMemory {
-    pub documents: Vec<RepositoryTextContent>,
+    pub documents: Vec<RepositoryMemoryDocument>,
 }
 
 impl RepositoryMemory {
@@ -183,6 +209,8 @@ pub fn read_all_text_contents(
 
     Ok(contents)
 }
+/// Birden fazla deponun desteklenen metinlerini,
+/// kaynak depo kimliklerini koruyarak ortak hafızada toplar.
 pub fn build_memory(
     &self,
     repositories: &[RepositoryRoot],
@@ -190,15 +218,23 @@ pub fn build_memory(
     let mut memory = RepositoryMemory::default();
 
     for repository in repositories {
-        let documents =
+        let contents =
             self.read_all_text_contents(repository)?;
 
-        memory.documents.extend(documents);
+        for text in contents {
+            memory.documents.push(
+                RepositoryMemoryDocument {
+                    repository_id: repository.id,
+                    repository_name:
+                        repository.name.clone(),
+                    text,
+                },
+            );
+        }
     }
 
     Ok(memory)
 }
-
 
 /// Bir dosya yolunun proje hafızasına alınabilecek
 /// desteklenen bir metin türü olup olmadığını bildirir.
@@ -783,20 +819,65 @@ fn scanner_reads_all_supported_text_files() {
         .expect("test repository should be removed");
 }
 #[test]
-fn scanner_builds_repository_memory() {
-    let repository = RepositoryRoot::new(
-        "memory-test",
-        std::env::temp_dir(),
+fn scanner_builds_repository_memory_with_source_identity() {
+    let test_root = std::env::temp_dir().join(
+        format!(
+            "zanistarast-mira-memory-{}",
+            uuid::Uuid::new_v4(),
+        ),
     );
+
+    fs::create_dir_all(&test_root)
+        .expect("test repository should be created");
+
+    fs::write(
+        test_root.join("README.md"),
+        "# Zanistarast Memory",
+    )
+    .expect("test document should be written");
+
+    let repository = RepositoryRoot::new(
+        "zanistarast-memory-test",
+        &test_root,
+    );
+
+    let repository_id = repository.id;
 
     let scanner = RepositoryScanner::new();
 
     let memory = scanner
         .build_memory(&[repository])
-        .unwrap_or_default();
+        .expect("repository memory should be built");
 
-    assert_eq!(memory.document_count(), memory.documents.len());
+    assert_eq!(memory.document_count(), 1);
+    assert!(!memory.is_empty());
 
+    let document = &memory.documents[0];
+
+    assert!(document.is_complete());
+
+    assert_eq!(
+        document.repository_id,
+        repository_id,
+    );
+
+    assert_eq!(
+        document.repository_name,
+        "zanistarast-memory-test",
+    );
+
+    assert_eq!(
+        document.text.relative_path,
+        PathBuf::from("README.md"),
+    );
+
+    assert_eq!(
+        document.text.content,
+        "# Zanistarast Memory",
+    );
+
+    fs::remove_dir_all(&test_root)
+        .expect("test repository should be removed");
 }
 
 }
