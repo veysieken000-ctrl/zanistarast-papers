@@ -557,7 +557,9 @@ fn truth_log_returns_critical_security_entries() {
         truth_log.critical_entries().len(),
         1,
     );
- #[test]
+ }
+
+#[test]
 fn truth_log_records_revised_hash_event() {
     let mut truth_log = TruthLog::new();
 
@@ -591,7 +593,7 @@ fn truth_log_records_revised_hash_event() {
         )
     );
 }
-}
+
     
 #[test]
 fn truth_log_rejects_incomplete_hash_record() {
