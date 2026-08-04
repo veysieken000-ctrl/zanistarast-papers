@@ -15,11 +15,6 @@ use crate::website_scanner::{
     WebsiteScanner,
 };
 
-use crate::repository_change_tracker::{
-    RepositoryChangeTracker,
-    RepositoryFileChange,
-};
-
 use std::io;
 use std::path::Path;
 
@@ -139,8 +134,7 @@ Done.
         assert_eq!(report.website_report.page_count(), 1);
         assert!(!report.inventory.candidates.is_empty());
         assert!(!report.analyses.is_empty());
-        assert!(report.changes.is_empty());
-
+       
         fs::remove_dir_all(root).unwrap();
     }
 }
