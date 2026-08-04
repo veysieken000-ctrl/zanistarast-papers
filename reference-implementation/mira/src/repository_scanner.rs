@@ -1394,8 +1394,8 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
                         relative_path:
                             PathBuf::from("README.md"),
                         content:
-                            "This project uses zanistarast-ontology."
-                                .to_string(),
+    "Project overview.\nThis project uses zanistarast-ontology."
+        .to_string(),
                         line_count: 1,
                         character_count: 39,
                     },
@@ -1445,7 +1445,8 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
             RepositoryRelationKind::References,
         );
        
-        assert_eq!(relation.source_line, 1);
+        assert_eq!(relation.source_line, 2);
+
 
 assert!(
             relation
