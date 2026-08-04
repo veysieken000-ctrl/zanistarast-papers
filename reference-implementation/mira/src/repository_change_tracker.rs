@@ -118,7 +118,7 @@ impl RepositoryChangeTracker {
 }
 
             }
-        }
+      
 
         for record in previous.records() {
     if current
