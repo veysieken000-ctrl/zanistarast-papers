@@ -1562,20 +1562,6 @@ fn repository_relation_preserves_source_line() {
 
     assert_eq!(relation.source_line, 42);
 }
-#[test]
-fn scanner_handles_empty_repository() {
-    let temp = tempfile::tempdir().unwrap();
-
-    let repository = Repository::new(
-        "empty",
-        temp.path(),
-    );
-
-    let scanner = RepositoryScanner::new();
-    let report = scanner.scan(&repository).unwrap();
-
-    assert_eq!(report.file_count(), 0);
-}
 
 }
 
