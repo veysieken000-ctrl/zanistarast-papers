@@ -222,4 +222,47 @@ fn detects_removed_repository_file() {
         Some(std::path::Path::new("src/lib.rs"))
     );
 }
+#[test]
+fn detects_modified_repository_file() {
+    let repository_id = Uuid::new_v4();
+
+    let mut previous = RepositoryFileInventory::new();
+    let mut current = RepositoryFileInventory::new();
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "src/lib.rs",
+            "/tmp/src/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            None,
+        )
+        .with_sha256("old-digest"),
+    ));
+
+    assert!(current.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "src/lib.rs",
+            "/tmp/src/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            None,
+        )
+        .with_sha256("new-digest"),
+    ));
+
+    let tracker = RepositoryChangeTracker::new();
+
+    let changes = tracker.detect_changes(&previous, &current);
+
+    assert_eq!(changes.len(), 1);
+    assert_eq!(changes[0].kind, RepositoryChangeKind::Modified);
+    assert_eq!(
+        changes[0].current_path.as_deref(),
+        Some(std::path::Path::new("src/lib.rs"))
+    );
+}
+
 }
