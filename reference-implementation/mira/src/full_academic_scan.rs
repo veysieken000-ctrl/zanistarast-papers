@@ -15,7 +15,6 @@ use crate::website_scanner::{
     WebsiteScanner,
 };
 
-use uuid::Uuid;
 use std::io;
 use std::path::Path;
 
