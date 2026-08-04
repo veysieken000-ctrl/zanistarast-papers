@@ -3,6 +3,11 @@ use std::path::{Path, PathBuf};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
+use crate::repository_change_tracker::{
+    RepositoryChangeKind,
+    RepositoryFileChange,
+};
+
 /// Bir metin dosyasının salt okunur içerik tarama sonucudur.
 #[derive(
     Debug,
@@ -90,6 +95,7 @@ impl RepositoryMemory {
         &self.documents
     }
 
+    
     /// Belirtilen depo kimliğine ait hafıza
     /// belgelerini döndürür.
     pub fn documents_for_repository(
@@ -181,6 +187,107 @@ impl RepositoryMemory {
         self.documents.extend(documents);
     }
 
+    /// Depo değişikliklerini güncel metin içerikleriyle
+/// birlikte proje hafızasına uygular.
+pub fn apply_changes(
+    &mut self,
+    repository_id: Uuid,
+    repository_name: &str,
+    changes: &[RepositoryFileChange],
+    current_contents: &[RepositoryTextContent],
+) {
+    for change in changes {
+        match change.kind {
+            RepositoryChangeKind::Added
+            | RepositoryChangeKind::Modified => {
+                let Some(current_path) =
+                    change.current_path.as_deref()
+                else {
+                    continue;
+                };
+
+                let Some(current_text) =
+                    current_contents.iter().find(|text| {
+                        text.relative_path == current_path
+                    })
+                else {
+                    continue;
+                };
+
+                if let Some(document) =
+                    self.documents.iter_mut().find(|document| {
+                        document.repository_id == repository_id
+                            && document.text.relative_path
+                                == current_path
+                    })
+                {
+                    document.repository_name =
+                        repository_name.to_string();
+                    document.text = current_text.clone();
+                } else {
+                    self.documents.push(
+                        RepositoryMemoryDocument {
+                            repository_id,
+                            repository_name:
+                                repository_name.to_string(),
+                            text: current_text.clone(),
+                        },
+                    );
+                }
+            }
+
+            RepositoryChangeKind::Removed => {
+                let Some(previous_path) =
+                    change.previous_path.as_deref()
+                else {
+                    continue;
+                };
+
+                self.documents.retain(|document| {
+                    document.repository_id != repository_id
+                        || document.text.relative_path
+                            != previous_path
+                });
+            }
+
+            RepositoryChangeKind::Moved => {
+                let (
+                    Some(previous_path),
+                    Some(current_path),
+                ) = (
+                    change.previous_path.as_deref(),
+                    change.current_path.as_deref(),
+                )
+                else {
+                    continue;
+                };
+
+                let current_text =
+                    current_contents.iter().find(|text| {
+                        text.relative_path == current_path
+                    });
+
+                if let Some(document) =
+                    self.documents.iter_mut().find(|document| {
+                        document.repository_id == repository_id
+                            && document.text.relative_path
+                                == previous_path
+                    })
+                {
+                    document.repository_name =
+                        repository_name.to_string();
+
+                    if let Some(current_text) = current_text {
+                        document.text = current_text.clone();
+                    } else {
+                        document.text.relative_path =
+                            current_path.to_path_buf();
+                    }
+                }
+            }
+        }
+    }
+}
     /// Hafıza belgeleri üzerinde salt okunur
     /// yineleyici oluşturur.
     pub fn iter(
@@ -189,5 +296,159 @@ impl RepositoryMemory {
         self.documents.iter()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repository_change_tracker::RepositoryFileChange;
+
+    #[test]
+    fn applies_repository_changes_to_project_memory() {
+        let repository_id = Uuid::new_v4();
+
+        let mut memory = RepositoryMemory {
+            documents: vec![
+                RepositoryMemoryDocument {
+                    repository_id,
+                    repository_name:
+                        "zanistarast-papers".to_string(),
+                    text: RepositoryTextContent {
+                        relative_path:
+                            PathBuf::from("removed.md"),
+                        content:
+                            "Old removed content".to_string(),
+                        line_count: 1,
+                        character_count: 19,
+                    },
+                },
+                RepositoryMemoryDocument {
+                    repository_id,
+                    repository_name:
+                        "zanistarast-papers".to_string(),
+                    text: RepositoryTextContent {
+                        relative_path:
+                            PathBuf::from("modified.md"),
+                        content:
+                            "Old content".to_string(),
+                        line_count: 1,
+                        character_count: 11,
+                    },
+                },
+                RepositoryMemoryDocument {
+                    repository_id,
+                    repository_name:
+                        "zanistarast-papers".to_string(),
+                    text: RepositoryTextContent {
+                        relative_path:
+                            PathBuf::from("old-name.md"),
+                        content:
+                            "Moved content".to_string(),
+                        line_count: 1,
+                        character_count: 13,
+                    },
+                },
+            ],
+        };
+
+        let changes = vec![
+            RepositoryFileChange::added("added.md"),
+            RepositoryFileChange::modified("modified.md"),
+            RepositoryFileChange::removed("removed.md"),
+            RepositoryFileChange::moved(
+                "old-name.md",
+                "new-name.md",
+            ),
+        ];
+
+        let current_contents = vec![
+            RepositoryTextContent {
+                relative_path:
+                    PathBuf::from("added.md"),
+                content:
+                    "Added content".to_string(),
+                line_count: 1,
+                character_count: 13,
+            },
+            RepositoryTextContent {
+                relative_path:
+                    PathBuf::from("modified.md"),
+                content:
+                    "New content".to_string(),
+                line_count: 1,
+                character_count: 11,
+            },
+            RepositoryTextContent {
+                relative_path:
+                    PathBuf::from("new-name.md"),
+                content:
+                    "Moved content".to_string(),
+                line_count: 1,
+                character_count: 13,
+            },
+        ];
+
+        memory.apply_changes(
+            repository_id,
+            "zanistarast-papers",
+            &changes,
+            &current_contents,
+        );
+
+        assert_eq!(memory.document_count(), 3);
+
+        assert!(
+            memory
+                .find_document(
+                    repository_id,
+                    Path::new("removed.md"),
+                )
+                .is_none(),
+        );
+
+        assert_eq!(
+            memory
+                .find_document(
+                    repository_id,
+                    Path::new("added.md"),
+                )
+                .expect("added document should exist")
+                .text
+                .content,
+            "Added content",
+        );
+
+        assert_eq!(
+            memory
+                .find_document(
+                    repository_id,
+                    Path::new("modified.md"),
+                )
+                .expect("modified document should exist")
+                .text
+                .content,
+            "New content",
+        );
+
+        assert!(
+            memory
+                .find_document(
+                    repository_id,
+                    Path::new("old-name.md"),
+                )
+                .is_none(),
+        );
+
+        assert!(
+            memory
+                .find_document(
+                    repository_id,
+                    Path::new("new-name.md"),
+                )
+                .is_some(),
+        );
+    }
+}
+
+
 
 
