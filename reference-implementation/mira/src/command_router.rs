@@ -3,10 +3,8 @@ use crate::article_inventory::{
     ArticleInventoryReport,
 };
 use crate::chat_interface::MiraChatCommand;
-use crate::repository_scanner::{
-    RepositoryScanReport,
-    RepositoryScanner,
-};
+use crate::repository_scan_report::RepositoryScanReport;
+use crate::repository_scanner::RepositoryScanner;
 use crate::website_scanner::{
     WebsiteScanReport,
     WebsiteScanner,
