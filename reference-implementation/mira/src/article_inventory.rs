@@ -4,9 +4,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use crate::repository_scan_report::RepositoryScanReport;
-use crate::repository_scanner::RepositoryScanner;
-
 /// Makale adayının kaynak türü.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub enum ArticleSourceType {
@@ -220,10 +217,10 @@ impl ArticleInventoryBuilder {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::repository_scanner::{
-        RepositoryFile,
-        RepositoryScanReport,
-    };
+   use crate::repository_scan_report::{
+    RepositoryFile,
+    RepositoryScanReport,
+};
     use crate::website_scanner::{
         WebsitePage,
         WebsiteScanReport,
