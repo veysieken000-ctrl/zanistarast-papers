@@ -6,9 +6,11 @@ use crate::article_analysis_service::{
 use crate::article_classifier::AcademicArticleType;
 use crate::article_inventory::ArticleCandidate;
 use crate::repository_change_tracker::{
+    RepositoryChangeKind,
     RepositoryChangeTracker,
     RepositoryFileChange,
 };
+
 use crate::repository_file_inventory::RepositoryFileInventory;
 use std::path::Path;
 
@@ -92,6 +94,63 @@ where
     let changes = tracker.detect_changes(
         previous_inventory,
         current_inventory,
+    );
+
+    RepositoryAcademicScanResult {
+        analyses,
+        changes,
+    }
+}
+
+/// Yalnızca eklenen, değiştirilen veya taşınan
+/// makale adaylarını akademik olarak analiz eder.
+///
+/// Silinen dosyalar analiz edilmez.
+/// Değişmeyen dosyalar yeniden analiz edilmez.
+pub fn scan_changed_repository_articles<F>(
+    repository_root: &Path,
+    candidates: &[ArticleCandidate],
+    previous_inventory: &RepositoryFileInventory,
+    current_inventory: &RepositoryFileInventory,
+    classify: F,
+) -> RepositoryAcademicScanResult
+where
+    F: Fn(&ArticleCandidate) -> AcademicArticleType,
+{
+    let tracker = RepositoryChangeTracker::new();
+
+    let changes = tracker.detect_changes(
+        previous_inventory,
+        current_inventory,
+    );
+
+    let changed_candidates: Vec<ArticleCandidate> =
+        candidates
+            .iter()
+            .filter(|candidate| {
+                changes.iter().any(|change| {
+                    match change.kind {
+                        RepositoryChangeKind::Added
+                        | RepositoryChangeKind::Modified
+                        | RepositoryChangeKind::Moved => {
+                            change.current_path.as_deref()
+                                == Some(
+                                    candidate
+                                        .relative_path
+                                        .as_path(),
+                                )
+                        }
+                        RepositoryChangeKind::Removed => false,
+                    }
+                })
+            })
+            .cloned()
+            .collect();
+
+    let analyses = scan_repository_articles(
+        repository_root,
+        &changed_candidates,
+        classify,
     );
 
     RepositoryAcademicScanResult {
@@ -275,5 +334,143 @@ Done
 
         std::fs::remove_dir_all(repository).unwrap();
     }
+#[test]
+fn academic_scan_analyzes_only_changed_articles() {
+    let repository = temporary_repository();
+
+    std::fs::create_dir_all(
+        repository.join("papers"),
+    )
+    .unwrap();
+
+    let unchanged_markdown = r#"# Abstract
+Unchanged
+# Conclusion
+Done
+# References
+[1] Ref"#;
+
+    let changed_markdown = r#"# Abstract
+Changed
+# Conclusion
+Done
+# References
+[1] Ref"#;
+
+    std::fs::write(
+        repository.join("papers/unchanged.md"),
+        unchanged_markdown,
+    )
+    .unwrap();
+
+    std::fs::write(
+        repository.join("papers/changed.md"),
+        changed_markdown,
+    )
+    .unwrap();
+
+    let candidates = vec![
+        ArticleCandidate {
+            relative_path:
+                PathBuf::from("papers/unchanged.md"),
+            title: Some("Unchanged".into()),
+            source_type:
+                ArticleSourceType::Markdown,
+            domains: Vec::new(),
+            size_bytes:
+                unchanged_markdown.len() as u64,
+        },
+        ArticleCandidate {
+            relative_path:
+                PathBuf::from("papers/changed.md"),
+            title: Some("Changed".into()),
+            source_type:
+                ArticleSourceType::Markdown,
+            domains: Vec::new(),
+            size_bytes:
+                changed_markdown.len() as u64,
+        },
+    ];
+
+    let repository_id = Uuid::new_v4();
+
+    let mut previous_inventory =
+        RepositoryFileInventory::new();
+
+    let mut current_inventory =
+        RepositoryFileInventory::new();
+
+    assert!(previous_inventory.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "papers/unchanged.md",
+            repository.join("papers/unchanged.md"),
+            RepositoryEntryKind::File,
+            unchanged_markdown.len() as u64,
+            None,
+        )
+        .with_sha256("unchanged-digest"),
+    ));
+
+    assert!(current_inventory.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "papers/unchanged.md",
+            repository.join("papers/unchanged.md"),
+            RepositoryEntryKind::File,
+            unchanged_markdown.len() as u64,
+            None,
+        )
+        .with_sha256("unchanged-digest"),
+    ));
+
+    assert!(previous_inventory.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "papers/changed.md",
+            repository.join("papers/changed.md"),
+            RepositoryEntryKind::File,
+            changed_markdown.len() as u64,
+            None,
+        )
+        .with_sha256("old-digest"),
+    ));
+
+    assert!(current_inventory.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "papers/changed.md",
+            repository.join("papers/changed.md"),
+            RepositoryEntryKind::File,
+            changed_markdown.len() as u64,
+            None,
+        )
+        .with_sha256("new-digest"),
+    ));
+
+    let result = scan_changed_repository_articles(
+        &repository,
+        &candidates,
+        &previous_inventory,
+        &current_inventory,
+        |_| AcademicArticleType::Theoretical,
+    );
+
+    assert_eq!(result.changes.len(), 1);
+    assert_eq!(
+        result.changes[0].kind,
+        RepositoryChangeKind::Modified,
+    );
+
+    assert_eq!(result.analyses.len(), 1);
+    assert_eq!(
+        result.analyses[0].relative_path,
+        "papers/changed.md",
+    );
+    assert!(result.analyses[0].result.is_ok());
+
+    std::fs::remove_dir_all(repository).unwrap();
+}
+
 }
 
