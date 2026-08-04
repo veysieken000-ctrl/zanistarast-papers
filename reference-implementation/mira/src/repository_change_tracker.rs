@@ -84,59 +84,154 @@ impl RepositoryChangeTracker {
 
     /// Önceki ve güncel envanteri karşılaştırarak
     /// yeni eklenen dosyaları belirler.
-    pub fn detect_changes(
-        &self,
-        previous: &RepositoryFileInventory,
-        current: &RepositoryFileInventory,
-    ) -> Vec<RepositoryFileChange> {
-        let mut changes = Vec::new();
+   /// Önceki ve güncel envanteri karşılaştırarak
+/// eklenen, değiştirilen, silinen ve taşınan
+/// dosyaları belirler.
+pub fn detect_changes(
+    &self,
+    previous: &RepositoryFileInventory,
+    current: &RepositoryFileInventory,
+) -> Vec<RepositoryFileChange> {
+    let mut changes = Vec::new();
 
-        for record in current.records() {
-           if previous
-    .find_by_relative_path(
-        record.repository_id,
-        &record.relative_path,
-    )
-    .is_none()
-{
-    changes.push(
-        RepositoryFileChange::added(
-            record.relative_path.clone(),
-        ),
-    );
-} else if let Some(previous_record) = previous.find_by_relative_path(
-    record.repository_id,
-    &record.relative_path,
-) && previous_record.sha256_digest != record.sha256_digest
-{
-    changes.push(
-        RepositoryFileChange::modified(
-            record.relative_path.clone(),
-        ),
-    );
-}
-            }
-      
-        for record in previous.records() {
-    if current
-        .find_by_relative_path(
-            record.repository_id,
-            &record.relative_path,
-        )
-        .is_none()
-    {
-        changes.push(
-            RepositoryFileChange::removed(
-                record.relative_path.clone(),
-            ),
+    let mut moved_previous_paths:
+        Vec<(uuid::Uuid, PathBuf)> = Vec::new();
+
+    let mut moved_current_paths:
+        Vec<(uuid::Uuid, PathBuf)> = Vec::new();
+
+    for previous_record in previous.records() {
+        if !previous_record.is_file()
+            || current
+                .find_by_relative_path(
+                    previous_record.repository_id,
+                    &previous_record.relative_path,
+                )
+                .is_some()
+        {
+            continue;
+        }
+
+        let Some(previous_digest) =
+            previous_record.sha256_digest.as_deref()
+        else {
+            continue;
+        };
+
+        if previous_digest.trim().is_empty() {
+            continue;
+        }
+
+        let moved_record = current.records().iter().find(
+            |current_record| {
+                current_record.is_file()
+                    && current_record.repository_id
+                        == previous_record.repository_id
+                    && previous
+                        .find_by_relative_path(
+                            current_record.repository_id,
+                            &current_record.relative_path,
+                        )
+                        .is_none()
+                    && current_record.sha256_digest.as_deref()
+                        == Some(previous_digest)
+                    && !moved_current_paths.iter().any(
+                        |(repository_id, relative_path)| {
+                            *repository_id
+                                == current_record.repository_id
+                                && relative_path
+                                    == &current_record.relative_path
+                        },
+                    )
+            },
         );
-    }
-}
 
-        changes
-    }
-}
+        if let Some(current_record) = moved_record {
+            changes.push(
+                RepositoryFileChange::moved(
+                    previous_record.relative_path.clone(),
+                    current_record.relative_path.clone(),
+                ),
+            );
 
+            moved_previous_paths.push((
+                previous_record.repository_id,
+                previous_record.relative_path.clone(),
+            ));
+
+            moved_current_paths.push((
+                current_record.repository_id,
+                current_record.relative_path.clone(),
+            ));
+        }
+    }
+
+    for record in current.records() {
+        if moved_current_paths.iter().any(
+            |(repository_id, relative_path)| {
+                *repository_id == record.repository_id
+                    && relative_path == &record.relative_path
+            },
+        ) {
+            continue;
+        }
+
+        if previous
+            .find_by_relative_path(
+                record.repository_id,
+                &record.relative_path,
+            )
+            .is_none()
+        {
+            changes.push(
+                RepositoryFileChange::added(
+                    record.relative_path.clone(),
+                ),
+            );
+        } else if let Some(previous_record) =
+            previous.find_by_relative_path(
+                record.repository_id,
+                &record.relative_path,
+            )
+            && previous_record.sha256_digest
+                != record.sha256_digest
+        {
+            changes.push(
+                RepositoryFileChange::modified(
+                    record.relative_path.clone(),
+                ),
+            );
+        }
+    }
+
+    for record in previous.records() {
+        if moved_previous_paths.iter().any(
+            |(repository_id, relative_path)| {
+                *repository_id == record.repository_id
+                    && relative_path == &record.relative_path
+            },
+        ) {
+            continue;
+        }
+
+        if current
+            .find_by_relative_path(
+                record.repository_id,
+                &record.relative_path,
+            )
+            .is_none()
+        {
+            changes.push(
+                RepositoryFileChange::removed(
+                    record.relative_path.clone(),
+                ),
+            );
+        }
+    }
+
+    changes
+}
+    
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -305,7 +400,7 @@ fn unchanged_repository_file_produces_no_change() {
     assert!(changes.is_empty());
 }
 #[test]
-fn moved_repository_file_is_currently_reported_as_added_and_removed() {
+fn detects_moved_repository_file_by_sha256() {
     let repository_id = Uuid::new_v4();
 
     let mut previous = RepositoryFileInventory::new();
@@ -342,15 +437,21 @@ fn moved_repository_file_is_currently_reported_as_added_and_removed() {
         &current,
     );
 
-    assert_eq!(changes.len(), 2);
+    assert_eq!(changes.len(), 1);
+    assert_eq!(
+        changes[0].kind,
+        RepositoryChangeKind::Moved,
+    );
 
-    assert!(changes.iter().any(|change| {
-        change.kind == RepositoryChangeKind::Added
-    }));
+    assert_eq!(
+        changes[0].previous_path.as_deref(),
+        Some(std::path::Path::new("old/lib.rs")),
+    );
 
-    assert!(changes.iter().any(|change| {
-        change.kind == RepositoryChangeKind::Removed
-    }));
+    assert_eq!(
+        changes[0].current_path.as_deref(),
+        Some(std::path::Path::new("new/lib.rs")),
+    );
 }
 
-}
+
