@@ -11,34 +11,18 @@ use crate::{
     RepositoryRoot,
 };
 
+use crate::repository_memory::{
+    RepositoryMemory,
+    RepositoryMemoryDocument,
+    RepositoryTextContent,
+};
+
 /// Repository taramasında bulunan tek bir dosyanın kaydı.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryFile {
     pub relative_path: PathBuf,
     pub extension: Option<String>,
     pub size_bytes: u64,
-}
-
-/// Bir metin dosyasının salt okunur içerik tarama sonucudur.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
-pub struct RepositoryTextContent {
-    pub relative_path: PathBuf,
-    pub content: String,
-    pub line_count: usize,
-    pub character_count: usize,
-}
-
-impl RepositoryTextContent {
-    /// İçerik kaydının zorunlu alanlarının eksiksiz
-    /// olup olmadığını bildirir.
-    pub fn is_complete(&self) -> bool {
-        !self.relative_path.as_os_str().is_empty()
-    }
-
-    /// Dosyanın boş olup olmadığını bildirir.
-    pub fn is_empty(&self) -> bool {
-        self.content.is_empty()
-    }
 }
 
 /// Proje hafızasına alınmış ve kaynak deposuyla
