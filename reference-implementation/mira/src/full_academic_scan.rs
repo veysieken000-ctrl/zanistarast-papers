@@ -29,7 +29,7 @@ pub struct FullAcademicScanReport {
     pub website_report: WebsiteScanReport,
     pub inventory: ArticleInventoryReport,
     pub analyses: Vec<RepositoryArticleAnalysis>,
-    pub changes: Vec<RepositoryFileChange>,
+    
 }
 
 /// Repository taraması, website taraması, makale envanteri
@@ -59,17 +59,12 @@ where
         classify,
     );
 
-    let changes = RepositoryChangeTracker::new().detect_changes(
-        &repository_report.file_inventory,
-        &repository_report.file_inventory,
-    );
-
     Ok(FullAcademicScanReport {
         repository_report,
         website_report,
         inventory,
         analyses,
-        changes,
+        
     })
 }
 
