@@ -250,6 +250,10 @@ pub use repository_file_inventory::{
     RepositoryFileRecord,
 };
 
+pub use repository_change_tracker::{
+    RepositoryChangeKind,
+    RepositoryFileChange,
+};
 
 
 
