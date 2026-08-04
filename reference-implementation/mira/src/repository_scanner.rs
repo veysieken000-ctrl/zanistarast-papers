@@ -1550,7 +1550,21 @@ assert!(
                 .is_none(),
         );
     }
+#[test]
+fn repository_relation_preserves_source_line() {
+    let relation = RepositoryRelation {
+        source_repository: uuid::Uuid::new_v4(),
+        target_repository: uuid::Uuid::new_v4(),
+        kind: RepositoryRelationKind::References,
+        source_line: 42,
+        evidence: "README.md".to_string(),
+    };
+
+    assert_eq!(relation.source_line, 42);
+}
 
 }
+
+
 
 
