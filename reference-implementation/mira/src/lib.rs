@@ -72,6 +72,7 @@ pub mod repository_inventory;
 pub mod repository_file_inventory;
 pub mod repository_change_tracker;
 pub mod repository_memory;
+pub mod repository_relation;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
@@ -261,6 +262,13 @@ pub use repository_memory::{
     RepositoryMemoryDocument,
     RepositoryTextContent,
 };
+
+pub use repository_relation::{
+    RepositoryRelation,
+    RepositoryRelationKind,
+};
+
+
 
 
 
