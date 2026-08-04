@@ -14,6 +14,12 @@ use crate::website_scanner::{
     WebsiteScanReport,
     WebsiteScanner,
 };
+
+use crate::repository_change_tracker::{
+    RepositoryChangeTracker,
+    RepositoryFileChange,
+};
+
 use std::io;
 use std::path::Path;
 
@@ -23,6 +29,7 @@ pub struct FullAcademicScanReport {
     pub website_report: WebsiteScanReport,
     pub inventory: ArticleInventoryReport,
     pub analyses: Vec<RepositoryArticleAnalysis>,
+    pub changes: Vec<RepositoryFileChange>,
 }
 
 /// Repository taraması, website taraması, makale envanteri
@@ -52,11 +59,17 @@ where
         classify,
     );
 
+    let changes = RepositoryChangeTracker::new().detect_changes(
+        &repository_report.file_inventory,
+        &repository_report.file_inventory,
+    );
+
     Ok(FullAcademicScanReport {
         repository_report,
         website_report,
         inventory,
         analyses,
+        changes,
     })
 }
 
@@ -131,6 +144,7 @@ Done.
         assert_eq!(report.website_report.page_count(), 1);
         assert!(!report.inventory.candidates.is_empty());
         assert!(!report.analyses.is_empty());
+        assert!(report.changes.is_empty());
 
         fs::remove_dir_all(root).unwrap();
     }
