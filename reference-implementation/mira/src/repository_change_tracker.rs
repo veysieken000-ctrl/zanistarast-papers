@@ -137,3 +137,52 @@ impl RepositoryChangeTracker {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::repository_file_inventory::{
+        RepositoryEntryKind,
+        RepositoryFileInventory,
+        RepositoryFileRecord,
+    };
+    use std::time::SystemTime;
+    use uuid::Uuid;
+
+    #[test]
+    fn detects_added_repository_file() {
+        let repository_id = Uuid::new_v4();
+
+        let previous = RepositoryFileInventory::new();
+
+        let mut current = RepositoryFileInventory::new();
+
+        assert!(current.register(
+            RepositoryFileRecord::new(
+                repository_id,
+                "src/lib.rs",
+                "/tmp/src/lib.rs",
+                RepositoryEntryKind::File,
+                1024,
+                Some(SystemTime::now()),
+            )
+        ));
+
+        let tracker = RepositoryChangeTracker::new();
+
+        let changes = tracker.detect_changes(
+            &previous,
+            &current,
+        );
+
+        assert_eq!(changes.len(), 1);
+        assert_eq!(
+            changes[0].kind,
+            RepositoryChangeKind::Added
+        );
+        assert_eq!(
+            changes[0].current_path.as_deref(),
+            Some(std::path::Path::new("src/lib.rs"))
+        );
+    }
+}
+
