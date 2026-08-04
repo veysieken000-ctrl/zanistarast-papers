@@ -1,5 +1,7 @@
 use std::path::PathBuf;
 
+use crate::repository_file_inventory::RepositoryFileInventory;
+
 /// İki repository taraması arasında belirlenen
 /// dosya değişikliğinin türü.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -69,37 +71,43 @@ impl RepositoryFileChange {
     }
 }
 
-/// İki repository dosya envanteri arasındaki değişiklikleri belirler.
+/// İki repository dosya envanteri arasındaki
+/// değişiklikleri belirler.
 #[derive(Debug, Default)]
 pub struct RepositoryChangeTracker;
 
 impl RepositoryChangeTracker {
+    /// Yeni bir repository değişiklik izleyicisi oluşturur.
     pub fn new() -> Self {
         Self
     }
-}
-pub fn detect_changes(
-    &self,
-    previous: &RepositoryFileInventory,
-    current: &RepositoryFileInventory,
-) -> Vec<RepositoryFileChange> {
-    let mut changes = Vec::new();
 
-    for record in current.records() {
-        if previous
-            .find_by_relative_path(
-                record.repository_id,
-                &record.relative_path,
-            )
-            .is_none()
-        {
-            changes.push(
-                RepositoryFileChange::added(
-                    record.relative_path.clone(),
-                ),
-            );
+    /// Önceki ve güncel envanteri karşılaştırarak
+    /// yeni eklenen dosyaları belirler.
+    pub fn detect_changes(
+        &self,
+        previous: &RepositoryFileInventory,
+        current: &RepositoryFileInventory,
+    ) -> Vec<RepositoryFileChange> {
+        let mut changes = Vec::new();
+
+        for record in current.records() {
+            if previous
+                .find_by_relative_path(
+                    record.repository_id,
+                    &record.relative_path,
+                )
+                .is_none()
+            {
+                changes.push(
+                    RepositoryFileChange::added(
+                        record.relative_path.clone(),
+                    ),
+                );
+            }
         }
-    }
 
-    changes
+        changes
+    }
 }
+
