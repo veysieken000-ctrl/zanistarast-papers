@@ -107,19 +107,16 @@ impl RepositoryChangeTracker {
 } else if let Some(previous_record) = previous.find_by_relative_path(
     record.repository_id,
     &record.relative_path,
-) {
-    if previous_record.sha256_digest != record.sha256_digest {
-        changes.push(
-            RepositoryFileChange::modified(
-                record.relative_path.clone(),
-            ),
-        );
-    }
+) && previous_record.sha256_digest != record.sha256_digest
+{
+    changes.push(
+        RepositoryFileChange::modified(
+            record.relative_path.clone(),
+        ),
+    );
 }
-
             }
       
-
         for record in previous.records() {
     if current
         .find_by_relative_path(
