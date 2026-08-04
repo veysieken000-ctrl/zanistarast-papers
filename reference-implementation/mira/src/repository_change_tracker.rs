@@ -304,5 +304,53 @@ fn unchanged_repository_file_produces_no_change() {
 
     assert!(changes.is_empty());
 }
+#[test]
+fn moved_repository_file_is_currently_reported_as_added_and_removed() {
+    let repository_id = Uuid::new_v4();
+
+    let mut previous = RepositoryFileInventory::new();
+    let mut current = RepositoryFileInventory::new();
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "old/lib.rs",
+            "/tmp/old/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            None,
+        )
+        .with_sha256("same-digest"),
+    ));
+
+    assert!(current.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "new/lib.rs",
+            "/tmp/new/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            None,
+        )
+        .with_sha256("same-digest"),
+    ));
+
+    let tracker = RepositoryChangeTracker::new();
+
+    let changes = tracker.detect_changes(
+        &previous,
+        &current,
+    );
+
+    assert_eq!(changes.len(), 2);
+
+    assert!(changes.iter().any(|change| {
+        change.kind == RepositoryChangeKind::Added
+    }));
+
+    assert!(changes.iter().any(|change| {
+        change.kind == RepositoryChangeKind::Removed
+    }));
+}
 
 }
