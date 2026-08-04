@@ -256,6 +256,14 @@ pub use repository_change_tracker::{
     RepositoryFileChange,
 };
 
+pub use repository_memory::{
+    RepositoryMemory,
+    RepositoryMemoryDocument,
+    RepositoryTextContent,
+};
+
+
+
 
 
 
