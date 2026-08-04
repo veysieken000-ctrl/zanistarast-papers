@@ -186,3 +186,40 @@ mod tests {
     }
 }
 
+#[test]
+fn detects_removed_repository_file() {
+    let repository_id = Uuid::new_v4();
+
+    let mut previous = RepositoryFileInventory::new();
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "src/lib.rs",
+            "/tmp/src/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            Some(SystemTime::now()),
+        )
+    ));
+
+    let current = RepositoryFileInventory::new();
+
+    let tracker = RepositoryChangeTracker::new();
+
+    let changes = tracker.detect_changes(
+        &previous,
+        &current,
+    );
+
+    assert_eq!(changes.len(), 1);
+    assert_eq!(
+        changes[0].kind,
+        RepositoryChangeKind::Removed
+    );
+    assert_eq!(
+        changes[0].previous_path.as_deref(),
+        Some(std::path::Path::new("src/lib.rs"))
+    );
+}
+
