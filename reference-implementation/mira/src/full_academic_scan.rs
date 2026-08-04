@@ -1,8 +1,11 @@
 use crate::article_classifier::AcademicArticleType;
 use crate::article_inventory::{
+    ArticleInventoryBuilder,
     ArticleCandidate,
+    ArticleInventoryBuilder,
     ArticleInventoryReport,
 };
+
 use crate::inventory_academic_runner::run_inventory_analysis;
 use crate::repository_academic_scan::RepositoryArticleAnalysis;
 use crate::repository_scan_report::RepositoryScanReport;
