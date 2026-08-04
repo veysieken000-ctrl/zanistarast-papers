@@ -10,7 +10,11 @@ use crate::repository_change_tracker::{
     RepositoryChangeTracker,
     RepositoryFileChange,
 };
-
+use crate::repository_memory::{
+    RepositoryMemory,
+    RepositoryTextContent,
+};
+use uuid::Uuid;
 use crate::repository_file_inventory::RepositoryFileInventory;
 use std::path::Path;
 
@@ -29,6 +33,24 @@ pub struct RepositoryArticleAnalysis {
 pub struct RepositoryAcademicScanResult {
     pub analyses: Vec<RepositoryArticleAnalysis>,
     pub changes: Vec<RepositoryFileChange>,
+}
+impl RepositoryAcademicScanResult {
+    /// Akademik taramada belirlenen depo değişikliklerini
+    /// güncel metin içerikleriyle proje hafızasına uygular.
+    pub fn apply_changes_to_memory(
+        &self,
+        memory: &mut RepositoryMemory,
+        repository_id: Uuid,
+        repository_name: &str,
+        current_contents: &[RepositoryTextContent],
+    ) {
+        memory.apply_changes(
+            repository_id,
+            repository_name,
+            &self.changes,
+            current_contents,
+        );
+    }
 }
 
 /// Repository envanterindeki makale adaylarını
@@ -471,6 +493,57 @@ Done
 
     std::fs::remove_dir_all(repository).unwrap();
 }
+#[test]
+fn academic_scan_result_updates_project_memory() {
+    let repository_id = Uuid::new_v4();
 
+    let result = RepositoryAcademicScanResult {
+        analyses: Vec::new(),
+        changes: vec![
+            RepositoryFileChange::added(
+                "papers/new-paper.md",
+            ),
+        ],
+    };
+
+    let current_contents = vec![
+        RepositoryTextContent {
+            relative_path:
+                PathBuf::from("papers/new-paper.md"),
+            content:
+                "New academic paper".to_string(),
+            line_count: 1,
+            character_count: 18,
+        },
+    ];
+
+    let mut memory = RepositoryMemory::default();
+
+    result.apply_changes_to_memory(
+        &mut memory,
+        repository_id,
+        "zanistarast-papers",
+        &current_contents,
+    );
+
+    assert_eq!(memory.document_count(), 1);
+
+    let document = memory
+        .find_document(
+            repository_id,
+            Path::new("papers/new-paper.md"),
+        )
+        .expect("new academic document should exist");
+
+    assert_eq!(
+        document.repository_name,
+        "zanistarast-papers",
+    );
+
+    assert_eq!(
+        document.text.content,
+        "New academic paper",
+    );
+}
 }
 
