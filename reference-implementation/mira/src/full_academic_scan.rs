@@ -1,6 +1,5 @@
 use crate::article_classifier::AcademicArticleType;
 use crate::article_inventory::{
-    ArticleInventoryBuilder,
     ArticleCandidate,
     ArticleInventoryBuilder,
     ArticleInventoryReport,
