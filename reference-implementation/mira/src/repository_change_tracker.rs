@@ -231,7 +231,7 @@ pub fn detect_changes(
 
     changes
 }
-    
+ }   
 #[cfg(test)]
 mod tests {
     use super::*;
