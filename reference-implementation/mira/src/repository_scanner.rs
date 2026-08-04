@@ -17,7 +17,14 @@ use crate::repository_memory::{
     RepositoryTextContent,
 };
 
+#[cfg(test)]
 use crate::repository_graph::RepositoryGraph;
+
+#[cfg(test)]
+use crate::repository_relation::{
+    RepositoryRelation,
+    RepositoryRelationKind,
+};
 
 /// Repository taramasında bulunan tek bir dosyanın kaydı.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
