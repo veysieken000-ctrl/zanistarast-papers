@@ -17,6 +17,11 @@ use crate::repository_memory::{
     RepositoryTextContent,
 };
 
+use crate::repository_scan_report::{
+    RepositoryFile,
+    RepositoryScanReport,
+};
+
 #[cfg(test)]
 use crate::repository_graph::RepositoryGraph;
 
