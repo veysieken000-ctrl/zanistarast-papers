@@ -264,5 +264,45 @@ fn detects_modified_repository_file() {
         Some(std::path::Path::new("src/lib.rs"))
     );
 }
+#[test]
+fn unchanged_repository_file_produces_no_change() {
+    let repository_id = Uuid::new_v4();
+
+    let mut previous = RepositoryFileInventory::new();
+    let mut current = RepositoryFileInventory::new();
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "src/lib.rs",
+            "/tmp/previous/src/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            None,
+        )
+        .with_sha256("same-digest"),
+    ));
+
+    assert!(current.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "src/lib.rs",
+            "/tmp/current/src/lib.rs",
+            RepositoryEntryKind::File,
+            1024,
+            None,
+        )
+        .with_sha256("same-digest"),
+    ));
+
+    let tracker = RepositoryChangeTracker::new();
+
+    let changes = tracker.detect_changes(
+        &previous,
+        &current,
+    );
+
+    assert!(changes.is_empty());
+}
 
 }
