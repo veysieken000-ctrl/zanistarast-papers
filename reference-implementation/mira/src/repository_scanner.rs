@@ -17,6 +17,11 @@ use crate::repository_memory::{
     RepositoryTextContent,
 };
 
+use crate::repository_relation::{
+    RepositoryRelation,
+    RepositoryRelationKind,
+};
+
 /// Repository taramasında bulunan tek bir dosyanın kaydı.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryFile {
