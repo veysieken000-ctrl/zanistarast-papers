@@ -6,10 +6,9 @@ use crate::article_inventory::{
 };
 use crate::inventory_academic_runner::run_inventory_analysis;
 use crate::repository_academic_scan::RepositoryArticleAnalysis;
-use crate::repository_scanner::{
-    RepositoryScanReport,
-    RepositoryScanner,
-};
+use crate::repository_scan_report::RepositoryScanReport;
+use crate::repository_scanner::RepositoryScanner;
+
 use crate::website_scanner::{
     WebsiteScanReport,
     WebsiteScanner,
