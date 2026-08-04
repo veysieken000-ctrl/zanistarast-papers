@@ -3,6 +3,9 @@ use std::fs;
 use std::io;
 use std::path::Path;
 
+#[cfg(test)]
+use std::path::PathBuf;
+
 use crate::{
     RepositoryEntryKind,
     RepositoryFileInventory,
