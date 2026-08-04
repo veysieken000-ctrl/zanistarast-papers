@@ -1,4 +1,4 @@
-repository_scan_report::RepositoryScanReport
+use crate::repository_scan_report::RepositoryScanReport;
 use crate::website_scanner::WebsiteScanReport;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
