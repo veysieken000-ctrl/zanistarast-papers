@@ -25,23 +25,6 @@ pub struct RepositoryFile {
     pub size_bytes: u64,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub enum RepositoryRelationKind {
-    References,
-    DependsOn,
-    Extends,
-    SharesConcepts,
-}
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct RepositoryRelation {
-    pub source_repository: uuid::Uuid,
-    pub target_repository: uuid::Uuid,
-    pub kind: RepositoryRelationKind,
-    pub source_line: usize,
-    pub evidence: String,
-}
-
 /// Salt okunur repository taramasının sonucu.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct RepositoryScanReport {
