@@ -184,7 +184,7 @@ mod tests {
             Some(std::path::Path::new("src/lib.rs"))
         );
     }
-}
+
 
 #[test]
 fn detects_removed_repository_file() {
@@ -222,4 +222,4 @@ fn detects_removed_repository_file() {
         Some(std::path::Path::new("src/lib.rs"))
     );
 }
-
+}
