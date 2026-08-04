@@ -69,3 +69,12 @@ impl RepositoryFileChange {
     }
 }
 
+/// İki repository dosya envanteri arasındaki değişiklikleri belirler.
+#[derive(Debug, Default)]
+pub struct RepositoryChangeTracker;
+
+impl RepositoryChangeTracker {
+    pub fn new() -> Self {
+        Self
+    }
+}
