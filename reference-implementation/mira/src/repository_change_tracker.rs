@@ -453,5 +453,6 @@ fn detects_moved_repository_file_by_sha256() {
         Some(std::path::Path::new("new/lib.rs")),
     );
 }
+}
 
 
