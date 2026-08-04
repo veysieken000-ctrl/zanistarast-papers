@@ -1,8 +1,11 @@
-use crate::repository_scan_report::RepositoryScanReport;
+repository_scan_report::RepositoryScanReport
 use crate::website_scanner::WebsiteScanReport;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
+
+use crate::repository_scan_report::RepositoryScanReport;
+use crate::repository_scanner::RepositoryScanner;
 
 /// Makale adayının kaynak türü.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
