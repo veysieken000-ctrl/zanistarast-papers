@@ -71,6 +71,7 @@ pub mod safe_file_version;
 pub mod repository_inventory;
 pub mod repository_file_inventory;
 pub mod repository_change_tracker;
+pub mod repository_memory;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
