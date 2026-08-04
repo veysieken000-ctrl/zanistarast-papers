@@ -92,19 +92,19 @@ impl RepositoryChangeTracker {
         let mut changes = Vec::new();
 
         for record in current.records() {
-            if previous
-                .find_by_relative_path(
-                    record.repository_id,
-                    &record.relative_path,
-                )
-                .is_none()
-            {
-                changes.push(
-                    RepositoryFileChange::added(
-                        record.relative_path.clone(),
-                    ),
-                );
-            else if let Some(previous_record) = previous.find_by_relative_path(
+           if previous
+    .find_by_relative_path(
+        record.repository_id,
+        &record.relative_path,
+    )
+    .is_none()
+{
+    changes.push(
+        RepositoryFileChange::added(
+            record.relative_path.clone(),
+        ),
+    );
+} else if let Some(previous_record) = previous.find_by_relative_path(
     record.repository_id,
     &record.relative_path,
 ) {
