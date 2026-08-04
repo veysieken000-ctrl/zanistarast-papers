@@ -107,6 +107,22 @@ impl RepositoryChangeTracker {
             }
         }
 
+        for record in previous.records() {
+    if current
+        .find_by_relative_path(
+            record.repository_id,
+            &record.relative_path,
+        )
+        .is_none()
+    {
+        changes.push(
+            RepositoryFileChange::removed(
+                record.relative_path.clone(),
+            ),
+        );
+    }
+}
+
         changes
     }
 }
