@@ -201,6 +201,19 @@ pub fn rebuild_from_memory(
             .collect()
     }
 
+    /// Belirtilen depoyla bağlantılı bütün ilişkileri döndürür.
+pub fn relations_for_repository(
+    &self,
+    repository: uuid::Uuid,
+) -> Vec<&RepositoryRelation> {
+    self.relations
+        .iter()
+        .filter(|relation| {
+            relation.source_repository == repository
+                || relation.target_repository == repository
+        })
+        .collect()
+}
     /// Kaynak, hedef ve ilişki türüne göre tek bir
     /// repository ilişkisi bulur.
     pub fn find_relation(
@@ -683,5 +696,38 @@ fn graph_builds_relationships_across_multiple_repositories() {
         1,
     );
 }
+#[test]
+fn graph_returns_all_relations_for_repository() {
+    let first = Uuid::new_v4();
+    let second = Uuid::new_v4();
+    let third = Uuid::new_v4();
+
+    let mut graph = RepositoryGraph::new();
+
+    assert!(graph.add_relation(
+        RepositoryRelation::new(
+            first,
+            second,
+            RepositoryRelationKind::References,
+            1,
+            "first -> second",
+        ),
+    ));
+
+    assert!(graph.add_relation(
+        RepositoryRelation::new(
+            third,
+            first,
+            RepositoryRelationKind::DependsOn,
+            2,
+            "third -> first",
+        ),
+    ));
+
+    let relations = graph.relations_for_repository(first);
+
+    assert_eq!(relations.len(), 2);
+}
+
 }
 
