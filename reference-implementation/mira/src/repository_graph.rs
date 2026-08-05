@@ -589,6 +589,99 @@ fn graph_rebuilds_relations_from_current_memory() {
         RepositoryRelationKind::References,
     ));
 }
+#[test]
+fn graph_builds_relationships_across_multiple_repositories() {
+    let papers_repository = Uuid::new_v4();
+    let ontology_repository = Uuid::new_v4();
+    let website_repository = Uuid::new_v4();
 
+    let memory = RepositoryMemory {
+        documents: vec![
+            RepositoryMemoryDocument {
+                repository_id: papers_repository,
+                repository_name:
+                    "zanistarast-papers".to_string(),
+                text: RepositoryTextContent {
+                    relative_path:
+                        PathBuf::from("README.md"),
+                    content: concat!(
+                        "Academic papers repository.\n",
+                        "Uses zanistarast-ontology.\n",
+                        "Published by zanistarast-website."
+                    )
+                    .to_string(),
+                    line_count: 3,
+                    character_count: 91,
+                },
+            },
+            RepositoryMemoryDocument {
+                repository_id: ontology_repository,
+                repository_name:
+                    "zanistarast-ontology".to_string(),
+                text: RepositoryTextContent {
+                    relative_path:
+                        PathBuf::from("README.md"),
+                    content:
+                        "Zanistarast ontology definitions."
+                            .to_string(),
+                    line_count: 1,
+                    character_count: 34,
+                },
+            },
+            RepositoryMemoryDocument {
+                repository_id: website_repository,
+                repository_name:
+                    "zanistarast-website".to_string(),
+                text: RepositoryTextContent {
+                    relative_path:
+                        PathBuf::from("README.md"),
+                    content: concat!(
+                        "Official publication website.\n",
+                        "Displays zanistarast-papers."
+                    )
+                    .to_string(),
+                    line_count: 2,
+                    character_count: 61,
+                },
+            },
+        ],
+    };
+
+    let mut graph = RepositoryGraph::new();
+
+    let relation_count =
+        graph.rebuild_from_memory(&memory);
+
+    assert_eq!(relation_count, 3);
+    assert_eq!(graph.relation_count(), 3);
+
+    assert!(graph.has_relation(
+        papers_repository,
+        ontology_repository,
+        RepositoryRelationKind::References,
+    ));
+
+    assert!(graph.has_relation(
+        papers_repository,
+        website_repository,
+        RepositoryRelationKind::References,
+    ));
+
+    assert!(graph.has_relation(
+        website_repository,
+        papers_repository,
+        RepositoryRelationKind::References,
+    ));
+
+    assert_eq!(
+        graph.relations_from(papers_repository).len(),
+        2,
+    );
+
+    assert_eq!(
+        graph.relations_to(papers_repository).len(),
+        1,
+    );
+}
 }
 
