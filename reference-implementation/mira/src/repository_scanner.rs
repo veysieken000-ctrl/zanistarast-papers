@@ -1044,7 +1044,7 @@ fn repository_graph_rejects_invalid_and_duplicate_relations() {
 
         assert_eq!(graph.relation_count(), 1);
 
-        let relation = &graph.relations[0];
+        let relation = &graph.relations()[0];
 
         assert_eq!(
             relation.source_repository,
