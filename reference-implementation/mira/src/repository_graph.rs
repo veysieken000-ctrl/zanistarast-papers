@@ -728,6 +728,43 @@ fn graph_returns_all_relations_for_repository() {
 
     assert_eq!(relations.len(), 2);
 }
+#[test]
+fn graph_rebuild_is_idempotent() {
+    let first_repository = Uuid::new_v4();
+    let second_repository = Uuid::new_v4();
 
+    let memory = RepositoryMemory {
+        documents: vec![
+            RepositoryMemoryDocument {
+                repository_id: first_repository,
+                repository_name: "zanistarast-papers".to_string(),
+                text: RepositoryTextContent {
+                    relative_path: PathBuf::from("README.md"),
+                    content: "Uses zanistarast-ontology.".to_string(),
+                    line_count: 1,
+                    character_count: 26,
+                },
+            },
+            RepositoryMemoryDocument {
+                repository_id: second_repository,
+                repository_name: "zanistarast-ontology".to_string(),
+                text: RepositoryTextContent {
+                    relative_path: PathBuf::from("README.md"),
+                    content: "Ontology repository.".to_string(),
+                    line_count: 1,
+                    character_count: 20,
+                },
+            },
+        ],
+    };
+
+    let mut graph = RepositoryGraph::new();
+
+    assert_eq!(graph.rebuild_from_memory(&memory), 1);
+    assert_eq!(graph.relation_count(), 1);
+
+    assert_eq!(graph.rebuild_from_memory(&memory), 1);
+    assert_eq!(graph.relation_count(), 1);
+}
 }
 
