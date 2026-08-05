@@ -1,10 +1,6 @@
 use uuid::Uuid;
 
-use crate::repository_memory::{
-    RepositoryMemory,
-    RepositoryMemoryDocument,
-    RepositoryTextContent,
-};
+use crate::repository_memory::RepositoryMemory;
 use crate::repository_relation::{
     RepositoryRelation,
     RepositoryRelationKind,
@@ -13,7 +9,7 @@ use crate::repository_relation::{
 /// Depolar arasında belirlenen ilişkilerin ortak grafıdır.
 #[derive(Debug, Clone, Default, PartialEq, Eq)]
 pub struct RepositoryGraph {
-    relations: Vec<RepositoryRelation>,
+    pub relations: Vec<RepositoryRelation>,
 }
 
 impl RepositoryGraph {
@@ -250,6 +246,11 @@ impl RepositoryGraph {
 mod tests {
     use super::*;
     use std::path::PathBuf;
+
+    use crate::repository_memory::{
+    RepositoryMemoryDocument,
+    RepositoryTextContent,
+};
 
     #[test]
     fn graph_adds_complete_repository_relation() {
