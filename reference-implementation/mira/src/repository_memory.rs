@@ -512,6 +512,13 @@ fn repository_memory_contains_document() {
         Path::new("missing.md"),
     ));
 }
+#[test]
+fn repository_memory_search_returns_empty_for_blank_query() {
+    let memory = RepositoryMemory::default();
+
+    assert!(memory.search_text("").is_empty());
+    assert!(memory.search_text(" ").is_empty());
+}
 
 }
 
