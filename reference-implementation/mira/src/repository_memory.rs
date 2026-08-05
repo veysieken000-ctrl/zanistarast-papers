@@ -453,20 +453,22 @@ mod tests {
     }
 #[test]
 fn repository_memory_len_reports_document_count() {
-    let mut memory = RepositoryMemory::new();
+    let mut memory = RepositoryMemory::default();
 
     assert_eq!(memory.len(), 0);
 
-    memory.register(RepositoryMemoryDocument::new(
-        Uuid::new_v4(),
-        "demo".to_string(),
-        RepositoryTextContent {
-    relative_path: "demo.md".into(),
-    content: "sample".into(),
-    line_count: 1,
-    character_count: 6,
-}
-    ));
+    let document = RepositoryMemoryDocument {
+        repository_id: Uuid::new_v4(),
+        repository_name: "demo".to_string(),
+        text: RepositoryTextContent {
+            relative_path: PathBuf::from("sample.md"),
+            content: "sample".to_string(),
+            line_count: 1,
+            character_count: 6,
+        },
+    };
+
+    memory.register(document);
 
     assert_eq!(memory.len(), 1);
 }
