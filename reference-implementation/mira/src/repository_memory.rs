@@ -468,7 +468,8 @@ fn repository_memory_len_reports_document_count() {
         },
     };
 
-    memory.register(document);
+    memory.extend(std::iter::once(document));
+
 
     assert_eq!(memory.len(), 1);
 }
