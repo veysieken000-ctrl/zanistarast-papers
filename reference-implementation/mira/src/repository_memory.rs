@@ -292,6 +292,16 @@ pub fn apply_changes(
         }
     }
 }
+    
+    pub fn contains(
+    &self,
+    repository_id: Uuid,
+    relative_path: impl AsRef<Path>,
+) -> bool {
+    self.find_document(repository_id, relative_path)
+        .is_some()
+}
+
     /// Hafıza belgeleri üzerinde salt okunur
     /// yineleyici oluşturur.
     pub fn iter(
@@ -472,6 +482,35 @@ fn repository_memory_len_reports_document_count() {
 
 
     assert_eq!(memory.len(), 1);
+}
+#[test]
+fn repository_memory_contains_document() {
+    let repository_id = Uuid::new_v4();
+
+    let mut memory = RepositoryMemory::default();
+
+    let document = RepositoryMemoryDocument {
+        repository_id,
+        repository_name: "demo".to_string(),
+        text: RepositoryTextContent {
+            relative_path: PathBuf::from("paper.md"),
+            content: "sample".to_string(),
+            line_count: 1,
+            character_count: 6,
+        },
+    };
+
+    memory.extend(std::iter::once(document));
+
+    assert!(memory.contains(
+        repository_id,
+        Path::new("paper.md"),
+    ));
+
+    assert!(!memory.contains(
+        repository_id,
+        Path::new("missing.md"),
+    ));
 }
 
 }
