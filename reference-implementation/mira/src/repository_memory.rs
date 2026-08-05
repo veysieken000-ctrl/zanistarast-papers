@@ -460,7 +460,12 @@ fn repository_memory_len_reports_document_count() {
     memory.register(RepositoryMemoryDocument::new(
         Uuid::new_v4(),
         "demo".to_string(),
-        RepositoryTextContent::new("sample"),
+        RepositoryTextContent {
+    relative_path: "demo.md".into(),
+    content: "sample".into(),
+    line_count: 1,
+    character_count: 6,
+}
     ));
 
     assert_eq!(memory.len(), 1);
