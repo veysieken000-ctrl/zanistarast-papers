@@ -33,6 +33,147 @@ pub enum KnowledgeRelationType {
     RequiresReview,
 }
 
+/// Bir bilgi düğümünün Zanistarast bilgi mimarisindeki
+/// işlevsel katmanını belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub enum ZanistarastKnowledgeLayer {
+    /// Değişmez çekirdek ilkeler, kavramlar,
+    /// aksiyomlar, epistemik hükümler ve resmî kararlar.
+    Dna,
+
+    /// Görevler, süreçler, dönüşüm kuralları
+    /// ve bilgi aktarım mekanizmaları.
+    Rna,
+
+    /// Makaleler, kod modülleri, raporlar,
+    /// yayın paketleri ve diğer somut çıktılar.
+    Protein,
+}
+
+/// Mevcut bir bilgi düğümünün DNA–RNA–Protein
+/// mimarisindeki katman atamasını temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct KnowledgeLayerAssignment {
+    pub node_id: String,
+    pub layer: ZanistarastKnowledgeLayer,
+    pub rationale: String,
+}
+
+impl KnowledgeLayerAssignment {
+    /// Yeni ve gerekçeli bir katman ataması oluşturur.
+    pub fn new(
+        node_id: impl Into<String>,
+        layer: ZanistarastKnowledgeLayer,
+        rationale: impl Into<String>,
+    ) -> Self {
+        Self {
+            node_id: node_id.into(),
+            layer,
+            rationale: rationale.into(),
+        }
+    }
+
+    /// Katman atamasının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.node_id.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+    }
+}
+
+/// Mevcut bilgi haritası düğümlerinin Zanistarast
+/// DNA–RNA–Protein katman atamalarını taşır.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct KnowledgeLayerMap {
+    pub assignments: Vec<KnowledgeLayerAssignment>,
+}
+
+impl KnowledgeLayerMap {
+    /// Boş bir katman haritası oluşturur.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Eksiksiz ve daha önce aynı düğüm için
+    /// kaydedilmemiş bir katman ataması ekler.
+    pub fn assign(
+        &mut self,
+        assignment: KnowledgeLayerAssignment,
+    ) -> bool {
+        if !assignment.is_complete() {
+            return false;
+        }
+
+        if self.assignments.iter().any(|stored| {
+            stored.node_id == assignment.node_id
+        }) {
+            return false;
+        }
+
+        self.assignments.push(assignment);
+        true
+    }
+
+    /// Belirtilen düğümün katman atamasını döndürür.
+    pub fn assignment_for_node(
+        &self,
+        node_id: &str,
+    ) -> Option<&KnowledgeLayerAssignment> {
+        self.assignments
+            .iter()
+            .find(|assignment| {
+                assignment.node_id == node_id
+            })
+    }
+
+    /// Belirtilen katmana atanmış bütün düğüm
+    /// kayıtlarını döndürür.
+    pub fn assignments_for_layer(
+        &self,
+        layer: ZanistarastKnowledgeLayer,
+    ) -> Vec<&KnowledgeLayerAssignment> {
+        self.assignments
+            .iter()
+            .filter(|assignment| {
+                assignment.layer == layer
+            })
+            .collect()
+    }
+
+    /// Toplam katman ataması sayısını döndürür.
+    pub fn assignment_count(&self) -> usize {
+        self.assignments.len()
+    }
+
+    /// Katman haritasının boş olup olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.assignments.is_empty()
+    }
+}
+
 /// Tek bir Zanistarast alanına ait bilgi haritası.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
 pub struct DomainKnowledgeMap {
@@ -329,6 +470,94 @@ mod tests {
             KnowledgeRelationType::RequiresReview
         );
     }
+
+    #[test]
+fn assigns_knowledge_nodes_to_dna_rna_protein_layers() {
+    let mut layer_map = KnowledgeLayerMap::new();
+
+    assert!(layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "hebun-core-principle",
+            ZanistarastKnowledgeLayer::Dna,
+            "Hebûn, Zanistarast çekirdek kavramıdır.",
+        ),
+    ));
+
+    assert!(layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "article-production-process",
+            ZanistarastKnowledgeLayer::Rna,
+            "Makale üretim görevlerini çıktıya dönüştürür.",
+        ),
+    ));
+
+    assert!(layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "rasterast-paper",
+            ZanistarastKnowledgeLayer::Protein,
+            "Akademik makale somut bir üretim çıktısıdır.",
+        ),
+    ));
+
+    assert_eq!(layer_map.assignment_count(), 3);
+
+    assert_eq!(
+        layer_map
+            .assignments_for_layer(
+                ZanistarastKnowledgeLayer::Dna,
+            )
+            .len(),
+        1,
+    );
+
+    assert_eq!(
+        layer_map
+            .assignment_for_node("rasterast-paper")
+            .expect("protein assignment should exist")
+            .layer,
+        ZanistarastKnowledgeLayer::Protein,
+    );
+}
+
+#[test]
+fn rejects_incomplete_and_duplicate_layer_assignments() {
+    let mut layer_map = KnowledgeLayerMap::new();
+
+    assert!(!layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "",
+            ZanistarastKnowledgeLayer::Dna,
+            "Missing node identifier.",
+        ),
+    ));
+
+    assert!(!layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "hebun",
+            ZanistarastKnowledgeLayer::Dna,
+            " ",
+        ),
+    ));
+
+    assert!(layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "hebun",
+            ZanistarastKnowledgeLayer::Dna,
+            "Hebûn çekirdek kavramdır.",
+        ),
+    ));
+
+    assert!(!layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "hebun",
+            ZanistarastKnowledgeLayer::Protein,
+            "The same node cannot receive a second layer.",
+        ),
+    ));
+
+    assert_eq!(layer_map.assignment_count(), 1);
+}
+
 }
 
 
