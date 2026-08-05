@@ -58,6 +58,170 @@ pub enum ZanistarastKnowledgeLayer {
     Protein,
 }
 
+/// Zanistarast DNA katmanındaki değişmez veya
+/// otoriteye bağlı çekirdek bilgi türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub enum ZanistarastDnaKind {
+    /// Zanistarast’ın değişmez temel ilkesi.
+    CorePrinciple,
+
+    /// Tanımlanmış temel veya türetilmiş kavram.
+    Concept,
+
+    /// Biçimsel veya kurucu aksiyom.
+    Axiom,
+
+    /// Bilginin doğruluk ve kesinlik statüsüne
+    /// ilişkin epistemik hüküm.
+    EpistemicJudgment,
+
+    /// Müdebbir tarafından verilmiş resmî karar.
+    OfficialDecision,
+}
+
+/// Bir bilgi düğümünün Zanistarast DNA katmanındaki
+/// ayrıntılı ve gerekçeli kaydıdır.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct DnaKnowledgeRecord {
+    pub node_id: String,
+    pub kind: ZanistarastDnaKind,
+    pub rationale: String,
+    pub immutable: bool,
+}
+
+impl DnaKnowledgeRecord {
+    /// Yeni bir DNA bilgi kaydı oluşturur.
+    pub fn new(
+        node_id: impl Into<String>,
+        kind: ZanistarastDnaKind,
+        rationale: impl Into<String>,
+        immutable: bool,
+    ) -> Self {
+        Self {
+            node_id: node_id.into(),
+            kind,
+            rationale: rationale.into(),
+            immutable,
+        }
+    }
+
+    /// DNA kaydının zorunlu bilgilerinin eksiksiz
+    /// ve DNA ilkeleriyle uyumlu olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.node_id.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+            && self.immutable
+    }
+
+    /// DNA kaydının belirtilen türde olup
+    /// olmadığını bildirir.
+    pub fn is_kind(
+        &self,
+        kind: ZanistarastDnaKind,
+    ) -> bool {
+        self.kind == kind
+    }
+}
+
+/// Zanistarast DNA katmanındaki ayrıntılı
+/// bilgi kayıtlarının koleksiyonudur.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct DnaKnowledgeMap {
+    pub records: Vec<DnaKnowledgeRecord>,
+}
+
+impl DnaKnowledgeMap {
+    /// Boş bir DNA bilgi haritası oluşturur.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Eksiksiz ve aynı düğüm için daha önce
+    /// kaydedilmemiş bir DNA kaydı ekler.
+    pub fn register(
+        &mut self,
+        record: DnaKnowledgeRecord,
+    ) -> bool {
+        if !record.is_complete() {
+            return false;
+        }
+
+        if self.records.iter().any(|stored| {
+            stored.node_id == record.node_id
+        }) {
+            return false;
+        }
+
+        self.records.push(record);
+        true
+    }
+
+    /// Toplam DNA bilgi kaydı sayısını döndürür.
+    pub fn record_count(&self) -> usize {
+        self.records.len()
+    }
+
+    /// DNA bilgi haritasının boş olup
+    /// olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.records.is_empty()
+    }
+
+    /// Belirtilen düğüme ait DNA kaydını döndürür.
+    pub fn record_for_node(
+        &self,
+        node_id: &str,
+    ) -> Option<&DnaKnowledgeRecord> {
+        self.records.iter().find(|record| {
+            record.node_id == node_id
+        })
+    }
+
+    /// Belirtilen DNA türüne ait bütün
+    /// kayıtları döndürür.
+    pub fn records_of_kind(
+        &self,
+        kind: ZanistarastDnaKind,
+    ) -> Vec<&DnaKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| record.is_kind(kind))
+            .collect()
+    }
+
+    /// Bir düğümün DNA katmanında kayıtlı olup
+    /// olmadığını bildirir.
+    pub fn contains_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.record_for_node(node_id).is_some()
+    }
+}
+
 /// Mevcut bir bilgi düğümünün DNA–RNA–Protein
 /// mimarisindeki katman atamasını temsil eder.
 #[derive(
@@ -68,6 +232,7 @@ pub enum ZanistarastKnowledgeLayer {
     PartialEq,
     Eq,
 )]
+
 pub struct KnowledgeLayerAssignment {
     pub node_id: String,
     pub layer: ZanistarastKnowledgeLayer,
@@ -848,6 +1013,128 @@ fn reports_knowledge_nodes_without_layer_assignment() {
         validation.unassigned_node_ids,
         vec!["hebun-process".to_string()],
     );
+}
+#[test]
+fn registers_zanistarast_dna_knowledge_types() {
+    let mut dna_map = DnaKnowledgeMap::new();
+
+    assert!(dna_map.register(
+        DnaKnowledgeRecord::new(
+            "hebun-core",
+            ZanistarastDnaKind::CorePrinciple,
+            "Hebûn, Zanistarast’ın değişmez çekirdek ilkesidir.",
+            true,
+        ),
+    ));
+
+    assert!(dna_map.register(
+        DnaKnowledgeRecord::new(
+            "rasterast-concept",
+            ZanistarastDnaKind::Concept,
+            "Rasterast, doğrulama katmanının temel kavramıdır.",
+            true,
+        ),
+    ));
+
+    assert!(dna_map.register(
+        DnaKnowledgeRecord::new(
+            "heksa-nizam-axiom",
+            ZanistarastDnaKind::Axiom,
+            "Heksa Nizam için biçimsel bir kurucu aksiyomdur.",
+            true,
+        ),
+    ));
+
+    assert!(dna_map.register(
+        DnaKnowledgeRecord::new(
+            "revelation-judgment",
+            ZanistarastDnaKind::EpistemicJudgment,
+            "Vahiy, Zanistarast epistemik düzeninde en yüksek ölçüdür.",
+            true,
+        ),
+    ));
+
+    assert!(dna_map.register(
+        DnaKnowledgeRecord::new(
+            "mudebbir-decision",
+            ZanistarastDnaKind::OfficialDecision,
+            "Müdebbir tarafından verilmiş resmî karardır.",
+            true,
+        ),
+    ));
+
+    assert_eq!(dna_map.record_count(), 5);
+
+    assert_eq!(
+        dna_map
+            .records_of_kind(
+                ZanistarastDnaKind::Axiom,
+            )
+            .len(),
+        1,
+    );
+
+    assert!(dna_map.contains_node("hebun-core"));
+
+    assert_eq!(
+        dna_map
+            .record_for_node("mudebbir-decision")
+            .expect("official decision should exist")
+            .kind,
+        ZanistarastDnaKind::OfficialDecision,
+    );
+}
+
+#[test]
+fn rejects_invalid_and_duplicate_dna_records() {
+    let mut dna_map = DnaKnowledgeMap::new();
+
+    assert!(!dna_map.register(
+        DnaKnowledgeRecord::new(
+            "",
+            ZanistarastDnaKind::Concept,
+            "Missing node identifier.",
+            true,
+        ),
+    ));
+
+    assert!(!dna_map.register(
+        DnaKnowledgeRecord::new(
+            "temporary-rule",
+            ZanistarastDnaKind::CorePrinciple,
+            "DNA kaydı değişmez olmalıdır.",
+            false,
+        ),
+    ));
+
+    assert!(!dna_map.register(
+        DnaKnowledgeRecord::new(
+            "empty-rationale",
+            ZanistarastDnaKind::Axiom,
+            " ",
+            true,
+        ),
+    ));
+
+    assert!(dna_map.register(
+        DnaKnowledgeRecord::new(
+            "hebun-core",
+            ZanistarastDnaKind::CorePrinciple,
+            "Hebûn çekirdek ilkedir.",
+            true,
+        ),
+    ));
+
+    assert!(!dna_map.register(
+        DnaKnowledgeRecord::new(
+            "hebun-core",
+            ZanistarastDnaKind::Concept,
+            "Aynı düğüm ikinci kez kaydedilemez.",
+            true,
+        ),
+    ));
+
+    assert_eq!(dna_map.record_count(), 1);
 }
 
 }
