@@ -57,6 +57,23 @@ impl RepositoryGraph {
         true
     }
 
+    /// Graf içindeki bütün ilişkileri temizler.
+pub fn clear(&mut self) {
+    self.relations.clear();
+}
+
+/// Mevcut graf ilişkilerini temizler ve güncel proje
+/// hafızasından ilişkileri yeniden çıkarır.
+///
+/// Dönen değer yeniden oluşturulan ilişki sayısıdır.
+pub fn rebuild_from_memory(
+    &mut self,
+    memory: &RepositoryMemory,
+) -> usize {
+    self.clear();
+    self.infer_from_memory(memory)
+}
+
     /// Proje hafızasındaki metinlerde başka repository
     /// adlarının geçmesini kanıt olarak kullanarak
     /// repository ilişkileri çıkarır.
@@ -479,5 +496,99 @@ fn graph_rejects_repository_relation_without_evidence() {
                 .is_empty(),
         );
     }
+#[test]
+fn graph_clear_removes_all_relations() {
+    let mut graph = RepositoryGraph::new();
+
+    assert!(graph.add_relation(
+        RepositoryRelation::new(
+            Uuid::new_v4(),
+            Uuid::new_v4(),
+            RepositoryRelationKind::References,
+            1,
+            "Repository reference evidence.",
+        ),
+    ));
+
+    assert_eq!(graph.relation_count(), 1);
+
+    graph.clear();
+
+    assert!(graph.is_empty());
+    assert_eq!(graph.relation_count(), 0);
+}
+
+#[test]
+fn graph_rebuilds_relations_from_current_memory() {
+    let first_repository = Uuid::new_v4();
+    let second_repository = Uuid::new_v4();
+    let obsolete_repository = Uuid::new_v4();
+
+    let mut graph = RepositoryGraph::new();
+
+    assert!(graph.add_relation(
+        RepositoryRelation::new(
+            first_repository,
+            obsolete_repository,
+            RepositoryRelationKind::DependsOn,
+            3,
+            "Obsolete repository dependency.",
+        ),
+    ));
+
+    let memory = RepositoryMemory {
+        documents: vec![
+            RepositoryMemoryDocument {
+                repository_id: first_repository,
+                repository_name:
+                    "zanistarast-papers".to_string(),
+                text: RepositoryTextContent {
+                    relative_path:
+                        PathBuf::from("README.md"),
+                    content: concat!(
+                        "Project documentation.\n",
+                        "This repository references ",
+                        "zanistarast-ontology."
+                    )
+                    .to_string(),
+                    line_count: 2,
+                    character_count: 70,
+                },
+            },
+            RepositoryMemoryDocument {
+                repository_id: second_repository,
+                repository_name:
+                    "zanistarast-ontology".to_string(),
+                text: RepositoryTextContent {
+                    relative_path:
+                        PathBuf::from("README.md"),
+                    content:
+                        "Ontology repository.".to_string(),
+                    line_count: 1,
+                    character_count: 20,
+                },
+            },
+        ],
+    };
+
+    let rebuilt_count =
+        graph.rebuild_from_memory(&memory);
+
+    assert_eq!(rebuilt_count, 1);
+    assert_eq!(graph.relation_count(), 1);
+
+    assert!(!graph.has_relation(
+        first_repository,
+        obsolete_repository,
+        RepositoryRelationKind::DependsOn,
+    ));
+
+    assert!(graph.has_relation(
+        first_repository,
+        second_repository,
+        RepositoryRelationKind::References,
+    ));
+}
+
 }
 
