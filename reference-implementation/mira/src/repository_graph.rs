@@ -274,20 +274,20 @@ mod tests {
     }
 
     #[test]
-    fn graph_rejects_incomplete_repository_relation() {
-        let relation = RepositoryRelation::new(
-            Uuid::new_v4(),
-            Uuid::new_v4(),
-            RepositoryRelationKind::DependsOn,
-            0,
-            "Missing source line.",
-        );
+fn graph_rejects_repository_relation_without_evidence() {
+    let relation = RepositoryRelation::new(
+        Uuid::new_v4(),
+        Uuid::new_v4(),
+        RepositoryRelationKind::DependsOn,
+        0,
+        " ",
+    );
 
-        let mut graph = RepositoryGraph::new();
+    let mut graph = RepositoryGraph::new();
 
-        assert!(!graph.add_relation(relation));
-        assert!(graph.is_empty());
-    }
+    assert!(!graph.add_relation(relation));
+    assert!(graph.is_empty());
+}
 
     #[test]
     fn graph_rejects_duplicate_repository_relation() {
