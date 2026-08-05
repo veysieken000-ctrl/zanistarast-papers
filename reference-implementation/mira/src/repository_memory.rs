@@ -95,7 +95,11 @@ impl RepositoryMemory {
         &self.documents
     }
 
-    
+    /// Hafızadaki belge sayısını döndürür.
+pub fn len(&self) -> usize {
+    self.documents.len()
+}
+
     /// Belirtilen depo kimliğine ait hafıza
     /// belgelerini döndürür.
     pub fn documents_for_repository(
@@ -447,6 +451,21 @@ mod tests {
                 .is_some(),
         );
     }
+#[test]
+fn repository_memory_len_reports_document_count() {
+    let mut memory = RepositoryMemory::new();
+
+    assert_eq!(memory.len(), 0);
+
+    memory.register(RepositoryMemoryDocument::new(
+        Uuid::new_v4(),
+        "demo".to_string(),
+        RepositoryTextContent::new("sample"),
+    ));
+
+    assert_eq!(memory.len(), 1);
+}
+
 }
 
 
