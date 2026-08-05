@@ -581,6 +581,69 @@ fn duplicate_digests_are_not_assumed_to_be_moves() {
     assert_eq!(added_count, 2);
     assert_eq!(removed_count, 2);
 }
+#[test]
+fn empty_digests_are_not_assumed_to_be_moves() {
+    let repository_id = Uuid::new_v4();
+
+    let mut previous = RepositoryFileInventory::new();
+    let mut current = RepositoryFileInventory::new();
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "old/paper.md",
+            "/tmp/old/paper.md",
+            RepositoryEntryKind::File,
+            100,
+            None,
+        )
+        .with_sha256(""),
+    ));
+
+    assert!(current.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "new/paper.md",
+            "/tmp/new/paper.md",
+            RepositoryEntryKind::File,
+            100,
+            None,
+        )
+        .with_sha256(""),
+    ));
+
+    let changes =
+        RepositoryChangeTracker::new().detect_changes(
+            &previous,
+            &current,
+        );
+
+    let moved_count = changes
+        .iter()
+        .filter(|change| {
+            change.kind == RepositoryChangeKind::Moved
+        })
+        .count();
+
+    let added_count = changes
+        .iter()
+        .filter(|change| {
+            change.kind == RepositoryChangeKind::Added
+        })
+        .count();
+
+    let removed_count = changes
+        .iter()
+        .filter(|change| {
+            change.kind == RepositoryChangeKind::Removed
+        })
+        .count();
+
+    assert_eq!(moved_count, 0);
+    assert_eq!(added_count, 1);
+    assert_eq!(removed_count, 1);
+}
+
 }
 
 
