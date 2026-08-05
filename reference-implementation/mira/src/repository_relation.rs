@@ -40,10 +40,9 @@ impl RepositoryRelation {
     /// İlişki kaydının zorunlu alanlarının eksiksiz
     /// ve geçerli olup olmadığını bildirir.
     pub fn is_complete(&self) -> bool {
-        self.source_repository != self.target_repository
-            && self.source_line > 0
-            && !self.evidence.trim().is_empty()
-    }
+    self.source_repository != self.target_repository
+        && !self.evidence.trim().is_empty()
+}
 
     /// İlişkinin belirtilen depodan başlayıp
     /// başlamadığını bildirir.
@@ -123,18 +122,19 @@ mod tests {
     }
 
     #[test]
-    fn rejects_relation_without_source_line() {
-        let relation = RepositoryRelation::new(
-            Uuid::new_v4(),
-            Uuid::new_v4(),
-            RepositoryRelationKind::Extends,
-            0,
-            "Extension evidence.",
-        );
+fn accepts_relation_with_unknown_source_line() {
+    let relation = RepositoryRelation::new(
+        Uuid::new_v4(),
+        Uuid::new_v4(),
+        RepositoryRelationKind::Extends,
+        0,
+        "Extension evidence.",
+    );
 
-        assert!(!relation.is_complete());
-    }
-
+    assert!(relation.is_complete());
+    assert_eq!(relation.source_line, 0);
+}
+    
     #[test]
     fn rejects_relation_without_evidence() {
         let relation = RepositoryRelation::new(
