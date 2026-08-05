@@ -122,6 +122,48 @@ pub fn detect_changes(
             continue;
         }
 
+        let previous_match_count = previous
+    .records()
+    .iter()
+    .filter(|record| {
+        record.is_file()
+            && record.repository_id
+                == previous_record.repository_id
+            && record.sha256_digest.as_deref()
+                == Some(previous_digest)
+            && current
+                .find_by_relative_path(
+                    record.repository_id,
+                    &record.relative_path,
+                )
+                .is_none()
+    })
+    .count();
+
+let current_match_count = current
+    .records()
+    .iter()
+    .filter(|record| {
+        record.is_file()
+            && record.repository_id
+                == previous_record.repository_id
+            && record.sha256_digest.as_deref()
+                == Some(previous_digest)
+            && previous
+                .find_by_relative_path(
+                    record.repository_id,
+                    &record.relative_path,
+                )
+                .is_none()
+    })
+    .count();
+
+if previous_match_count != 1
+    || current_match_count != 1
+{
+    continue;
+}
+
         let moved_record = current.records().iter().find(
             |current_record| {
                 current_record.is_file()
@@ -452,6 +494,92 @@ fn detects_moved_repository_file_by_sha256() {
         changes[0].current_path.as_deref(),
         Some(std::path::Path::new("new/lib.rs")),
     );
+}
+#[test]
+fn duplicate_digests_are_not_assumed_to_be_moves() {
+    let repository_id = Uuid::new_v4();
+
+    let mut previous = RepositoryFileInventory::new();
+    let mut current = RepositoryFileInventory::new();
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "old/first.md",
+            "/tmp/old/first.md",
+            RepositoryEntryKind::File,
+            100,
+            None,
+        )
+        .with_sha256("shared-digest"),
+    ));
+
+    assert!(previous.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "old/second.md",
+            "/tmp/old/second.md",
+            RepositoryEntryKind::File,
+            100,
+            None,
+        )
+        .with_sha256("shared-digest"),
+    ));
+
+    assert!(current.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "new/first.md",
+            "/tmp/new/first.md",
+            RepositoryEntryKind::File,
+            100,
+            None,
+        )
+        .with_sha256("shared-digest"),
+    ));
+
+    assert!(current.register(
+        RepositoryFileRecord::new(
+            repository_id,
+            "new/second.md",
+            "/tmp/new/second.md",
+            RepositoryEntryKind::File,
+            100,
+            None,
+        )
+        .with_sha256("shared-digest"),
+    ));
+
+    let changes =
+        RepositoryChangeTracker::new().detect_changes(
+            &previous,
+            &current,
+        );
+
+    let moved_count = changes
+        .iter()
+        .filter(|change| {
+            change.kind == RepositoryChangeKind::Moved
+        })
+        .count();
+
+    let added_count = changes
+        .iter()
+        .filter(|change| {
+            change.kind == RepositoryChangeKind::Added
+        })
+        .count();
+
+    let removed_count = changes
+        .iter()
+        .filter(|change| {
+            change.kind == RepositoryChangeKind::Removed
+        })
+        .count();
+
+    assert_eq!(moved_count, 0);
+    assert_eq!(added_count, 2);
+    assert_eq!(removed_count, 2);
 }
 }
 
