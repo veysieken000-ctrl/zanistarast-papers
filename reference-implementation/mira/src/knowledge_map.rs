@@ -172,6 +172,70 @@ impl KnowledgeLayerMap {
     pub fn is_empty(&self) -> bool {
         self.assignments.is_empty()
     }
+  /// Katman haritasındaki bütün atamaların mevcut
+    /// bilgi haritası düğümlerine ait olup olmadığını
+    /// doğrular.
+    pub fn validate_against(
+        &self,
+        knowledge_map: &KnowledgeMapReport,
+    ) -> KnowledgeLayerValidationReport {
+        let mut unknown_node_ids = Vec::new();
+
+        for assignment in &self.assignments {
+            let node_exists = knowledge_map
+                .maps
+                .iter()
+                .flat_map(|map| map.nodes.iter())
+                .any(|node| {
+                    node.id == assignment.node_id
+                });
+
+            if !node_exists {
+                unknown_node_ids.push(
+                    assignment.node_id.clone(),
+                );
+            }
+        }
+
+        unknown_node_ids.sort();
+        unknown_node_ids.dedup();
+
+        KnowledgeLayerValidationReport {
+            assignment_count:
+                self.assignments.len(),
+            unknown_node_ids,
+        }
+    }
+}
+
+/// DNA–RNA–Protein katman atamalarının mevcut
+/// bilgi haritasıyla uyumluluk sonucudur.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct KnowledgeLayerValidationReport {
+    pub assignment_count: usize,
+    pub unknown_node_ids: Vec<String>,
+}
+
+impl KnowledgeLayerValidationReport {
+    /// Bütün katman atamalarının mevcut bilgi
+    /// düğümlerine bağlı olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        self.unknown_node_ids.is_empty()
+    }
+
+    /// Bilgi haritasında bulunmayan düğüm kimliği
+    /// sayısını döndürür.
+    pub fn unknown_node_count(&self) -> usize {
+        self.unknown_node_ids.len()
+    }
 }
 
 /// Tek bir Zanistarast alanına ait bilgi haritası.
@@ -557,7 +621,92 @@ fn rejects_incomplete_and_duplicate_layer_assignments() {
 
     assert_eq!(layer_map.assignment_count(), 1);
 }
+  #[test]
+    fn validates_layer_assignments_against_knowledge_map() {
+        let knowledge_map = KnowledgeMapReport {
+            maps: vec![DomainKnowledgeMap {
+                domain: ZanistarastDomain::Hebun,
+                nodes: vec![
+                    KnowledgeNode {
+                        id: "hebun-main".to_string(),
+                        relative_path:
+                            PathBuf::from(
+                                "papers/hebun-main.md",
+                            ),
+                        title:
+                            Some("Hebûn".to_string()),
+                        readiness_score: 90,
+                        maturity_level:
+                            ArticleMaturityLevel::StrongCandidate,
+                    },
+                ],
+                relations: Vec::new(),
+            }],
+        };
 
+        let mut layer_map =
+            KnowledgeLayerMap::new();
+
+        assert!(layer_map.assign(
+            KnowledgeLayerAssignment::new(
+                "hebun-main",
+                ZanistarastKnowledgeLayer::Dna,
+                "Hebûn çekirdek kavramdır.",
+            ),
+        ));
+
+        let validation =
+            layer_map.validate_against(
+                &knowledge_map,
+            );
+
+        assert!(validation.is_valid());
+
+        assert_eq!(
+            validation.assignment_count,
+            1,
+        );
+
+        assert_eq!(
+            validation.unknown_node_count(),
+            0,
+        );
+    }
+
+    #[test]
+    fn reports_layer_assignment_for_unknown_node() {
+        let knowledge_map = KnowledgeMapReport {
+            maps: Vec::new(),
+        };
+
+        let mut layer_map =
+            KnowledgeLayerMap::new();
+
+        assert!(layer_map.assign(
+            KnowledgeLayerAssignment::new(
+                "missing-node",
+                ZanistarastKnowledgeLayer::Protein,
+                "Makale çıktısı olduğu düşünülüyor.",
+            ),
+        ));
+
+        let validation =
+            layer_map.validate_against(
+                &knowledge_map,
+            );
+
+        assert!(!validation.is_valid());
+
+        assert_eq!(
+            validation.unknown_node_count(),
+            1,
+        );
+
+        assert_eq!(
+            validation.unknown_node_ids,
+            vec!["missing-node".to_string()],
+        );
+    }
 }
 
 
