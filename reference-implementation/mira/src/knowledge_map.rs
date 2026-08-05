@@ -175,41 +175,68 @@ impl KnowledgeLayerMap {
   /// Katman haritasındaki bütün atamaların mevcut
     /// bilgi haritası düğümlerine ait olup olmadığını
     /// doğrular.
-    pub fn validate_against(
-        &self,
-        knowledge_map: &KnowledgeMapReport,
-    ) -> KnowledgeLayerValidationReport {
-        let mut unknown_node_ids = Vec::new();
+    /// Katman atamaları ile mevcut bilgi haritası
+/// düğümlerinin iki yönlü uyumluluğunu doğrular.
+///
+/// Bilgi haritasında bulunmayan atamalar ile henüz
+/// katman atanmamış bilgi düğümleri ayrı raporlanır.
+pub fn validate_against(
+    &self,
+    knowledge_map: &KnowledgeMapReport,
+) -> KnowledgeLayerValidationReport {
+    let mut knowledge_node_ids = knowledge_map
+        .maps
+        .iter()
+        .flat_map(|map| map.nodes.iter())
+        .map(|node| node.id.clone())
+        .collect::<Vec<_>>();
 
-        for assignment in &self.assignments {
-            let node_exists = knowledge_map
-                .maps
-                .iter()
-                .flat_map(|map| map.nodes.iter())
-                .any(|node| {
-                    node.id == assignment.node_id
-                });
+    knowledge_node_ids.sort();
+    knowledge_node_ids.dedup();
 
-            if !node_exists {
-                unknown_node_ids.push(
-                    assignment.node_id.clone(),
-                );
-            }
-        }
+    let mut assigned_node_ids = self
+        .assignments
+        .iter()
+        .map(|assignment| assignment.node_id.clone())
+        .collect::<Vec<_>>();
 
-        unknown_node_ids.sort();
-        unknown_node_ids.dedup();
+    assigned_node_ids.sort();
+    assigned_node_ids.dedup();
 
-        KnowledgeLayerValidationReport {
-            assignment_count:
-                self.assignments.len(),
-            unknown_node_ids,
-        }
+    let mut unknown_node_ids = assigned_node_ids
+        .iter()
+        .filter(|node_id| {
+            !knowledge_node_ids.contains(node_id)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    let mut unassigned_node_ids = knowledge_node_ids
+        .iter()
+        .filter(|node_id| {
+            !assigned_node_ids.contains(node_id)
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    unknown_node_ids.sort();
+    unknown_node_ids.dedup();
+
+    unassigned_node_ids.sort();
+    unassigned_node_ids.dedup();
+
+    KnowledgeLayerValidationReport {
+        assignment_count: self.assignments.len(),
+        knowledge_node_count:
+            knowledge_node_ids.len(),
+        unknown_node_ids,
+        unassigned_node_ids,
     }
 }
+}
 
-/// DNA–RNA–Protein katman atamalarının mevcut
-/// bilgi haritasıyla uyumluluk sonucudur.
+       /// DNA–RNA–Protein katman atamalarının mevcut
+/// bilgi haritasıyla iki yönlü uyumluluk sonucudur.
 #[derive(
     Debug,
     Clone,
@@ -221,14 +248,18 @@ impl KnowledgeLayerMap {
 )]
 pub struct KnowledgeLayerValidationReport {
     pub assignment_count: usize,
+    pub knowledge_node_count: usize,
     pub unknown_node_ids: Vec<String>,
+    pub unassigned_node_ids: Vec<String>,
 }
 
 impl KnowledgeLayerValidationReport {
-    /// Bütün katman atamalarının mevcut bilgi
-    /// düğümlerine bağlı olup olmadığını bildirir.
+    /// Bütün katman atamalarının mevcut düğümlere
+    /// bağlı ve bütün bilgi düğümlerinin katman
+    /// atanmış olup olmadığını bildirir.
     pub fn is_valid(&self) -> bool {
         self.unknown_node_ids.is_empty()
+            && self.unassigned_node_ids.is_empty()
     }
 
     /// Bilgi haritasında bulunmayan düğüm kimliği
@@ -236,7 +267,19 @@ impl KnowledgeLayerValidationReport {
     pub fn unknown_node_count(&self) -> usize {
         self.unknown_node_ids.len()
     }
-}
+
+    /// Henüz DNA, RNA veya Protein katmanına
+    /// atanmamış düğüm sayısını döndürür.
+    pub fn unassigned_node_count(&self) -> usize {
+        self.unassigned_node_ids.len()
+    }
+
+    /// Katman ataması gerektiren herhangi bir bilgi
+    /// düğümü bulunup bulunmadığını bildirir.
+    pub fn has_unassigned_nodes(&self) -> bool {
+        !self.unassigned_node_ids.is_empty()
+    }
+} 
 
 /// Tek bir Zanistarast alanına ait bilgi haritası.
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
@@ -671,6 +714,18 @@ fn rejects_incomplete_and_duplicate_layer_assignments() {
             validation.unknown_node_count(),
             0,
         );
+    assert_eq!(
+    validation.knowledge_node_count,
+    1,
+);
+
+assert_eq!(
+    validation.unassigned_node_count(),
+    0,
+);
+
+assert!(!validation.has_unassigned_nodes());
+
     }
 
     #[test]
@@ -706,7 +761,95 @@ fn rejects_incomplete_and_duplicate_layer_assignments() {
             validation.unknown_node_ids,
             vec!["missing-node".to_string()],
         );
+
+        assert_eq!(
+    validation.knowledge_node_count,
+    0,
+);
+
+assert_eq!(
+    validation.unassigned_node_count(),
+    0,
+);
     }
+#[test]
+fn reports_knowledge_nodes_without_layer_assignment() {
+    let knowledge_map = KnowledgeMapReport {
+        maps: vec![DomainKnowledgeMap {
+            domain: ZanistarastDomain::Hebun,
+            nodes: vec![
+                KnowledgeNode {
+                    id: "hebun-core".to_string(),
+                    relative_path:
+                        PathBuf::from(
+                            "papers/hebun-core.md",
+                        ),
+                    title:
+                        Some("Hebûn Çekirdeği".to_string()),
+                    readiness_score: 95,
+                    maturity_level:
+                        ArticleMaturityLevel::StrongCandidate,
+                },
+                KnowledgeNode {
+                    id: "hebun-process".to_string(),
+                    relative_path:
+                        PathBuf::from(
+                            "papers/hebun-process.md",
+                        ),
+                    title:
+                        Some("Hebûn Süreci".to_string()),
+                    readiness_score: 80,
+                    maturity_level:
+                        ArticleMaturityLevel::DevelopingDraft,
+                },
+            ],
+            relations: Vec::new(),
+        }],
+    };
+
+    let mut layer_map = KnowledgeLayerMap::new();
+
+    assert!(layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "hebun-core",
+            ZanistarastKnowledgeLayer::Dna,
+            "Hebûn çekirdek kavramdır.",
+        ),
+    ));
+
+    let validation =
+        layer_map.validate_against(&knowledge_map);
+
+    assert!(!validation.is_valid());
+
+    assert_eq!(
+        validation.assignment_count,
+        1,
+    );
+
+    assert_eq!(
+        validation.knowledge_node_count,
+        2,
+    );
+
+    assert_eq!(
+        validation.unknown_node_count(),
+        0,
+    );
+
+    assert_eq!(
+        validation.unassigned_node_count(),
+        1,
+    );
+
+    assert!(validation.has_unassigned_nodes());
+
+    assert_eq!(
+        validation.unassigned_node_ids,
+        vec!["hebun-process".to_string()],
+    );
+}
+
 }
 
 
