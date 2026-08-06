@@ -159,6 +159,239 @@ impl DnaKnowledgeMap {
         Self::default()
     }
 
+    /// Zanistarast RNA katmanındaki görev, süreç ve
+/// bilgi dönüşümü türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub enum ZanistarastRnaKind {
+    /// Mira veya başka bir ajan tarafından
+    /// yürütülecek açık görev.
+    Task,
+
+    /// Birden fazla adımı içeren iş veya
+    /// akademik üretim süreci.
+    Process,
+
+    /// Bir bilgi biçimini başka bir bilgi veya
+    /// çıktı biçimine dönüştüren kural.
+    TransformationRule,
+
+    /// Bilginin katmanlar, ajanlar veya sistemler
+    /// arasında taşınmasını sağlayan mekanizma.
+    KnowledgeTransfer,
+
+    /// Rasterast tarafından yürütülecek
+    /// doğrulama süreci.
+    VerificationRequest,
+
+    /// Müdebbir kararı gerektiren onay süreci.
+    ApprovalRequest,
+}
+
+/// Bir bilgi düğümünün Zanistarast RNA katmanındaki
+/// ayrıntılı ve gerekçeli süreç kaydıdır.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct RnaKnowledgeRecord {
+    pub node_id: String,
+    pub kind: ZanistarastRnaKind,
+    pub rationale: String,
+    pub source_node_ids: Vec<String>,
+    pub target_node_ids: Vec<String>,
+}
+
+impl RnaKnowledgeRecord {
+    /// Yeni bir RNA bilgi kaydı oluşturur.
+    pub fn new(
+        node_id: impl Into<String>,
+        kind: ZanistarastRnaKind,
+        rationale: impl Into<String>,
+        source_node_ids: Vec<String>,
+        target_node_ids: Vec<String>,
+    ) -> Self {
+        Self {
+            node_id: node_id.into(),
+            kind,
+            rationale: rationale.into(),
+            source_node_ids,
+            target_node_ids,
+        }
+    }
+
+    /// RNA kaydının zorunlu bilgilerinin eksiksiz
+    /// olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.node_id.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+            && self
+                .source_node_ids
+                .iter()
+                .all(|node_id| !node_id.trim().is_empty())
+            && self
+                .target_node_ids
+                .iter()
+                .all(|node_id| !node_id.trim().is_empty())
+    }
+
+    /// RNA kaydının belirtilen türde olup
+    /// olmadığını bildirir.
+    pub fn is_kind(
+        &self,
+        kind: ZanistarastRnaKind,
+    ) -> bool {
+        self.kind == kind
+    }
+
+    /// RNA sürecinin belirtilen bilgi düğümünden
+    /// beslenip beslenmediğini bildirir.
+    pub fn uses_source_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.source_node_ids
+            .iter()
+            .any(|source| source == node_id)
+    }
+
+    /// RNA sürecinin belirtilen bilgi düğümünü
+    /// üretip üretmediğini bildirir.
+    pub fn produces_target_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.target_node_ids
+            .iter()
+            .any(|target| target == node_id)
+    }
+}
+
+/// Zanistarast RNA katmanındaki görev, süreç ve
+/// bilgi dönüşümü kayıtlarının koleksiyonudur.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct RnaKnowledgeMap {
+    pub records: Vec<RnaKnowledgeRecord>,
+}
+
+impl RnaKnowledgeMap {
+    /// Boş bir RNA bilgi haritası oluşturur.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Eksiksiz ve aynı düğüm için daha önce
+    /// kaydedilmemiş bir RNA kaydı ekler.
+    pub fn register(
+        &mut self,
+        record: RnaKnowledgeRecord,
+    ) -> bool {
+        if !record.is_complete() {
+            return false;
+        }
+
+        if self.records.iter().any(|stored| {
+            stored.node_id == record.node_id
+        }) {
+            return false;
+        }
+
+        self.records.push(record);
+        true
+    }
+
+    /// Toplam RNA bilgi kaydı sayısını döndürür.
+    pub fn record_count(&self) -> usize {
+        self.records.len()
+    }
+
+    /// RNA bilgi haritasının boş olup
+    /// olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.records.is_empty()
+    }
+
+    /// Belirtilen düğüme ait RNA kaydını döndürür.
+    pub fn record_for_node(
+        &self,
+        node_id: &str,
+    ) -> Option<&RnaKnowledgeRecord> {
+        self.records.iter().find(|record| {
+            record.node_id == node_id
+        })
+    }
+
+    /// Belirtilen RNA türüne ait bütün
+    /// kayıtları döndürür.
+    pub fn records_of_kind(
+        &self,
+        kind: ZanistarastRnaKind,
+    ) -> Vec<&RnaKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| record.is_kind(kind))
+            .collect()
+    }
+
+    /// Belirtilen bilgi düğümünü kaynak olarak
+    /// kullanan RNA kayıtlarını döndürür.
+    pub fn records_using_source(
+        &self,
+        source_node_id: &str,
+    ) -> Vec<&RnaKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| {
+                record.uses_source_node(source_node_id)
+            })
+            .collect()
+    }
+
+    /// Belirtilen bilgi düğümünü çıktı olarak
+    /// üreten RNA kayıtlarını döndürür.
+    pub fn records_producing_target(
+        &self,
+        target_node_id: &str,
+    ) -> Vec<&RnaKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| {
+                record.produces_target_node(
+                    target_node_id,
+                )
+            })
+            .collect()
+    }
+
+    /// Bir düğümün RNA katmanında kayıtlı olup
+    /// olmadığını bildirir.
+    pub fn contains_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.record_for_node(node_id).is_some()
+    }
+}
+
     /// Eksiksiz ve aynı düğüm için daha önce
     /// kaydedilmemiş bir DNA kaydı ekler.
     pub fn register(
@@ -1135,6 +1368,237 @@ fn rejects_invalid_and_duplicate_dna_records() {
     ));
 
     assert_eq!(dna_map.record_count(), 1);
+}
+#[test]
+fn registers_zanistarast_rna_knowledge_types() {
+    let mut rna_map = RnaKnowledgeMap::new();
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "prepare-rasterast-paper",
+            ZanistarastRnaKind::Task,
+            "Rasterast makalesini hazırlama görevidir.",
+            vec![
+                "rasterast-concept".to_string(),
+            ],
+            vec![
+                "rasterast-paper".to_string(),
+            ],
+        ),
+    ));
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "academic-publication-process",
+            ZanistarastRnaKind::Process,
+            "Akademik analizi doğrulanmış yayına dönüştürür.",
+            vec![
+                "verified-academic-analysis".to_string(),
+            ],
+            vec![
+                "publication-package".to_string(),
+            ],
+        ),
+    ));
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "dna-to-article-rule",
+            ZanistarastRnaKind::TransformationRule,
+            "DNA çekirdek bilgisini makale planına dönüştürür.",
+            vec![
+                "hebun-core".to_string(),
+            ],
+            vec![
+                "hebun-article-plan".to_string(),
+            ],
+        ),
+    ));
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "repository-memory-transfer",
+            ZanistarastRnaKind::KnowledgeTransfer,
+            "Depo hafızasını akademik üretim bağlamına taşır.",
+            vec![
+                "repository-memory".to_string(),
+            ],
+            vec![
+                "academic-context".to_string(),
+            ],
+        ),
+    ));
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "rasterast-verification-request",
+            ZanistarastRnaKind::VerificationRequest,
+            "Akademik çıktıyı Rasterast doğrulamasına gönderir.",
+            vec![
+                "article-draft".to_string(),
+            ],
+            vec![
+                "verified-article".to_string(),
+            ],
+        ),
+    ));
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "mudebbir-publication-approval",
+            ZanistarastRnaKind::ApprovalRequest,
+            "Gerçek yayın öncesinde Müdebbir onayı ister.",
+            vec![
+                "verified-publication-package".to_string(),
+            ],
+            vec![
+                "approved-publication-package".to_string(),
+            ],
+        ),
+    ));
+
+    assert_eq!(rna_map.record_count(), 6);
+
+    assert_eq!(
+        rna_map
+            .records_of_kind(
+                ZanistarastRnaKind::Task,
+            )
+            .len(),
+        1,
+    );
+
+    assert_eq!(
+        rna_map
+            .records_using_source(
+                "rasterast-concept",
+            )
+            .len(),
+        1,
+    );
+
+    assert_eq!(
+        rna_map
+            .records_producing_target(
+                "publication-package",
+            )
+            .len(),
+        1,
+    );
+
+    assert!(
+        rna_map.contains_node(
+            "mudebbir-publication-approval",
+        ),
+    );
+}
+
+#[test]
+fn rejects_invalid_and_duplicate_rna_records() {
+    let mut rna_map = RnaKnowledgeMap::new();
+
+    assert!(!rna_map.register(
+        RnaKnowledgeRecord::new(
+            "",
+            ZanistarastRnaKind::Task,
+            "Missing node identifier.",
+            Vec::new(),
+            Vec::new(),
+        ),
+    ));
+
+    assert!(!rna_map.register(
+        RnaKnowledgeRecord::new(
+            "empty-rationale",
+            ZanistarastRnaKind::Process,
+            " ",
+            Vec::new(),
+            Vec::new(),
+        ),
+    ));
+
+    assert!(!rna_map.register(
+        RnaKnowledgeRecord::new(
+            "invalid-source",
+            ZanistarastRnaKind::TransformationRule,
+            "Kaynak düğüm kimliği boş olamaz.",
+            vec![" ".to_string()],
+            vec!["target-node".to_string()],
+        ),
+    ));
+
+    assert!(!rna_map.register(
+        RnaKnowledgeRecord::new(
+            "invalid-target",
+            ZanistarastRnaKind::KnowledgeTransfer,
+            "Hedef düğüm kimliği boş olamaz.",
+            vec!["source-node".to_string()],
+            vec!["".to_string()],
+        ),
+    ));
+
+    assert!(rna_map.register(
+        RnaKnowledgeRecord::new(
+            "article-process",
+            ZanistarastRnaKind::Process,
+            "Makale üretim sürecidir.",
+            vec!["article-plan".to_string()],
+            vec!["article-draft".to_string()],
+        ),
+    ));
+
+    assert!(!rna_map.register(
+        RnaKnowledgeRecord::new(
+            "article-process",
+            ZanistarastRnaKind::Task,
+            "Aynı düğüm ikinci kez kaydedilemez.",
+            Vec::new(),
+            Vec::new(),
+        ),
+    ));
+
+    assert_eq!(rna_map.record_count(), 1);
+}
+
+#[test]
+fn rna_record_reports_sources_and_targets() {
+    let record = RnaKnowledgeRecord::new(
+        "dna-to-protein-process",
+        ZanistarastRnaKind::TransformationRule,
+        "DNA bilgisini somut akademik çıktıya dönüştürür.",
+        vec![
+            "hebun-core".to_string(),
+            "rasterast-concept".to_string(),
+        ],
+        vec![
+            "hebun-paper".to_string(),
+            "rasterast-report".to_string(),
+        ],
+    );
+
+    assert!(record.is_complete());
+
+    assert!(
+        record.uses_source_node("hebun-core"),
+    );
+
+    assert!(
+        record.uses_source_node(
+            "rasterast-concept",
+        ),
+    );
+
+    assert!(
+        record.produces_target_node(
+            "hebun-paper",
+        ),
+    );
+
+    assert!(
+        !record.produces_target_node(
+            "unknown-output",
+        ),
+    );
 }
 
 }
