@@ -1059,6 +1059,97 @@ impl ZanistarastKnowledgeArchitecture {
 
             Some(_) => {}
         }
+    /// DNA–RNA–Protein kayıtları arasındaki kaynak
+    /// ve hedef bağlantılarının mevcut düğümlere
+    /// dayanıp dayanmadığını doğrular.
+    ///
+    /// Kurallar:
+    /// - RNA kaynakları DNA, RNA veya Protein
+    /// katmanındaki mevcut bir düğüme bağlanmalıdır.
+    /// - RNA hedefleri RNA veya Protein
+    /// katmanındaki mevcut bir düğüme bağlanmalıdır.
+    /// - Protein kaynakları DNA, RNA veya Protein
+    /// katmanındaki mevcut bir düğüme bağlanmalıdır.
+    pub fn validate_knowledge_chain(
+        &self,
+    ) -> KnowledgeChainValidationReport {
+        let mut report = KnowledgeChainValidationReport {
+            rna_record_count: self.rna.record_count(),
+            protein_record_count:
+                self.protein.record_count(),
+            ..Default::default()
+        };
+
+        for record in self.rna.records() {
+            for source_node_id in
+                &record.source_node_ids
+            {
+                if !self.contains_node(source_node_id) {
+                    report
+                        .missing_rna_source_nodes
+                        .push(format!(
+                            "{}:{}",
+                            record.node_id,
+                            source_node_id,
+                        ));
+                }
+            }
+
+            for target_node_id in
+                &record.target_node_ids
+            {
+                let target_exists =
+                    self.rna.contains_node(
+                        target_node_id,
+                    )
+                    || self.protein.contains_node(
+                        target_node_id,
+                    );
+
+                if !target_exists {
+                    report
+                        .missing_rna_target_nodes
+                        .push(format!(
+                            "{}:{}",
+                            record.node_id,
+                            target_node_id,
+                        ));
+                }
+            }
+        }
+
+        for record in self.protein.records() {
+            for source_node_id in
+                &record.source_node_ids
+            {
+                if !self.contains_node(source_node_id) {
+                    report
+                        .missing_protein_source_nodes
+                        .push(format!(
+                            "{}:{}",
+                            record.node_id,
+                            source_node_id,
+                        ));
+                }
+            }
+        }
+
+        report.missing_rna_source_nodes.sort();
+        report.missing_rna_source_nodes.dedup();
+
+        report.missing_rna_target_nodes.sort();
+        report.missing_rna_target_nodes.dedup();
+
+        report
+            .missing_protein_source_nodes
+            .sort();
+        report
+            .missing_protein_source_nodes
+            .dedup();
+
+        report
+    }
+
     }
 
     for record in self.dna.records() {
@@ -1146,6 +1237,69 @@ impl KnowledgeArchitectureValidationReport {
     /// katman ataması olmayan düğüm sayısını döndürür.
     pub fn unassigned_count(&self) -> usize {
         self.unassigned_detailed_nodes.len()
+    }
+}
+/// Zanistarast DNA–RNA–Protein bilgi akışındaki
+/// eksik kaynak ve hedef bağlantılarını raporlar.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct KnowledgeChainValidationReport {
+    pub rna_record_count: usize,
+    pub protein_record_count: usize,
+    pub missing_rna_source_nodes: Vec<String>,
+    pub missing_rna_target_nodes: Vec<String>,
+    pub missing_protein_source_nodes: Vec<String>,
+}
+
+impl KnowledgeChainValidationReport {
+    /// DNA–RNA–Protein bilgi zincirindeki bütün
+    /// kaynak ve hedef bağlantılarının geçerli
+    /// olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        self.missing_rna_source_nodes.is_empty()
+            && self.missing_rna_target_nodes.is_empty()
+            && self
+                .missing_protein_source_nodes
+                .is_empty()
+    }
+
+    /// RNA kayıtlarında bulunamayan kaynak
+    /// bağlantılarının sayısını döndürür.
+    pub fn missing_rna_source_count(
+        &self,
+    ) -> usize {
+        self.missing_rna_source_nodes.len()
+    }
+
+    /// RNA kayıtlarında bulunamayan hedef
+    /// bağlantılarının sayısını döndürür.
+    pub fn missing_rna_target_count(
+        &self,
+    ) -> usize {
+        self.missing_rna_target_nodes.len()
+    }
+
+    /// Protein kayıtlarında bulunamayan kaynak
+    /// bağlantılarının sayısını döndürür.
+    pub fn missing_protein_source_count(
+        &self,
+    ) -> usize {
+        self.missing_protein_source_nodes.len()
+    }
+
+    /// Zincirde bulunan toplam eksik bağlantı
+    /// sayısını döndürür.
+    pub fn missing_link_count(&self) -> usize {
+        self.missing_rna_source_count()
+            + self.missing_rna_target_count()
+            + self.missing_protein_source_count()
     }
 }
 
@@ -2303,6 +2457,223 @@ fn reports_detailed_records_without_layer_assignment() {
         .mismatched_layer_nodes
         .is_empty());
 }
+#[test]
+    fn validates_complete_dna_rna_protein_chain() {
+        let mut architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        assert!(architecture.dna.register(
+            DnaKnowledgeRecord::new(
+                "hebun-core",
+                ZanistarastDnaKind::CorePrinciple,
+                "Hebûn değişmez çekirdek ilkedir.",
+                true,
+            ),
+        ));
+
+        assert!(architecture.rna.register(
+            RnaKnowledgeRecord::new(
+                "hebun-article-process",
+                ZanistarastRnaKind::Process,
+                "Hebûn çekirdek bilgisini makale çıktısına dönüştürür.",
+                vec![
+                    "hebun-core".to_string(),
+                ],
+                vec![
+                    "hebun-paper".to_string(),
+                ],
+            ),
+        ));
+
+        assert!(architecture.protein.register(
+            ProteinKnowledgeRecord::new(
+                "hebun-paper",
+                ZanistarastProteinKind::Article,
+                "Hebûn hakkındaki somut akademik makaledir.",
+                vec![
+                    "hebun-core".to_string(),
+                    "hebun-article-process"
+                        .to_string(),
+                ],
+                Some(PathBuf::from(
+                    "papers/hebun.md",
+                )),
+                false,
+            ),
+        ));
+
+        let validation =
+            architecture.validate_knowledge_chain();
+
+        assert!(validation.is_valid());
+
+        assert_eq!(
+            validation.rna_record_count,
+            1,
+        );
+
+        assert_eq!(
+            validation.protein_record_count,
+            1,
+        );
+
+        assert_eq!(
+            validation.missing_link_count(),
+            0,
+        );
+
+        assert!(validation
+            .missing_rna_source_nodes
+            .is_empty());
+
+        assert!(validation
+            .missing_rna_target_nodes
+            .is_empty());
+
+        assert!(validation
+            .missing_protein_source_nodes
+            .is_empty());
+    }
+
+    #[test]
+    fn reports_missing_dna_rna_protein_chain_links() {
+        let mut architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        assert!(architecture.rna.register(
+            RnaKnowledgeRecord::new(
+                "article-process",
+                ZanistarastRnaKind::Process,
+                "Eksik DNA kaynağından eksik Protein hedefine ilerler.",
+                vec![
+                    "missing-dna-source"
+                        .to_string(),
+                ],
+                vec![
+                    "missing-protein-target"
+                        .to_string(),
+                ],
+            ),
+        ));
+
+        assert!(architecture.protein.register(
+            ProteinKnowledgeRecord::new(
+                "article-output",
+                ZanistarastProteinKind::Article,
+                "Kaynak süreci bulunmayan akademik çıktıdır.",
+                vec![
+                    "missing-rna-process"
+                        .to_string(),
+                ],
+                Some(PathBuf::from(
+                    "papers/article.md",
+                )),
+                false,
+            ),
+        ));
+
+        let validation =
+            architecture.validate_knowledge_chain();
+
+        assert!(!validation.is_valid());
+
+        assert_eq!(
+            validation.missing_rna_source_count(),
+            1,
+        );
+
+        assert_eq!(
+            validation.missing_rna_target_count(),
+            1,
+        );
+
+        assert_eq!(
+            validation
+                .missing_protein_source_count(),
+            1,
+        );
+
+        assert_eq!(
+            validation.missing_link_count(),
+            3,
+        );
+
+        assert_eq!(
+            validation.missing_rna_source_nodes,
+            vec![
+                "article-process:missing-dna-source"
+                    .to_string(),
+            ],
+        );
+
+        assert_eq!(
+            validation.missing_rna_target_nodes,
+            vec![
+                "article-process:missing-protein-target"
+                    .to_string(),
+            ],
+        );
+
+        assert_eq!(
+            validation
+                .missing_protein_source_nodes,
+            vec![
+                "article-output:missing-rna-process"
+                    .to_string(),
+            ],
+        );
+    }
+
+    #[test]
+    fn rejects_dna_node_as_rna_target() {
+        let mut architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        assert!(architecture.dna.register(
+            DnaKnowledgeRecord::new(
+                "hebun-core",
+                ZanistarastDnaKind::CorePrinciple,
+                "Hebûn değişmez çekirdek ilkedir.",
+                true,
+            ),
+        ));
+
+        assert!(architecture.rna.register(
+            RnaKnowledgeRecord::new(
+                "invalid-process",
+                ZanistarastRnaKind::Process,
+                "RNA süreci DNA katmanını çıktı olarak üretemez.",
+                vec![
+                    "hebun-core".to_string(),
+                ],
+                vec![
+                    "hebun-core".to_string(),
+                ],
+            ),
+        ));
+
+        let validation =
+            architecture.validate_knowledge_chain();
+
+        assert!(!validation.is_valid());
+
+        assert!(validation
+            .missing_rna_source_nodes
+            .is_empty());
+
+        assert_eq!(
+            validation.missing_rna_target_nodes,
+            vec![
+                "invalid-process:hebun-core"
+                    .to_string(),
+            ],
+        );
+
+        assert_eq!(
+            validation.missing_link_count(),
+            1,
+        );
+    }
 
 }
 
