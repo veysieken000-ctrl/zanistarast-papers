@@ -1150,7 +1150,7 @@ impl ZanistarastKnowledgeArchitecture {
         report
     }
 
-    }
+        
 
     for record in self.dna.records() {
         if !layer_map.has_assignment(
