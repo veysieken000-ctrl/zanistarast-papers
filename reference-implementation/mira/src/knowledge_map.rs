@@ -1029,36 +1029,82 @@ impl ZanistarastKnowledgeArchitecture {
         None
     }
 
+   /// DNA–RNA–Protein ayrıntılı kayıtlarının genel
+    /// katman atamalarıyla uyumluluğunu doğrular.
     pub fn validate_layer_alignment(
-    &self,
-    layer_map: &KnowledgeLayerMap,
-) -> KnowledgeArchitectureValidationReport {
-    let mut report = KnowledgeArchitectureValidationReport {
-        assignment_count: layer_map.assignment_count(),
-        detailed_record_count: self.total_record_count(),
-        ..Default::default()
-    };
+        &self,
+        layer_map: &KnowledgeLayerMap,
+    ) -> KnowledgeArchitectureValidationReport {
+        let mut report = KnowledgeArchitectureValidationReport {
+            assignment_count: layer_map.assignment_count(),
+            detailed_record_count: self.total_record_count(),
+            ..Default::default()
+        };
 
-    for assignment in layer_map.assignments() {
-        match self.layer_for_node(
-            &assignment.node_id,
-        ) {
-            None => {
-                report
-                    .missing_detailed_records
-                    .push(assignment.node_id.clone());
+        for assignment in layer_map.assignments() {
+            match self.layer_for_node(
+                &assignment.node_id,
+            ) {
+                None => {
+                    report
+                        .missing_detailed_records
+                        .push(assignment.node_id.clone());
+                }
+
+                Some(layer)
+                    if layer != assignment.layer =>
+                {
+                    report
+                        .mismatched_layer_nodes
+                        .push(assignment.node_id.clone());
+                }
+
+                Some(_) => {}
             }
-
-            Some(layer)
-                if layer != assignment.layer =>
-            {
-                report
-                    .mismatched_layer_nodes
-                    .push(assignment.node_id.clone());
-            }
-
-            Some(_) => {}
         }
+
+        for record in self.dna.records() {
+            if !layer_map.has_assignment(
+                &record.node_id,
+            ) {
+                report
+                    .unassigned_detailed_nodes
+                    .push(record.node_id.clone());
+            }
+        }
+
+        for record in self.rna.records() {
+            if !layer_map.has_assignment(
+                &record.node_id,
+            ) {
+                report
+                    .unassigned_detailed_nodes
+                    .push(record.node_id.clone());
+            }
+        }
+
+        for record in self.protein.records() {
+            if !layer_map.has_assignment(
+                &record.node_id,
+            ) {
+                report
+                    .unassigned_detailed_nodes
+                    .push(record.node_id.clone());
+            }
+        }
+
+        report.missing_detailed_records.sort();
+        report.missing_detailed_records.dedup();
+
+        report.mismatched_layer_nodes.sort();
+        report.mismatched_layer_nodes.dedup();
+
+        report.unassigned_detailed_nodes.sort();
+        report.unassigned_detailed_nodes.dedup();
+
+        report
+    }
+
      /// DNA–RNA–Protein ayrıntılı kayıtlarının genel
     /// katman atamalarıyla uyumluluğunu doğrular.
     pub fn validate_layer_alignment(
