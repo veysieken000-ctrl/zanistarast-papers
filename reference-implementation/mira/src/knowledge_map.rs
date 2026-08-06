@@ -1197,7 +1197,20 @@ impl ZanistarastKnowledgeArchitecture {
         report
     }
 }
-
+/// Zanistarast bilgi mimarisinin katman
+    /// atamalarını ve DNA–RNA–Protein zincirini
+    /// tek bir raporda doğrular.
+    pub fn validate_architecture(
+        &self,
+        layer_map: &KnowledgeLayerMap,
+    ) -> KnowledgeArchitectureHealthReport {
+        KnowledgeArchitectureHealthReport {
+            layer_alignment:
+                self.validate_layer_alignment(layer_map),
+            knowledge_chain:
+                self.validate_knowledge_chain(),
+        }
+    }
 /// Katman doğrulama raporu.
 #[derive(
     Debug,
@@ -1306,6 +1319,58 @@ impl KnowledgeChainValidationReport {
         self.missing_rna_source_count()
             + self.missing_rna_target_count()
             + self.missing_protein_source_count()
+    }
+}
+/// Zanistarast bilgi mimarisinin katman ataması
+/// ve bilgi zinciri sonuçlarını birleştiren rapordur.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct KnowledgeArchitectureHealthReport {
+    pub layer_alignment:
+        KnowledgeArchitectureValidationReport,
+    pub knowledge_chain:
+        KnowledgeChainValidationReport,
+}
+
+impl KnowledgeArchitectureHealthReport {
+    /// Katman atamalarının ve bilgi zincirinin
+    /// birlikte geçerli olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        self.layer_alignment.is_valid()
+            && self.knowledge_chain.is_valid()
+    }
+
+    /// Katman atamalarında bulunan toplam
+    /// sorun sayısını döndürür.
+    pub fn layer_issue_count(&self) -> usize {
+        self.layer_alignment.missing_count()
+            + self.layer_alignment.mismatch_count()
+            + self.layer_alignment.unassigned_count()
+    }
+
+    /// Bilgi zincirinde bulunan toplam eksik
+    /// bağlantı sayısını döndürür.
+    pub fn chain_issue_count(&self) -> usize {
+        self.knowledge_chain.missing_link_count()
+    }
+
+    /// Birleşik mimaride bulunan toplam sorun
+    /// sayısını döndürür.
+    pub fn total_issue_count(&self) -> usize {
+        self.layer_issue_count()
+            + self.chain_issue_count()
+    }
+
+    /// Mimari raporunda herhangi bir sorun
+    /// bulunup bulunmadığını bildirir.
+    pub fn has_issues(&self) -> bool {
+        self.total_issue_count() > 0
     }
 }
 
@@ -2678,6 +2743,170 @@ fn reports_detailed_records_without_layer_assignment() {
         assert_eq!(
             validation.missing_link_count(),
             1,
+        );
+    }
+#[test]
+    fn validates_complete_knowledge_architecture_health() {
+        let mut architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        assert!(architecture.dna.register(
+            DnaKnowledgeRecord::new(
+                "hebun-core",
+                ZanistarastDnaKind::CorePrinciple,
+                "Hebûn değişmez çekirdek ilkedir.",
+                true,
+            ),
+        ));
+
+        assert!(architecture.rna.register(
+            RnaKnowledgeRecord::new(
+                "hebun-process",
+                ZanistarastRnaKind::Process,
+                "Hebûn bilgisini makale çıktısına dönüştürür.",
+                vec!["hebun-core".to_string()],
+                vec!["hebun-paper".to_string()],
+            ),
+        ));
+
+        assert!(architecture.protein.register(
+            ProteinKnowledgeRecord::new(
+                "hebun-paper",
+                ZanistarastProteinKind::Article,
+                "Hebûn hakkındaki somut akademik makaledir.",
+                vec![
+                    "hebun-core".to_string(),
+                    "hebun-process".to_string(),
+                ],
+                Some(PathBuf::from(
+                    "papers/hebun.md",
+                )),
+                false,
+            ),
+        ));
+
+        let mut layer_map =
+            KnowledgeLayerMap::new();
+
+        assert!(layer_map.assign(
+            KnowledgeLayerAssignment::new(
+                "hebun-core",
+                ZanistarastKnowledgeLayer::Dna,
+                "Değişmez çekirdek ilkedir.",
+            ),
+        ));
+
+        assert!(layer_map.assign(
+            KnowledgeLayerAssignment::new(
+                "hebun-process",
+                ZanistarastKnowledgeLayer::Rna,
+                "Bilgi dönüşüm sürecidir.",
+            ),
+        ));
+
+        assert!(layer_map.assign(
+            KnowledgeLayerAssignment::new(
+                "hebun-paper",
+                ZanistarastKnowledgeLayer::Protein,
+                "Somut akademik çıktıdır.",
+            ),
+        ));
+
+        let health =
+            architecture.validate_architecture(
+                &layer_map,
+            );
+
+        assert!(health.is_valid());
+        assert!(!health.has_issues());
+
+        assert_eq!(
+            health.layer_issue_count(),
+            0,
+        );
+
+        assert_eq!(
+            health.chain_issue_count(),
+            0,
+        );
+
+        assert_eq!(
+            health.total_issue_count(),
+            0,
+        );
+    }
+
+    #[test]
+    fn reports_combined_knowledge_architecture_issues() {
+        let mut architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        assert!(architecture.rna.register(
+            RnaKnowledgeRecord::new(
+                "article-process",
+                ZanistarastRnaKind::Process,
+                "Eksik kaynaktan eksik hedefe ilerler.",
+                vec![
+                    "missing-dna-source".to_string(),
+                ],
+                vec![
+                    "missing-protein-target"
+                        .to_string(),
+                ],
+            ),
+        ));
+
+        let layer_map =
+            KnowledgeLayerMap::new();
+
+        let health =
+            architecture.validate_architecture(
+                &layer_map,
+            );
+
+        assert!(!health.is_valid());
+        assert!(health.has_issues());
+
+        assert_eq!(
+            health.layer_issue_count(),
+            1,
+        );
+
+        assert_eq!(
+            health.chain_issue_count(),
+            2,
+        );
+
+        assert_eq!(
+            health.total_issue_count(),
+            3,
+        );
+
+        assert_eq!(
+            health
+                .layer_alignment
+                .unassigned_detailed_nodes,
+            vec!["article-process".to_string()],
+        );
+
+        assert_eq!(
+            health
+                .knowledge_chain
+                .missing_rna_source_nodes,
+            vec![
+                "article-process:missing-dna-source"
+                    .to_string(),
+            ],
+        );
+
+        assert_eq!(
+            health
+                .knowledge_chain
+                .missing_rna_target_nodes,
+            vec![
+                "article-process:missing-protein-target"
+                    .to_string(),
+            ],
         );
     }
 
