@@ -1396,13 +1396,13 @@ pub fn summary(&self) -> String {
         self.knowledge_chain.is_valid(),
         self.issue_count(),
     )
-    /// Bilgi mimarisinde hiç sorun bulunup
+    }
+        /// Bilgi mimarisinde hiç sorun bulunup
 /// bulunmadığını bildirir.
 pub fn has_issues(&self) -> bool {
     self.issue_count() > 0
 }
 
-}
 }
 
 /// Tek bir Zanistarast alanına ait bilgi haritası.
