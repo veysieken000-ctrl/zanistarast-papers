@@ -1033,15 +1033,11 @@ impl ZanistarastKnowledgeArchitecture {
         &self,
         layer_map: &KnowledgeLayerMap,
     ) -> KnowledgeArchitectureValidationReport {
-        let mut report =
-            KnowledgeArchitectureValidationReport::default();
-
-        report.assignment_count =
-            layer_map.assignment_count();
-
-        report.detailed_record_count =
-            self.total_record_count();
-
+       let mut report = KnowledgeArchitectureValidationReport {
+    assignment_count: layer_map.assignment_count(),
+    detailed_record_count: self.total_record_count(),
+    ..Default::default()
+};
         for assignment in layer_map.assignments() {
             match self.layer_for_node(
                 &assignment.node_id,
