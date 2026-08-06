@@ -451,7 +451,10 @@ impl RnaKnowledgeMap {
     ) -> bool {
         self.record_for_node(node_id).is_some()
     }
-/// Zanistarast Protein katmanındaki somut
+
+    }
+
+    /// Zanistarast Protein katmanındaki somut
 /// bilimsel ve teknik çıktı türlerini belirtir.
 #[derive(
     Debug,
