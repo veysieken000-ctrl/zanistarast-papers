@@ -1373,7 +1373,14 @@ impl KnowledgeArchitectureHealthReport {
     pub fn has_issues(&self) -> bool {
         self.total_issue_count() > 0
     }
- 
+ /// Katman doğrulaması ile bilgi zinciri
+/// doğrulamasının birlikte başarılı olup
+/// olmadığını bildirir.
+pub fn is_healthy(&self) -> bool {
+    self.layer_alignment.is_valid()
+        && self.knowledge_chain.is_valid()
+}
+
 }
 
 /// Tek bir Zanistarast alanına ait bilgi haritası.
