@@ -1030,40 +1030,77 @@ impl ZanistarastKnowledgeArchitecture {
     }
 
     pub fn validate_layer_alignment(
-        &self,
-        layer_map: &KnowledgeLayerMap,
-    ) -> KnowledgeArchitectureValidationReport {
-       let mut report = KnowledgeArchitectureValidationReport {
-    assignment_count: layer_map.assignment_count(),
-    detailed_record_count: self.total_record_count(),
-    ..Default::default()
-};
-        for assignment in layer_map.assignments() {
-            match self.layer_for_node(
-                &assignment.node_id,
-            ) {
-                None => report
+    &self,
+    layer_map: &KnowledgeLayerMap,
+) -> KnowledgeArchitectureValidationReport {
+    let mut report = KnowledgeArchitectureValidationReport {
+        assignment_count: layer_map.assignment_count(),
+        detailed_record_count: self.total_record_count(),
+        ..Default::default()
+    };
+
+    for assignment in layer_map.assignments() {
+        match self.layer_for_node(
+            &assignment.node_id,
+        ) {
+            None => {
+                report
                     .missing_detailed_records
-                    .push(
-                        assignment.node_id.clone(),
-                    ),
-
-                Some(layer)
-                    if layer != assignment.layer =>
-                {
-                    report
-                        .mismatched_layer_nodes
-                        .push(
-                            assignment.node_id.clone(),
-                        );
-                }
-
-                Some(_) => {}
+                    .push(assignment.node_id.clone());
             }
-        }
 
-        report
+            Some(layer)
+                if layer != assignment.layer =>
+            {
+                report
+                    .mismatched_layer_nodes
+                    .push(assignment.node_id.clone());
+            }
+
+            Some(_) => {}
+        }
     }
+
+    for record in self.dna.records() {
+        if !layer_map.has_assignment(
+            &record.node_id,
+        ) {
+            report
+                .unassigned_detailed_nodes
+                .push(record.node_id.clone());
+        }
+    }
+
+    for record in self.rna.records() {
+        if !layer_map.has_assignment(
+            &record.node_id,
+        ) {
+            report
+                .unassigned_detailed_nodes
+                .push(record.node_id.clone());
+        }
+    }
+
+    for record in self.protein.records() {
+        if !layer_map.has_assignment(
+            &record.node_id,
+        ) {
+            report
+                .unassigned_detailed_nodes
+                .push(record.node_id.clone());
+        }
+    }
+
+    report.missing_detailed_records.sort();
+    report.missing_detailed_records.dedup();
+
+    report.mismatched_layer_nodes.sort();
+    report.mismatched_layer_nodes.dedup();
+
+    report.unassigned_detailed_nodes.sort();
+    report.unassigned_detailed_nodes.dedup();
+
+    report
 }
 
 /// Katman doğrulama raporu.
@@ -1081,20 +1118,34 @@ pub struct KnowledgeArchitectureValidationReport {
     pub detailed_record_count: usize,
     pub missing_detailed_records: Vec<String>,
     pub mismatched_layer_nodes: Vec<String>,
+    pub unassigned_detailed_nodes: Vec<String>,
 }
 
 impl KnowledgeArchitectureValidationReport {
+    /// Ayrıntılı kayıtlar ile katman atamalarının
+    /// tamamen uyumlu olup olmadığını bildirir.
     pub fn is_valid(&self) -> bool {
         self.missing_detailed_records.is_empty()
             && self.mismatched_layer_nodes.is_empty()
+            && self.unassigned_detailed_nodes.is_empty()
     }
 
+    /// Katman ataması bulunduğu hâlde ayrıntılı
+    /// kaydı bulunmayan düğüm sayısını döndürür.
     pub fn missing_count(&self) -> usize {
         self.missing_detailed_records.len()
     }
 
+    /// Atanan katman ile gerçek ayrıntılı katmanı
+    /// uyuşmayan düğüm sayısını döndürür.
     pub fn mismatch_count(&self) -> usize {
         self.mismatched_layer_nodes.len()
+    }
+
+    /// Ayrıntılı kaydı bulunduğu hâlde genel
+    /// katman ataması olmayan düğüm sayısını döndürür.
+    pub fn unassigned_count(&self) -> usize {
+        self.unassigned_detailed_nodes.len()
     }
 }
 
@@ -2174,6 +2225,85 @@ mod tests {
             ],
         );
     }
+#[test]
+fn reports_detailed_records_without_layer_assignment() {
+    let mut architecture =
+        ZanistarastKnowledgeArchitecture::new();
+
+    assert!(architecture.dna.register(
+        DnaKnowledgeRecord::new(
+            "hebun-core",
+            ZanistarastDnaKind::CorePrinciple,
+            "Hebûn değişmez çekirdek ilkedir.",
+            true,
+        ),
+    ));
+
+    assert!(architecture.rna.register(
+        RnaKnowledgeRecord::new(
+            "hebun-process",
+            ZanistarastRnaKind::Process,
+            "Hebûn bilgisini somut çıktıya dönüştürür.",
+            vec!["hebun-core".to_string()],
+            vec!["hebun-paper".to_string()],
+        ),
+    ));
+
+    assert!(architecture.protein.register(
+        ProteinKnowledgeRecord::new(
+            "hebun-paper",
+            ZanistarastProteinKind::Article,
+            "Hebûn akademik makalesidir.",
+            vec![
+                "hebun-core".to_string(),
+                "hebun-process".to_string(),
+            ],
+            Some(PathBuf::from(
+                "papers/hebun.md",
+            )),
+            false,
+        ),
+    ));
+
+    let mut layer_map = KnowledgeLayerMap::new();
+
+    assert!(layer_map.assign(
+        KnowledgeLayerAssignment::new(
+            "hebun-core",
+            ZanistarastKnowledgeLayer::Dna,
+            "Çekirdek ilkedir.",
+        ),
+    ));
+
+    let validation =
+        architecture.validate_layer_alignment(
+            &layer_map,
+        );
+
+    assert!(!validation.is_valid());
+
+    assert_eq!(
+        validation.unassigned_count(),
+        2,
+    );
+
+    assert_eq!(
+        validation.unassigned_detailed_nodes,
+        vec![
+            "hebun-paper".to_string(),
+            "hebun-process".to_string(),
+        ],
+    );
+
+    assert!(validation
+        .missing_detailed_records
+        .is_empty());
+
+    assert!(validation
+        .mismatched_layer_nodes
+        .is_empty());
+}
+
 }
 
 
