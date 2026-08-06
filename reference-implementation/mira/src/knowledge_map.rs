@@ -1387,7 +1387,16 @@ pub fn issue_count(&self) -> usize {
         + self.layer_alignment.unassigned_count()
         + self.knowledge_chain.missing_link_count()
 }
-
+/// Katman doğrulaması ile bilgi zinciri
+/// doğrulamasının özet durumunu döndürür.
+pub fn summary(&self) -> String {
+    format!(
+        "layer_valid={}, chain_valid={}, issues={}",
+        self.layer_alignment.is_valid(),
+        self.knowledge_chain.is_valid(),
+        self.issue_count(),
+    )
+}
 }
 
 /// Tek bir Zanistarast alanına ait bilgi haritası.
