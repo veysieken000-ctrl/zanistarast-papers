@@ -451,7 +451,245 @@ impl RnaKnowledgeMap {
     ) -> bool {
         self.record_for_node(node_id).is_some()
     }
+/// Zanistarast Protein katmanındaki somut
+/// bilimsel ve teknik çıktı türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub enum ZanistarastProteinKind {
+    /// Akademik makale veya makale taslağı.
+    Article,
+
+    /// Çalışan veya hazırlanmakta olan kod modülü.
+    CodeModule,
+
+    /// Bilimsel, teknik veya doğrulama raporu.
+    Report,
+
+    /// Yayına hazır dosya ve metadata paketi.
+    PublicationPackage,
+
+    /// Website, servis veya başka bir uygulama çıktısı.
+    Application,
 }
+
+/// Zanistarast Protein katmanındaki somut bir
+/// çıktının ayrıntılı ve gerekçeli kaydıdır.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct ProteinKnowledgeRecord {
+    pub node_id: String,
+    pub kind: ZanistarastProteinKind,
+    pub rationale: String,
+    pub source_node_ids: Vec<String>,
+    pub relative_path: Option<PathBuf>,
+    pub verified: bool,
+}
+
+impl ProteinKnowledgeRecord {
+    /// Yeni bir Protein bilgi kaydı oluşturur.
+    pub fn new(
+        node_id: impl Into<String>,
+        kind: ZanistarastProteinKind,
+        rationale: impl Into<String>,
+        source_node_ids: Vec<String>,
+        relative_path: Option<PathBuf>,
+        verified: bool,
+    ) -> Self {
+        Self {
+            node_id: node_id.into(),
+            kind,
+            rationale: rationale.into(),
+            source_node_ids,
+            relative_path,
+            verified,
+        }
+    }
+
+    /// Protein kaydının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.node_id.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+            && self
+                .source_node_ids
+                .iter()
+                .all(|node_id| !node_id.trim().is_empty())
+            && self
+                .relative_path
+                .as_ref()
+                .is_none_or(|path| {
+                    !path.as_os_str().is_empty()
+                })
+    }
+
+    /// Protein kaydının belirtilen türde olup
+    /// olmadığını bildirir.
+    pub fn is_kind(
+        &self,
+        kind: ZanistarastProteinKind,
+    ) -> bool {
+        self.kind == kind
+    }
+
+    /// Protein çıktısının belirtilen bilgi
+    /// düğümünden üretilip üretilmediğini bildirir.
+    pub fn uses_source_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.source_node_ids
+            .iter()
+            .any(|source| source == node_id)
+    }
+
+    /// Protein çıktısının dosya veya dizin yoluna
+    /// bağlı olup olmadığını bildirir.
+    pub fn has_relative_path(&self) -> bool {
+        self.relative_path
+            .as_ref()
+            .is_some_and(|path| {
+                !path.as_os_str().is_empty()
+            })
+    }
+
+    /// Protein çıktısının doğrulanmış olup
+    /// olmadığını bildirir.
+    pub fn is_verified(&self) -> bool {
+        self.verified
+    }
+}
+
+/// Zanistarast Protein katmanındaki somut
+/// çıktı kayıtlarının koleksiyonudur.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct ProteinKnowledgeMap {
+    pub records: Vec<ProteinKnowledgeRecord>,
+}
+
+impl ProteinKnowledgeMap {
+    /// Boş bir Protein bilgi haritası oluşturur.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Eksiksiz ve aynı düğüm için daha önce
+    /// kaydedilmemiş bir Protein kaydı ekler.
+    pub fn register(
+        &mut self,
+        record: ProteinKnowledgeRecord,
+    ) -> bool {
+        if !record.is_complete() {
+            return false;
+        }
+
+        if self.records.iter().any(|stored| {
+            stored.node_id == record.node_id
+        }) {
+            return false;
+        }
+
+        self.records.push(record);
+        true
+    }
+
+    /// Toplam Protein bilgi kaydı sayısını döndürür.
+    pub fn record_count(&self) -> usize {
+        self.records.len()
+    }
+
+    /// Protein bilgi haritasının boş olup
+    /// olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.records.is_empty()
+    }
+
+    /// Belirtilen düğüme ait Protein kaydını döndürür.
+    pub fn record_for_node(
+        &self,
+        node_id: &str,
+    ) -> Option<&ProteinKnowledgeRecord> {
+        self.records.iter().find(|record| {
+            record.node_id == node_id
+        })
+    }
+
+    /// Belirtilen Protein türüne ait bütün
+    /// kayıtları döndürür.
+    pub fn records_of_kind(
+        &self,
+        kind: ZanistarastProteinKind,
+    ) -> Vec<&ProteinKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| record.is_kind(kind))
+            .collect()
+    }
+
+    /// Belirtilen bilgi düğümünden üretilmiş
+    /// Protein kayıtlarını döndürür.
+    pub fn records_using_source(
+        &self,
+        source_node_id: &str,
+    ) -> Vec<&ProteinKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| {
+                record.uses_source_node(source_node_id)
+            })
+            .collect()
+    }
+
+    /// Doğrulanmış Protein çıktılarını döndürür.
+    pub fn verified_records(
+        &self,
+    ) -> Vec<&ProteinKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| record.is_verified())
+            .collect()
+    }
+
+    /// Henüz doğrulanmamış Protein çıktılarını döndürür.
+    pub fn unverified_records(
+        &self,
+    ) -> Vec<&ProteinKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| !record.is_verified())
+            .collect()
+    }
+
+    /// Bir düğümün Protein katmanında kayıtlı olup
+    /// olmadığını bildirir.
+    pub fn contains_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.record_for_node(node_id).is_some()
+    }
+}
+
 /// Mevcut bir bilgi düğümünün DNA–RNA–Protein
 /// mimarisindeki katman atamasını temsil eder.
 #[derive(
@@ -1595,6 +1833,236 @@ fn rna_record_reports_sources_and_targets() {
         !record.produces_target_node(
             "unknown-output",
         ),
+    );
+}
+#[test]
+fn registers_zanistarast_protein_knowledge_types() {
+    let mut protein_map = ProteinKnowledgeMap::new();
+
+    assert!(protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "rasterast-paper",
+            ZanistarastProteinKind::Article,
+            "Rasterast hakkındaki somut akademik makaledir.",
+            vec![
+                "rasterast-concept".to_string(),
+                "prepare-rasterast-paper".to_string(),
+            ],
+            Some(PathBuf::from(
+                "papers/rasterast.md",
+            )),
+            true,
+        ),
+    ));
+
+    assert!(protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "repository-graph-module",
+            ZanistarastProteinKind::CodeModule,
+            "Depolar arasındaki ilişkileri yöneten kod modülüdür.",
+            vec![
+                "repository-graph-process".to_string(),
+            ],
+            Some(PathBuf::from(
+                "reference-implementation/mira/src/repository_graph.rs",
+            )),
+            true,
+        ),
+    ));
+
+    assert!(protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "rasterast-verification-report",
+            ZanistarastProteinKind::Report,
+            "Rasterast doğrulama sürecinin rapor çıktısıdır.",
+            vec![
+                "rasterast-verification-request".to_string(),
+            ],
+            Some(PathBuf::from(
+                "reports/rasterast-verification.md",
+            )),
+            false,
+        ),
+    ));
+
+    assert!(protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "zenodo-publication-package",
+            ZanistarastProteinKind::PublicationPackage,
+            "Zenodo için hazırlanmış yayın paketidir.",
+            vec![
+                "academic-publication-process".to_string(),
+            ],
+            Some(PathBuf::from(
+                "dist/zenodo-package",
+            )),
+            false,
+        ),
+    ));
+
+    assert!(protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "zanistarast-website",
+            ZanistarastProteinKind::Application,
+            "Zanistarast yayınlarının görünür uygulama çıktısıdır.",
+            vec![
+                "website-publication-process".to_string(),
+            ],
+            None,
+            true,
+        ),
+    ));
+
+    assert_eq!(protein_map.record_count(), 5);
+
+    assert_eq!(
+        protein_map
+            .records_of_kind(
+                ZanistarastProteinKind::Article,
+            )
+            .len(),
+        1,
+    );
+
+    assert_eq!(
+        protein_map
+            .records_using_source(
+                "academic-publication-process",
+            )
+            .len(),
+        1,
+    );
+
+    assert_eq!(
+        protein_map.verified_records().len(),
+        3,
+    );
+
+    assert_eq!(
+        protein_map.unverified_records().len(),
+        2,
+    );
+
+    assert!(
+        protein_map.contains_node(
+            "rasterast-paper",
+        ),
+    );
+}
+
+#[test]
+fn rejects_invalid_and_duplicate_protein_records() {
+    let mut protein_map = ProteinKnowledgeMap::new();
+
+    assert!(!protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "",
+            ZanistarastProteinKind::Article,
+            "Missing node identifier.",
+            Vec::new(),
+            None,
+            false,
+        ),
+    ));
+
+    assert!(!protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "empty-rationale",
+            ZanistarastProteinKind::Report,
+            " ",
+            Vec::new(),
+            None,
+            false,
+        ),
+    ));
+
+    assert!(!protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "invalid-source",
+            ZanistarastProteinKind::CodeModule,
+            "Kaynak düğüm kimliği boş olamaz.",
+            vec![" ".to_string()],
+            None,
+            false,
+        ),
+    ));
+
+    assert!(!protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "invalid-path",
+            ZanistarastProteinKind::PublicationPackage,
+            "Boş göreli yol kabul edilmez.",
+            Vec::new(),
+            Some(PathBuf::new()),
+            false,
+        ),
+    ));
+
+    assert!(protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "hebun-paper",
+            ZanistarastProteinKind::Article,
+            "Hebûn akademik makalesidir.",
+            vec!["hebun-article-process".to_string()],
+            Some(PathBuf::from(
+                "papers/hebun.md",
+            )),
+            false,
+        ),
+    ));
+
+    assert!(!protein_map.register(
+        ProteinKnowledgeRecord::new(
+            "hebun-paper",
+            ZanistarastProteinKind::Report,
+            "Aynı düğüm ikinci kez kaydedilemez.",
+            Vec::new(),
+            None,
+            false,
+        ),
+    ));
+
+    assert_eq!(protein_map.record_count(), 1);
+}
+
+#[test]
+fn protein_record_reports_source_path_and_verification() {
+    let record = ProteinKnowledgeRecord::new(
+        "rasterast-paper",
+        ZanistarastProteinKind::Article,
+        "Rasterast akademik çıktısıdır.",
+        vec![
+            "rasterast-concept".to_string(),
+            "article-production-process".to_string(),
+        ],
+        Some(PathBuf::from(
+            "papers/rasterast.md",
+        )),
+        true,
+    );
+
+    assert!(record.is_complete());
+
+    assert!(
+        record.uses_source_node(
+            "rasterast-concept",
+        ),
+    );
+
+    assert!(
+        !record.uses_source_node(
+            "unknown-source",
+        ),
+    );
+
+    assert!(record.has_relative_path());
+    assert!(record.is_verified());
+
+    assert_eq!(
+        record.relative_path.as_deref(),
+        Some(std::path::Path::new(
+            "papers/rasterast.md",
+        )),
     );
 }
 
