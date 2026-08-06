@@ -220,7 +220,9 @@ impl DnaKnowledgeMap {
     ) -> bool {
         self.record_for_node(node_id).is_some()
     }
- /// Zanistarast RNA katmanındaki görev, süreç ve
+}
+
+/// Zanistarast RNA katmanındaki görev, süreç ve
 /// bilgi dönüşümü türlerini belirtir.
 #[derive(
     Debug,
@@ -436,9 +438,7 @@ impl RnaKnowledgeMap {
         self.records
             .iter()
             .filter(|record| {
-                record.produces_target_node(
-                    target_node_id,
-                )
+                record.produces_target_node(target_node_id)
             })
             .collect()
     }
@@ -452,9 +452,6 @@ impl RnaKnowledgeMap {
         self.record_for_node(node_id).is_some()
     }
 }
-
-}
-
 /// Mevcut bir bilgi düğümünün DNA–RNA–Protein
 /// mimarisindeki katman atamasını temsil eder.
 #[derive(
