@@ -1102,7 +1102,7 @@ impl ZanistarastKnowledgeArchitecture {
 
     report
 }
-
+}
 /// Katman doğrulama raporu.
 #[derive(
     Debug,
