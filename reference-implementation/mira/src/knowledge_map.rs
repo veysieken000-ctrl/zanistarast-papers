@@ -159,7 +159,68 @@ impl DnaKnowledgeMap {
         Self::default()
     }
 
-    /// Zanistarast RNA katmanındaki görev, süreç ve
+    /// Eksiksiz ve aynı düğüm için daha önce
+    /// kaydedilmemiş bir DNA kaydı ekler.
+    pub fn register(
+        &mut self,
+        record: DnaKnowledgeRecord,
+    ) -> bool {
+        if !record.is_complete() {
+            return false;
+        }
+
+        if self.records.iter().any(|stored| {
+            stored.node_id == record.node_id
+        }) {
+            return false;
+        }
+
+        self.records.push(record);
+        true
+    }
+
+    /// Toplam DNA bilgi kaydı sayısını döndürür.
+    pub fn record_count(&self) -> usize {
+        self.records.len()
+    }
+
+    /// DNA bilgi haritasının boş olup
+    /// olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.records.is_empty()
+    }
+
+    /// Belirtilen düğüme ait DNA kaydını döndürür.
+    pub fn record_for_node(
+        &self,
+        node_id: &str,
+    ) -> Option<&DnaKnowledgeRecord> {
+        self.records.iter().find(|record| {
+            record.node_id == node_id
+        })
+    }
+
+    /// Belirtilen DNA türüne ait bütün
+    /// kayıtları döndürür.
+    pub fn records_of_kind(
+        &self,
+        kind: ZanistarastDnaKind,
+    ) -> Vec<&DnaKnowledgeRecord> {
+        self.records
+            .iter()
+            .filter(|record| record.is_kind(kind))
+            .collect()
+    }
+
+    /// Bir düğümün DNA katmanında kayıtlı olup
+    /// olmadığını bildirir.
+    pub fn contains_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.record_for_node(node_id).is_some()
+    }
+ /// Zanistarast RNA katmanındaki görev, süreç ve
 /// bilgi dönüşümü türlerini belirtir.
 #[derive(
     Debug,
@@ -392,67 +453,6 @@ impl RnaKnowledgeMap {
     }
 }
 
-    /// Eksiksiz ve aynı düğüm için daha önce
-    /// kaydedilmemiş bir DNA kaydı ekler.
-    pub fn register(
-        &mut self,
-        record: DnaKnowledgeRecord,
-    ) -> bool {
-        if !record.is_complete() {
-            return false;
-        }
-
-        if self.records.iter().any(|stored| {
-            stored.node_id == record.node_id
-        }) {
-            return false;
-        }
-
-        self.records.push(record);
-        true
-    }
-
-    /// Toplam DNA bilgi kaydı sayısını döndürür.
-    pub fn record_count(&self) -> usize {
-        self.records.len()
-    }
-
-    /// DNA bilgi haritasının boş olup
-    /// olmadığını bildirir.
-    pub fn is_empty(&self) -> bool {
-        self.records.is_empty()
-    }
-
-    /// Belirtilen düğüme ait DNA kaydını döndürür.
-    pub fn record_for_node(
-        &self,
-        node_id: &str,
-    ) -> Option<&DnaKnowledgeRecord> {
-        self.records.iter().find(|record| {
-            record.node_id == node_id
-        })
-    }
-
-    /// Belirtilen DNA türüne ait bütün
-    /// kayıtları döndürür.
-    pub fn records_of_kind(
-        &self,
-        kind: ZanistarastDnaKind,
-    ) -> Vec<&DnaKnowledgeRecord> {
-        self.records
-            .iter()
-            .filter(|record| record.is_kind(kind))
-            .collect()
-    }
-
-    /// Bir düğümün DNA katmanında kayıtlı olup
-    /// olmadığını bildirir.
-    pub fn contains_node(
-        &self,
-        node_id: &str,
-    ) -> bool {
-        self.record_for_node(node_id).is_some()
-    }
 }
 
 /// Mevcut bir bilgi düğümünün DNA–RNA–Protein
