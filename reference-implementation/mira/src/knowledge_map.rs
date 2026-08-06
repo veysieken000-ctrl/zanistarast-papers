@@ -1105,19 +1105,17 @@ impl ZanistarastKnowledgeArchitecture {
         report
     }
 
-     /// DNA–RNA–Protein ayrıntılı kayıtlarının genel
-    /// katman atamalarıyla uyumluluğunu doğrular.
-   
-    /// DNA–RNA–Protein kayıtları arasındaki kaynak
+     /// DNA–RNA–Protein kayıtları arasındaki kaynak
     /// ve hedef bağlantılarının mevcut düğümlere
     /// dayanıp dayanmadığını doğrular.
     ///
-    /// Kurallar:
-    /// - RNA kaynakları DNA, RNA veya Protein
+    /// RNA kaynakları DNA, RNA veya Protein
     /// katmanındaki mevcut bir düğüme bağlanmalıdır.
-    /// - RNA hedefleri RNA veya Protein
+    ///
+    /// RNA hedefleri RNA veya Protein
     /// katmanındaki mevcut bir düğüme bağlanmalıdır.
-    /// - Protein kaynakları DNA, RNA veya Protein
+    ///
+    /// Protein kaynakları DNA, RNA veya Protein
     /// katmanındaki mevcut bir düğüme bağlanmalıdır.
     pub fn validate_knowledge_chain(
         &self,
