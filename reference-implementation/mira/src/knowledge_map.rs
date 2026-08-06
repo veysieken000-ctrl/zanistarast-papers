@@ -1196,11 +1196,11 @@ impl ZanistarastKnowledgeArchitecture {
 
         report
     }
-}
-/// Zanistarast bilgi mimarisinin katman
+
+    /// Zanistarast bilgi mimarisinin katman
     /// atamalarını ve DNA–RNA–Protein zincirini
     /// tek bir raporda doğrular.
-    pub fn validate_architecture(
+pub fn validate_architecture(
         &self,
         layer_map: &KnowledgeLayerMap,
     ) -> KnowledgeArchitectureHealthReport {
@@ -1211,6 +1211,7 @@ impl ZanistarastKnowledgeArchitecture {
                 self.validate_knowledge_chain(),
         }
     }
+  }
 /// Katman doğrulama raporu.
 #[derive(
     Debug,
