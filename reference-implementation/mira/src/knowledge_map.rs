@@ -1380,6 +1380,13 @@ pub fn is_healthy(&self) -> bool {
     self.layer_alignment.is_valid()
         && self.knowledge_chain.is_valid()
 }
+/// Mimaride tespit edilen toplam sorun sayısını döndürür.
+pub fn issue_count(&self) -> usize {
+    self.layer_alignment.missing_count()
+        + self.layer_alignment.mismatch_count()
+        + self.layer_alignment.unassigned_count()
+        + self.knowledge_chain.missing_link_count()
+}
 
 }
 
