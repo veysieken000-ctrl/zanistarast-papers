@@ -137,6 +137,38 @@ impl WorkCenter {
             self.items_awaiting_verification().len(),
         )
     }
+/// Mira'nın bugün ele alması gereken en uygun işi döndürür.
+    ///
+    /// Öncelik sırası:
+    /// 1. Hazır iş
+    /// 2. Girdi bekleyen iş
+    /// 3. Onay bekleyen iş
+    /// 4. Doğrulama bekleyen iş
+    /// 5. Engellenmiş iş
+    pub fn what_should_we_do_today(&self) -> Option<&WorkItem> {
+        self.next_ready_item()
+            .or_else(|| {
+                self.items_awaiting_input()
+                    .into_iter()
+                    .next()
+            })
+            .or_else(|| {
+                self.items_requiring_review()
+                    .into_iter()
+                    .next()
+            })
+            .or_else(|| {
+                self.items_awaiting_verification()
+                    .into_iter()
+                    .next()
+            })
+            .or_else(|| {
+                self.blocked_items()
+                    .into_iter()
+                    .next()
+            })
+    }
+
 }
 
 
