@@ -3486,6 +3486,126 @@ fn reports_detailed_records_without_layer_assignment() {
             "layer_valid=true, chain_valid=true, issues=0",
         );
     }
+#[test]
+    fn builds_and_queries_zanistarast_knowledge_graph() {
+        let mut architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        assert!(architecture.dna.register(
+            DnaKnowledgeRecord::new(
+                "hebun-core",
+                ZanistarastDnaKind::CorePrinciple,
+                "Hebûn değişmez çekirdek ilkedir.",
+                true,
+            ),
+        ));
+
+        assert!(architecture.rna.register(
+            RnaKnowledgeRecord::new(
+                "hebun-process",
+                ZanistarastRnaKind::Process,
+                "Hebûn bilgisini makale çıktısına dönüştürür.",
+                vec!["hebun-core".to_string()],
+                vec!["hebun-paper".to_string()],
+            ),
+        ));
+
+        assert!(architecture.protein.register(
+            ProteinKnowledgeRecord::new(
+                "hebun-paper",
+                ZanistarastProteinKind::Article,
+                "Hebûn akademik makalesidir.",
+                vec![
+                    "hebun-process".to_string(),
+                ],
+                Some(PathBuf::from(
+                    "papers/hebun.md",
+                )),
+                true,
+            ),
+        ));
+
+        let mut graph =
+            ZanistarastKnowledgeGraph::new();
+
+        assert_eq!(
+            graph.register_dna_records(
+                &architecture.dna,
+            ),
+            1,
+        );
+
+        assert_eq!(
+            graph.register_rna_records(
+                &architecture.rna,
+            ),
+            1,
+        );
+
+        assert_eq!(
+            graph.register_protein_records(
+                &architecture.protein,
+            ),
+            1,
+        );
+
+        assert_eq!(graph.node_count(), 3);
+
+        assert_eq!(
+            graph.register_rna_relations(
+                &architecture.rna,
+            ),
+            2,
+        );
+
+        assert_eq!(
+            graph.register_protein_relations(
+                &architecture.protein,
+            ),
+            1,
+        );
+
+        assert_eq!(graph.relation_count(), 3);
+
+        assert!(graph.has_relation(
+            "hebun-core",
+            "hebun-process",
+            ZanistarastKnowledgeGraphRelationKind::DependsOn,
+        ));
+
+        assert!(graph.has_relation(
+            "hebun-process",
+            "hebun-paper",
+            ZanistarastKnowledgeGraphRelationKind::Produces,
+        ));
+
+        assert_eq!(
+            graph
+                .dependencies_of(
+                    "hebun-process",
+                )
+                .len(),
+            1,
+        );
+
+        assert_eq!(
+            graph
+                .impacts_of(
+                    "hebun-process",
+                )
+                .len(),
+            1,
+        );
+
+        assert_eq!(
+            graph
+                .nodes_of_kind(
+                    ZanistarastKnowledgeGraphNodeKind::Article,
+                )
+                .len(),
+            1,
+        );
+    }
 
 }
 
