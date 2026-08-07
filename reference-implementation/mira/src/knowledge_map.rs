@@ -189,6 +189,71 @@ impl ZanistarastKnowledgeGraphNode {
     PartialEq,
     Eq,
 )]
+
+/// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub enum ZanistarastKnowledgeGraphRelationKind {
+    Defines,
+    References,
+    DependsOn,
+    Extends,
+    Contradicts,
+    Supports,
+    Verifies,
+    TransformsInto,
+    Produces,
+    RequiresApproval,
+    PublishedAs,
+    ArchivedBy,
+}
+
+/// Zanistarast üst bilgi grafındaki iki düğüm
+/// arasındaki yönlü ilişkiyi temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct ZanistarastKnowledgeGraphRelation {
+    pub source_id: String,
+    pub target_id: String,
+    pub kind: ZanistarastKnowledgeGraphRelationKind,
+}
+
+impl ZanistarastKnowledgeGraphRelation {
+    /// Yeni bir üst bilgi grafı ilişkisi oluşturur.
+    pub fn new(
+        source_id: impl Into<String>,
+        target_id: impl Into<String>,
+        kind: ZanistarastKnowledgeGraphRelationKind,
+    ) -> Self {
+        Self {
+            source_id: source_id.into(),
+            target_id: target_id.into(),
+            kind,
+        }
+    }
+
+    /// İlişkinin zorunlu alanlarının geçerli
+    /// olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.source_id.trim().is_empty()
+            && !self.target_id.trim().is_empty()
+            && self.source_id != self.target_id
+    }
+}
+
 pub enum ZanistarastDnaKind {
     /// Zanistarast’ın değişmez temel ilkesi.
     CorePrinciple,
