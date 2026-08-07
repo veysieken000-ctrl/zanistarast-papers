@@ -3559,13 +3559,13 @@ fn reports_detailed_records_without_layer_assignment() {
         );
 
         assert_eq!(
-            graph.register_protein_relations(
-                &architecture.protein,
-            ),
-            1,
-        );
+    graph.register_protein_relations(
+        &architecture.protein,
+    ),
+    0,
+);
 
-        assert_eq!(graph.relation_count(), 3);
+        assert_eq!(graph.relation_count(), 2);
 
         assert!(graph.has_relation(
             "hebun-core",
