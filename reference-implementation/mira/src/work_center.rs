@@ -124,7 +124,19 @@ impl WorkCenter {
     pub fn blocked_items(&self) -> Vec<&WorkItem> {
         self.items_with_status(WorkItemStatus::Blocked)
     }
-
+/// Çalışma merkezinin kısa durum özetini döndürür.
+    pub fn summary(&self) -> String {
+        format!(
+            "total={}, active={}, ready={}, blocked={}, awaiting_input={}, awaiting_approval={}, awaiting_verification={}",
+            self.item_count(),
+            self.active_items().len(),
+            self.items_with_status(WorkItemStatus::Ready).len(),
+            self.blocked_items().len(),
+            self.items_awaiting_input().len(),
+            self.items_requiring_review().len(),
+            self.items_awaiting_verification().len(),
+        )
+    }
 }
 
 
