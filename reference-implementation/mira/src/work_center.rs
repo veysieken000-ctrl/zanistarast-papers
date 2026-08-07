@@ -54,5 +54,17 @@ impl WorkItem {
     }
 }
 
-
+/// Mira'nın görünür aktif çalışma merkezidir.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct WorkCenter {
+    pub items: Vec<WorkItem>,
+}
 
