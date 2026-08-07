@@ -396,6 +396,44 @@ impl ZanistarastKnowledgeGraph {
 
         registered
     }
+/// RNA katmanındaki ayrıntılı kayıtları
+    /// üst bilgi grafına düğüm olarak aktarır.
+    pub fn register_rna_records(
+        &mut self,
+        rna_map: &RnaKnowledgeMap,
+    ) -> usize {
+        let mut registered = 0;
+
+        for record in rna_map.records() {
+            let kind = match record.kind {
+                ZanistarastRnaKind::Task => {
+                    ZanistarastKnowledgeGraphNodeKind::Task
+                }
+
+                ZanistarastRnaKind::ApprovalRequest => {
+                    ZanistarastKnowledgeGraphNodeKind::Decision
+                }
+
+                ZanistarastRnaKind::Process
+                | ZanistarastRnaKind::TransformationRule
+                | ZanistarastRnaKind::KnowledgeTransfer
+                | ZanistarastRnaKind::VerificationRequest => {
+                    ZanistarastKnowledgeGraphNodeKind::Task
+                }
+            };
+
+            if self.register_node(
+                ZanistarastKnowledgeGraphNode::new(
+                    record.node_id.clone(),
+                    kind,
+                ),
+            ) {
+                registered += 1;
+            }
+        }
+
+        registered
+    }
 
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
