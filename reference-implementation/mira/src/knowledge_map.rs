@@ -550,6 +550,25 @@ impl ZanistarastKnowledgeGraph {
             })
             .collect()
     }
+/// Belirtilen düğümün doğrudan ürettiği
+    /// veya etkilediği üst bilgi grafı düğümlerini döndürür.
+    pub fn impacts_of(
+        &self,
+        node_id: &str,
+    ) -> Vec<&ZanistarastKnowledgeGraphNode> {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.source_id == node_id
+                    && relation.kind
+                        == ZanistarastKnowledgeGraphRelationKind::Produces
+            })
+            .filter_map(|relation| {
+                self.node_for_id(&relation.target_id)
+            })
+            .collect()
+    }
+    
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
 #[derive(
