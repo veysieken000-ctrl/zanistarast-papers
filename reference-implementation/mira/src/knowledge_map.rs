@@ -112,6 +112,52 @@ pub enum ZanistarastKnowledgeLayer {
     PartialEq,
     Eq,
 )]
+
+/// Zanistarast üst bilgi grafındaki düğüm türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+    PartialOrd,
+    Ord,
+)]
+pub enum ZanistarastKnowledgeGraphNodeKind {
+    /// Bir kaynak kod veya içerik deposu.
+    Repository,
+
+    /// Depo içindeki tek bir dosya veya belge.
+    File,
+
+    /// Zanistarast kavramsal bilgisi.
+    Concept,
+
+    /// Biçimsel veya kurucu aksiyom.
+    Axiom,
+
+    /// İspatlanmış veya ispatlanacak teorem.
+    Theorem,
+
+    /// Akademik makale veya makale taslağı.
+    Article,
+
+    /// Mira tarafından yürütülecek görev.
+    Task,
+
+    /// Müdebbir tarafından verilmiş veya
+    /// verilmesi beklenen karar.
+    Decision,
+
+    /// Akademik veya bilimsel kaynak.
+    Source,
+
+    /// Yayına hazırlanmış somut paket.
+    PublicationPackage,
+}
+
 pub enum ZanistarastDnaKind {
     /// Zanistarast’ın değişmez temel ilkesi.
     CorePrinciple,
