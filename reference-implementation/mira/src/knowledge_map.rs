@@ -101,18 +101,6 @@ pub enum ZanistarastKnowledgeLayer {
     Protein,
 }
 
-/// Zanistarast DNA katmanındaki değişmez veya
-/// otoriteye bağlı çekirdek bilgi türlerini belirtir.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-)]
-
 /// Zanistarast üst bilgi grafındaki düğüm türlerini belirtir.
 #[derive(
     Debug,
@@ -157,7 +145,17 @@ pub enum ZanistarastKnowledgeGraphNodeKind {
     /// Yayına hazırlanmış somut paket.
     PublicationPackage,
 }
-
+/// Zanistarast DNA katmanındaki değişmez veya
+/// otoriteye bağlı çekirdek bilgi türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
 pub enum ZanistarastDnaKind {
     /// Zanistarast’ın değişmez temel ilkesi.
     CorePrinciple,
