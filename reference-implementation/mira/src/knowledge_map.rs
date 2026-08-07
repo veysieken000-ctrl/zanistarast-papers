@@ -145,6 +145,39 @@ pub enum ZanistarastKnowledgeGraphNodeKind {
     /// Yayına hazırlanmış somut paket.
     PublicationPackage,
 }
+/// Zanistarast üst bilgi grafındaki tek bir düğümün kaydıdır.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct ZanistarastKnowledgeGraphNode {
+    pub node_id: String,
+    pub kind: ZanistarastKnowledgeGraphNodeKind,
+}
+
+impl ZanistarastKnowledgeGraphNode {
+    /// Yeni bir üst bilgi grafı düğümü oluşturur.
+    pub fn new(
+        node_id: impl Into<String>,
+        kind: ZanistarastKnowledgeGraphNodeKind,
+    ) -> Self {
+        Self {
+            node_id: node_id.into(),
+            kind,
+        }
+    }
+
+    /// Düğümün zorunlu kimliğinin geçerli olup
+    /// olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.node_id.trim().is_empty()
+    }
+}
+
 /// Zanistarast DNA katmanındaki değişmez veya
 /// otoriteye bağlı çekirdek bilgi türlerini belirtir.
 #[derive(
