@@ -79,6 +79,22 @@ impl WorkCenter {
         self.items.push(item);
         true
     }
+/// Çalışma merkezindeki toplam iş sayısını döndürür.
+    pub fn item_count(&self) -> usize {
+        self.items.len()
+    }
+
+    /// Belirtilen durumdaki işleri döndürür.
+    pub fn items_with_status(
+        &self,
+        status: WorkItemStatus,
+    ) -> Vec<&WorkItem> {
+        self.items
+            .iter()
+            .filter(|item| item.status == status)
+            .collect()
+    }
+
 }
 
 
