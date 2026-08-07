@@ -102,6 +102,13 @@ impl WorkCenter {
     pub fn items_awaiting_input(&self) -> Vec<&WorkItem> {
         self.items_with_status(WorkItemStatus::AwaitingInput)
     }
+/// Henüz tamamlanmamış çalışma merkezi işlerini döndürür.
+    pub fn active_items(&self) -> Vec<&WorkItem> {
+        self.items
+            .iter()
+            .filter(|item| item.status != WorkItemStatus::Completed)
+            .collect()
+    }
 
 }
 
