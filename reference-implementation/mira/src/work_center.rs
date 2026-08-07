@@ -102,7 +102,12 @@ impl WorkCenter {
     pub fn items_awaiting_input(&self) -> Vec<&WorkItem> {
         self.items_with_status(WorkItemStatus::AwaitingInput)
     }
-/// Henüz tamamlanmamış çalışma merkezi işlerini döndürür.
+/// Rasterast veya başka bir doğrulama katmanını bekleyen işleri döndürür.
+    pub fn items_awaiting_verification(&self) -> Vec<&WorkItem> {
+        self.items_with_status(WorkItemStatus::AwaitingVerification)
+    }
+
+    /// Henüz tamamlanmamış çalışma merkezi işlerini döndürür.
     pub fn active_items(&self) -> Vec<&WorkItem> {
         self.items
             .iter()
