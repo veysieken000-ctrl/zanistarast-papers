@@ -98,6 +98,10 @@ impl WorkCenter {
     pub fn items_requiring_review(&self) -> Vec<&WorkItem> {
     self.items_with_status(WorkItemStatus::AwaitingApproval)
 }
+/// Müdebbirden veya kullanıcıdan bilgi girişi bekleyen işleri döndürür.
+    pub fn items_awaiting_input(&self) -> Vec<&WorkItem> {
+        self.items_with_status(WorkItemStatus::AwaitingInput)
+    }
 
 }
 
