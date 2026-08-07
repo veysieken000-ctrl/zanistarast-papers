@@ -178,18 +178,6 @@ impl ZanistarastKnowledgeGraphNode {
     }
 }
 
-/// Zanistarast DNA katmanındaki değişmez veya
-/// otoriteye bağlı çekirdek bilgi türlerini belirtir.
-#[derive(
-    Debug,
-    Clone,
-    Copy,
-    Serialize,
-    Deserialize,
-    PartialEq,
-    Eq,
-)]
-
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
 #[derive(
     Debug,
@@ -253,6 +241,18 @@ impl ZanistarastKnowledgeGraphRelation {
             && self.source_id != self.target_id
     }
 }
+
+/// Zanistarast DNA katmanındaki değişmez veya
+/// otoriteye bağlı çekirdek bilgi türlerini belirtir.
+#[derive(
+    Debug,
+    Clone,
+    Copy,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
 
 pub enum ZanistarastDnaKind {
     /// Zanistarast’ın değişmez temel ilkesi.
