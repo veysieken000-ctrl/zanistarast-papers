@@ -361,6 +361,41 @@ impl ZanistarastKnowledgeGraph {
         )
         .is_some()
     }
+ /// DNA katmanındaki ayrıntılı kayıtları
+    /// üst bilgi grafına düğüm olarak aktarır.
+    pub fn register_dna_records(
+        &mut self,
+        dna_map: &DnaKnowledgeMap,
+    ) -> usize {
+        let mut registered = 0;
+
+        for record in dna_map.records() {
+            let kind = match record.kind {
+                ZanistarastDnaKind::Concept => {
+                    ZanistarastKnowledgeGraphNodeKind::Concept
+                }
+                ZanistarastDnaKind::Axiom => {
+                    ZanistarastKnowledgeGraphNodeKind::Axiom
+                }
+                ZanistarastDnaKind::CorePrinciple
+                | ZanistarastDnaKind::EpistemicJudgment
+                | ZanistarastDnaKind::OfficialDecision => {
+                    ZanistarastKnowledgeGraphNodeKind::Decision
+                }
+            };
+
+            if self.register_node(
+                ZanistarastKnowledgeGraphNode::new(
+                    record.node_id.clone(),
+                    kind,
+                ),
+            ) {
+                registered += 1;
+            }
+        }
+
+        registered
+    }
 
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
