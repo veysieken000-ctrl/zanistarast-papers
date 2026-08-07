@@ -68,3 +68,17 @@ pub struct WorkCenter {
     pub items: Vec<WorkItem>,
 }
 
+impl WorkCenter {
+    /// Geçerli bir işi çalışma merkezine ekler.
+    /// Geçersiz işler eklenmez.
+    pub fn add_item(&mut self, item: WorkItem) -> bool {
+        if !item.is_valid() {
+            return false;
+        }
+
+        self.items.push(item);
+        true
+    }
+}
+
+
