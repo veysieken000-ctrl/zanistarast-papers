@@ -2934,6 +2934,24 @@ fn reports_detailed_records_without_layer_assignment() {
             ],
         );
     }
+#[test]
+    fn summarizes_knowledge_architecture_health() {
+        let architecture =
+            ZanistarastKnowledgeArchitecture::new();
+
+        let layer_map =
+            KnowledgeLayerMap::new();
+
+        let health =
+            architecture.validate_architecture(
+                &layer_map,
+            );
+
+        assert_eq!(
+            health.summary(),
+            "layer_valid=true, chain_valid=true, issues=0",
+        );
+    }
 
 }
 
