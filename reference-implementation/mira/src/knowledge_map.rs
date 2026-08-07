@@ -434,6 +434,43 @@ impl ZanistarastKnowledgeGraph {
 
         registered
     }
+ /// Protein katmanındaki ayrıntılı kayıtları
+    /// üst bilgi grafına düğüm olarak aktarır.
+    pub fn register_protein_records(
+        &mut self,
+        protein_map: &ProteinKnowledgeMap,
+    ) -> usize {
+        let mut registered = 0;
+
+        for record in protein_map.records() {
+            let kind = match record.kind {
+                ZanistarastProteinKind::Article => {
+                    ZanistarastKnowledgeGraphNodeKind::Article
+                }
+
+                ZanistarastProteinKind::PublicationPackage => {
+                    ZanistarastKnowledgeGraphNodeKind::PublicationPackage
+                }
+
+                ZanistarastProteinKind::CodeModule
+                | ZanistarastProteinKind::Report
+                | ZanistarastProteinKind::Application => {
+                    ZanistarastKnowledgeGraphNodeKind::File
+                }
+            };
+
+            if self.register_node(
+                ZanistarastKnowledgeGraphNode::new(
+                    record.node_id.clone(),
+                    kind,
+                ),
+            ) {
+                registered += 1;
+            }
+        }
+
+        registered
+    }
 
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
