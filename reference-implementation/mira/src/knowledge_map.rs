@@ -471,6 +471,67 @@ impl ZanistarastKnowledgeGraph {
 
         registered
     }
+/// RNA kayıtlarındaki kaynak ve hedef bağlantılarını
+    /// üst bilgi grafı ilişkilerine dönüştürür.
+    pub fn register_rna_relations(
+        &mut self,
+        rna_map: &RnaKnowledgeMap,
+    ) -> usize {
+        let mut registered = 0;
+
+        for record in rna_map.records() {
+            for source_node_id in &record.source_node_ids {
+                if self.register_relation(
+                    ZanistarastKnowledgeGraphRelation::new(
+                        source_node_id.clone(),
+                        record.node_id.clone(),
+                        ZanistarastKnowledgeGraphRelationKind::DependsOn,
+                    ),
+                ) {
+                    registered += 1;
+                }
+            }
+
+            for target_node_id in &record.target_node_ids {
+                if self.register_relation(
+                    ZanistarastKnowledgeGraphRelation::new(
+                        record.node_id.clone(),
+                        target_node_id.clone(),
+                        ZanistarastKnowledgeGraphRelationKind::Produces,
+                    ),
+                ) {
+                    registered += 1;
+                }
+            }
+        }
+
+        registered
+    }
+
+    /// Protein kayıtlarındaki kaynak bağlantılarını
+    /// üst bilgi grafı ilişkilerine dönüştürür.
+    pub fn register_protein_relations(
+        &mut self,
+        protein_map: &ProteinKnowledgeMap,
+    ) -> usize {
+        let mut registered = 0;
+
+        for record in protein_map.records() {
+            for source_node_id in &record.source_node_ids {
+                if self.register_relation(
+                    ZanistarastKnowledgeGraphRelation::new(
+                        source_node_id.clone(),
+                        record.node_id.clone(),
+                        ZanistarastKnowledgeGraphRelationKind::Produces,
+                    ),
+                ) {
+                    registered += 1;
+                }
+            }
+        }
+
+        registered
+    }
 
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
