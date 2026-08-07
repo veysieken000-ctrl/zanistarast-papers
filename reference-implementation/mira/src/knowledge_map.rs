@@ -266,6 +266,102 @@ impl ZanistarastKnowledgeGraph {
             .filter(|node| node.kind == kind)
             .collect()
     }
+  /// Kaynak ve hedef düğümleri graf içinde bulunan,
+    /// geçerli ve daha önce kaydedilmemiş bir ilişkiyi ekler.
+    pub fn register_relation(
+        &mut self,
+        relation: ZanistarastKnowledgeGraphRelation,
+    ) -> bool {
+        if !relation.is_valid() {
+            return false;
+        }
+
+        if !self.contains_node(&relation.source_id)
+            || !self.contains_node(&relation.target_id)
+        {
+            return false;
+        }
+
+        if self.relations.iter().any(|stored| {
+            stored.source_id == relation.source_id
+                && stored.target_id == relation.target_id
+                && stored.kind == relation.kind
+        }) {
+            return false;
+        }
+
+        self.relations.push(relation);
+        true
+    }
+
+    /// Belirtilen kaynak düğümden çıkan ilişkileri döndürür.
+    pub fn relations_from(
+        &self,
+        source_id: &str,
+    ) -> Vec<&ZanistarastKnowledgeGraphRelation> {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.source_id == source_id
+            })
+            .collect()
+    }
+
+    /// Belirtilen hedef düğüme yönelen ilişkileri döndürür.
+    pub fn relations_to(
+        &self,
+        target_id: &str,
+    ) -> Vec<&ZanistarastKnowledgeGraphRelation> {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.target_id == target_id
+            })
+            .collect()
+    }
+
+    /// Belirtilen türdeki ilişkileri döndürür.
+    pub fn relations_of_kind(
+        &self,
+        kind: ZanistarastKnowledgeGraphRelationKind,
+    ) -> Vec<&ZanistarastKnowledgeGraphRelation> {
+        self.relations
+            .iter()
+            .filter(|relation| relation.kind == kind)
+            .collect()
+    }
+
+    /// Kaynak, hedef ve ilişki türüne göre
+    /// tek bir graf ilişkisi bulur.
+    pub fn relation(
+        &self,
+        source_id: &str,
+        target_id: &str,
+        kind: ZanistarastKnowledgeGraphRelationKind,
+    ) -> Option<&ZanistarastKnowledgeGraphRelation> {
+        self.relations.iter().find(|relation| {
+            relation.source_id == source_id
+                && relation.target_id == target_id
+                && relation.kind == kind
+        })
+    }
+
+    /// Belirtilen graf ilişkisinin bulunup
+    /// bulunmadığını bildirir.
+    pub fn has_relation(
+        &self,
+        source_id: &str,
+        target_id: &str,
+        kind: ZanistarastKnowledgeGraphRelationKind,
+    ) -> bool {
+        self.relation(
+            source_id,
+            target_id,
+            kind,
+        )
+        .is_some()
+    }
+
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
 #[derive(
