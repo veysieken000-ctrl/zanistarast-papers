@@ -75,6 +75,7 @@ pub mod repository_memory;
 pub mod repository_relation;
 pub mod repository_graph;
 pub mod repository_scan_report;
+pub mod work_center;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
