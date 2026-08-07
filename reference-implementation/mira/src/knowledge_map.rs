@@ -1398,7 +1398,7 @@ pub fn summary(&self) -> String {
     )
     }
        
-
+ }
 /// Tek bir Zanistarast alanına ait bilgi haritası.
 #[derive(
     Debug,
