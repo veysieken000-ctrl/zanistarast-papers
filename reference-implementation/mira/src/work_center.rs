@@ -106,7 +106,7 @@ impl WorkCenter {
     pub fn active_items(&self) -> Vec<&WorkItem> {
         self.items
             .iter()
-            .filter(|item| item.status != WorkItemStatus::Completed)
+            .filter(|item| item.status != WorkItemStatus::Ready)
             .collect()
     }
 
