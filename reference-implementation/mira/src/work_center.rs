@@ -171,4 +171,64 @@ impl WorkCenter {
 
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn work_center_reports_and_selects_active_work() {
+        let mut center = WorkCenter::default();
+
+        assert!(center.add_item(WorkItem::new(
+            "ready-paper",
+            "Hazır makaleyi işle",
+            WorkItemStatus::Ready,
+        )));
+
+        assert!(center.add_item(WorkItem::new(
+            "approval-required",
+            "Müdebbir onayını bekle",
+            WorkItemStatus::AwaitingApproval,
+        )));
+
+        assert!(center.add_item(WorkItem::new(
+            "verification-required",
+            "Rasterast doğrulamasını bekle",
+            WorkItemStatus::AwaitingVerification,
+        )));
+
+        assert!(center.add_item(WorkItem::new(
+            "blocked-task",
+            "Engellenmiş görevi incele",
+            WorkItemStatus::Blocked,
+        )));
+
+        assert_eq!(center.item_count(), 4);
+
+        assert_eq!(
+            center.items_requiring_review().len(),
+            1,
+        );
+
+        assert_eq!(
+            center.items_awaiting_verification().len(),
+            1,
+        );
+
+        assert_eq!(
+            center.blocked_items().len(),
+            1,
+        );
+
+        let next = center
+            .what_should_we_do_today()
+            .expect("ready work item should exist");
+
+        assert_eq!(next.id, "ready-paper");
+        assert_eq!(next.status, WorkItemStatus::Ready);
+    }
+}
+
+
+
 
