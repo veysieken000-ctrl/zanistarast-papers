@@ -94,7 +94,10 @@ impl WorkCenter {
             .filter(|item| item.status == status)
             .collect()
     }
-
+/// Müdebbir incelemesi veya kararı bekleyen işleri döndürür.
+    pub fn items_requiring_review(&self) -> Vec<&WorkItem> {
+        self.items_with_status(WorkItemStatus::RequiresReview)
+    }
 }
 
 
