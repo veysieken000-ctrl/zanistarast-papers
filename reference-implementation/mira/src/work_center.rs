@@ -114,6 +114,12 @@ impl WorkCenter {
             .filter(|item| item.status != WorkItemStatus::Ready)
             .collect()
     }
+ /// Mira'nın doğrudan ele alabileceği ilk hazır işi döndürür.
+    pub fn next_ready_item(&self) -> Option<&WorkItem> {
+        self.items
+            .iter()
+            .find(|item| item.status == WorkItemStatus::Ready)
+    }
 
 }
 
