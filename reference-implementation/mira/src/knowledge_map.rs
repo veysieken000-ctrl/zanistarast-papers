@@ -178,6 +178,44 @@ impl ZanistarastKnowledgeGraphNode {
     }
 }
 
+/// Zanistarast üst bilgi grafındaki düğüm ve
+/// ilişkilerin birleşik koleksiyonudur.
+#[derive(
+    Debug,
+    Clone,
+    Default,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct ZanistarastKnowledgeGraph {
+    pub nodes: Vec<ZanistarastKnowledgeGraphNode>,
+    pub relations: Vec<ZanistarastKnowledgeGraphRelation>,
+}
+
+impl ZanistarastKnowledgeGraph {
+    /// Boş bir Zanistarast üst bilgi grafı oluşturur.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Graf içindeki toplam düğüm sayısını döndürür.
+    pub fn node_count(&self) -> usize {
+        self.nodes.len()
+    }
+
+    /// Graf içindeki toplam ilişki sayısını döndürür.
+    pub fn relation_count(&self) -> usize {
+        self.relations.len()
+    }
+
+    /// Grafın tamamen boş olup olmadığını bildirir.
+    pub fn is_empty(&self) -> bool {
+        self.nodes.is_empty()
+            && self.relations.is_empty()
+    }
+}
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
 #[derive(
     Debug,
