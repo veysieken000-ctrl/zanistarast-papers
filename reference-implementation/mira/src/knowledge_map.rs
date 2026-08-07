@@ -532,7 +532,24 @@ impl ZanistarastKnowledgeGraph {
 
         registered
     }
-
+/// Belirtilen düğümün doğrudan bağımlı olduğu
+    /// üst bilgi grafı düğümlerini döndürür.
+    pub fn dependencies_of(
+        &self,
+        node_id: &str,
+    ) -> Vec<&ZanistarastKnowledgeGraphNode> {
+        self.relations
+            .iter()
+            .filter(|relation| {
+                relation.target_id == node_id
+                    && relation.kind
+                        == ZanistarastKnowledgeGraphRelationKind::DependsOn
+            })
+            .filter_map(|relation| {
+                self.node_for_id(&relation.source_id)
+            })
+            .collect()
+    }
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
 #[derive(
