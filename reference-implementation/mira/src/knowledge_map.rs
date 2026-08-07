@@ -215,6 +215,57 @@ impl ZanistarastKnowledgeGraph {
         self.nodes.is_empty()
             && self.relations.is_empty()
     }
+
+    /// Geçerli ve aynı kimlikle daha önce
+    /// kaydedilmemiş bir düğümü grafa ekler.
+    pub fn register_node(
+        &mut self,
+        node: ZanistarastKnowledgeGraphNode,
+    ) -> bool {
+        if !node.is_valid() {
+            return false;
+        }
+
+        if self.nodes.iter().any(|stored| {
+            stored.node_id == node.node_id
+        }) {
+            return false;
+        }
+
+        self.nodes.push(node);
+        true
+    }
+
+    /// Belirtilen kimliğe ait graf düğümünü döndürür.
+    pub fn node_for_id(
+        &self,
+        node_id: &str,
+    ) -> Option<&ZanistarastKnowledgeGraphNode> {
+        self.nodes.iter().find(|node| {
+            node.node_id == node_id
+        })
+    }
+
+    /// Belirtilen kimlikte bir düğümün
+    /// graf içinde bulunup bulunmadığını bildirir.
+    pub fn contains_node(
+        &self,
+        node_id: &str,
+    ) -> bool {
+        self.node_for_id(node_id).is_some()
+    }
+
+    /// Belirtilen türdeki bütün graf
+    /// düğümlerini döndürür.
+    pub fn nodes_of_kind(
+        &self,
+        kind: ZanistarastKnowledgeGraphNodeKind,
+    ) -> Vec<&ZanistarastKnowledgeGraphNode> {
+        self.nodes
+            .iter()
+            .filter(|node| node.kind == kind)
+            .collect()
+    }
 }
 /// Zanistarast üst bilgi grafındaki ilişki türlerini belirtir.
 #[derive(
