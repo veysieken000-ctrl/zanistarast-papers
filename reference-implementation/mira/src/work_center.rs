@@ -120,6 +120,10 @@ impl WorkCenter {
             .iter()
             .find(|item| item.status == WorkItemStatus::Ready)
     }
+/// İlerlemesi bir engel nedeniyle durmuş işleri döndürür.
+    pub fn blocked_items(&self) -> Vec<&WorkItem> {
+        self.items_with_status(WorkItemStatus::Blocked)
+    }
 
 }
 
