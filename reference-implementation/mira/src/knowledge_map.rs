@@ -1397,13 +1397,7 @@ pub fn summary(&self) -> String {
         self.issue_count(),
     )
     }
-        /// Bilgi mimarisinde hiç sorun bulunup
-/// bulunmadığını bildirir.
-pub fn has_issues(&self) -> bool {
-    self.issue_count() > 0
-}
-
-}
+       
 
 /// Tek bir Zanistarast alanına ait bilgi haritası.
 #[derive(
