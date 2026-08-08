@@ -1873,6 +1873,72 @@ zanistarast-papers",
             ],
         );
     }
+#[test]
+    fn prepares_multi_channel_publication_outputs() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(request.is_ready());
+
+        let zenodo_metadata =
+            ZenodoMetadata::from_publication_metadata(
+                &request.metadata,
+            );
+
+        assert!(zenodo_metadata.is_complete());
+
+        let website =
+            WebsitePublicationSubmission::from_request(
+                &request,
+                Some(
+                    "10.5281/zenodo.1234567"
+                        .to_string(),
+                ),
+            );
+
+        let medium =
+            MediumPublicationDraft::from_request(
+                &request,
+                Some(
+                    "10.5281/zenodo.1234567"
+                        .to_string(),
+                ),
+            );
+
+        let linkedin =
+            LinkedInPublicationDraft::from_request(
+                &request,
+                Some(
+                    "10.5281/zenodo.1234567"
+                        .to_string(),
+                ),
+            );
+
+        assert!(website.is_ready());
+        assert!(medium.is_ready());
+        assert!(linkedin.is_ready());
+
+        assert_eq!(
+            website.title,
+            request.metadata.title,
+        );
+
+        assert_eq!(
+            medium.title,
+            request.metadata.title,
+        );
+
+        assert_eq!(
+            linkedin.title,
+            request.metadata.title,
+        );
+    }
+
 }
 
 
