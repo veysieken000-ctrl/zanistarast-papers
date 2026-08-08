@@ -1340,6 +1340,60 @@ fn publication_requests_have_unique_identifiers() {
 
         assert!(!missing_deposition.is_valid());
     }
+#[test]
+    fn prepares_complete_zenodo_publication_flow() {
+        let metadata = PublicationMetadata::new(
+            "Rasterast Verification",
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+            "Deterministic verification for academic publication.",
+            vec![
+                "Rasterast".to_string(),
+                "Zanistarast".to_string(),
+            ],
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        );
+
+        let zenodo_metadata =
+            ZenodoMetadata::from_publication_metadata(
+                &metadata,
+            );
+
+        let deposition = ZenodoDeposition::new(
+            zenodo_metadata,
+            vec![
+                "rasterast-verification.pdf".to_string(),
+                "rasterast-verification.tex".to_string(),
+            ],
+        );
+
+        let submission = ZenodoSubmission::new(
+            deposition,
+            vec![
+                ZenodoUploadFile::new(
+                    "rasterast-verification.pdf",
+                    b"%PDF-1.7\n".to_vec(),
+                ),
+                ZenodoUploadFile::new(
+                    "rasterast-verification.tex",
+                    b"\\documentclass{article}".to_vec(),
+                ),
+            ],
+        );
+
+        assert!(submission.is_ready());
+
+        let result =
+            ZenodoPublicationResult::new(
+                "1234567",
+                "10.5281/zenodo.1234567",
+            );
+
+        assert!(result.is_valid());
+    }
 
 }
 
