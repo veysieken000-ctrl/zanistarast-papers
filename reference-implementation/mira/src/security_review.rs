@@ -288,6 +288,49 @@ impl BenefitRiskAssessment {
     }
 }
 
+/// Müdebbir tarafından verilen açık onay veya ret kararını temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct MudebbirApprovalRecord {
+    pub subject: String,
+    pub approved: bool,
+    pub rationale: String,
+}
+
+impl MudebbirApprovalRecord {
+    /// Yeni bir Müdebbir onay kaydı oluşturur.
+    pub fn new(
+        subject: impl Into<String>,
+        approved: bool,
+        rationale: impl Into<String>,
+    ) -> Self {
+        Self {
+            subject: subject.into(),
+            approved,
+            rationale: rationale.into(),
+        }
+    }
+
+    /// Onay kaydının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.subject.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+    }
+
+    /// Müdebbir tarafından açık onay verilip
+    /// verilmediğini bildirir.
+    pub fn is_approved(&self) -> bool {
+        self.is_valid() && self.approved
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
