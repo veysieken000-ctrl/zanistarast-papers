@@ -297,6 +297,49 @@ impl ZenodoPublicationResult {
             && !self.doi.trim().is_empty()
     }
 }
+/// arXiv'e gönderilmeden önce hazırlanmış
+/// akademik yayın bilgisini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct ArxivSubmission {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub abstract_text: String,
+    pub latex_source: String,
+}
+
+impl ArxivSubmission {
+    /// Genel yayın isteğinden arXiv hazırlığı oluşturur.
+    pub fn from_request(
+        request: &PublicationRequest,
+    ) -> Self {
+        Self {
+            title: request.metadata.title.clone(),
+            authors: request.metadata.authors.clone(),
+            abstract_text:
+                request.metadata.abstract_text.clone(),
+            latex_source:
+                request.package.latex_source.clone(),
+        }
+    }
+
+    /// arXiv hazırlığının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_ready(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.abstract_text.trim().is_empty()
+            && !self.latex_source.trim().is_empty()
+    }
+}
 
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1393,6 +1436,37 @@ fn publication_requests_have_unique_identifiers() {
             );
 
         assert!(result.is_valid());
+    }
+#[test]
+    fn prepares_complete_arxiv_submission() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Arxiv,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(request.is_ready());
+
+        let arxiv =
+            ArxivSubmission::from_request(
+                &request,
+            );
+
+        assert!(arxiv.is_ready());
+
+        assert_eq!(
+            arxiv.title,
+            "Rasterast Verification",
+        );
+
+        assert_eq!(
+            arxiv.authors,
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+        );
     }
 
 }
