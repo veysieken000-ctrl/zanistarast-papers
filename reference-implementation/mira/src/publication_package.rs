@@ -1011,6 +1011,25 @@ fn publication_requests_have_unique_identifiers() {
         assert_eq!(zenodo.license, "CC-BY-4.0");
         assert_eq!(zenodo.version, "1.0.0");
     }
+#[test]
+    fn incomplete_zenodo_metadata_is_rejected() {
+        let metadata = PublicationMetadata::new(
+            "",
+            Vec::new(),
+            "",
+            Vec::new(),
+            "",
+            "",
+            "",
+        );
+
+        let zenodo =
+            ZenodoMetadata::from_publication_metadata(
+                &metadata,
+            );
+
+        assert!(!zenodo.is_complete());
+    }
 
 }
 
