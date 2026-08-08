@@ -67,6 +67,58 @@ impl SecurityReview {
         self.status
             == SecurityReviewStatus::RequiresMudebbirApproval
     }
+/// Korunan bir metnin değişiklik öncesi ve güncel
+/// SHA-256 bütünlük değerlerini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct OriginalTextIntegrityRecord {
+    pub relative_path: String,
+    pub original_sha256: String,
+    pub current_sha256: String,
+}
+
+impl OriginalTextIntegrityRecord {
+    /// Yeni bir metin bütünlük kaydı oluşturur.
+    pub fn new(
+        relative_path: impl Into<String>,
+        original_sha256: impl Into<String>,
+        current_sha256: impl Into<String>,
+    ) -> Self {
+        Self {
+            relative_path: relative_path.into(),
+            original_sha256: original_sha256.into(),
+            current_sha256: current_sha256.into(),
+        }
+    }
+
+    /// Bütünlük kaydının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.relative_path.trim().is_empty()
+            && !self.original_sha256.trim().is_empty()
+            && !self.current_sha256.trim().is_empty()
+    }
+
+    /// Korunan metnin SHA-256 değerinin
+    /// değişmeden kalıp kalmadığını bildirir.
+    pub fn is_unchanged(&self) -> bool {
+        self.is_valid()
+            && self.original_sha256 == self.current_sha256
+    }
+
+    /// Korunan metnin değişmiş olup
+    /// olmadığını bildirir.
+    pub fn has_changed(&self) -> bool {
+        self.is_valid() && !self.is_unchanged()
+    }
+}
+
 }
 
 
