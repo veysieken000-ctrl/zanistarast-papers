@@ -168,6 +168,34 @@ impl OriginalTextIntegrityRecord {
     }
 }
 
+/// Korunan bir metnin değişiklik özetini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct TextDiffReport {
+    pub relative_path: String,
+    pub changed: bool,
+    pub original_sha256: String,
+    pub current_sha256: String,
+}
+
+impl OriginalTextIntegrityRecord {
+    /// Bütünlük kaydından değişiklik raporu üretir.
+    pub fn diff_report(&self) -> TextDiffReport {
+        TextDiffReport {
+            relative_path: self.relative_path.clone(),
+            changed: self.has_changed(),
+            original_sha256: self.original_sha256.clone(),
+            current_sha256: self.current_sha256.clone(),
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
