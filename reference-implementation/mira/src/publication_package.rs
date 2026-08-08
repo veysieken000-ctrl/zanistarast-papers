@@ -191,6 +191,36 @@ impl ZenodoDeposition {
     }
 }
 
+/// Zenodo'ya yüklenecek tek bir dosyanın
+/// yerel hazırlık modelidir.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct ZenodoUploadFile {
+    pub filename: String,
+    pub bytes: Vec<u8>,
+}
+
+impl ZenodoUploadFile {
+    pub fn new(
+        filename: impl Into<String>,
+        bytes: Vec<u8>,
+    ) -> Self {
+        Self {
+            filename: filename.into(),
+            bytes,
+        }
+    }
+
+    pub fn is_ready(&self) -> bool {
+        !self.filename.trim().is_empty()
+            && !self.bytes.is_empty()
+    }
+}
+
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationError {
@@ -1137,6 +1167,30 @@ fn publication_requests_have_unique_identifiers() {
         );
 
         assert!(!blank_file.is_ready());
+    }
+
+    #[test]
+    fn zenodo_upload_file_requires_name_and_content() {
+        let ready = ZenodoUploadFile::new(
+            "rasterast-verification.pdf",
+            b"%PDF-1.7\n".to_vec(),
+        );
+
+        assert!(ready.is_ready());
+
+        let missing_name = ZenodoUploadFile::new(
+            "",
+            b"%PDF-1.7\n".to_vec(),
+        );
+
+        assert!(!missing_name.is_ready());
+
+        let missing_content = ZenodoUploadFile::new(
+            "rasterast-verification.pdf",
+            Vec::new(),
+        );
+
+        assert!(!missing_content.is_ready());
     }
 
 }
