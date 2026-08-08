@@ -375,6 +375,44 @@ impl TruthLogRecord {
     }
 }
 
+/// Zanistarast güvenlik, Rasterast, fayda–risk ve
+/// Müdebbir onay sonuçlarını tek raporda birleştirir.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct SecurityValidationReport {
+    pub integrity: OriginalTextIntegrityReport,
+    pub rasterast: RasterastVerificationResult,
+    pub benefit_risk: BenefitRiskAssessment,
+    pub approval: MudebbirApprovalRecord,
+    pub truth_log: TruthLogRecord,
+}
+
+impl SecurityValidationReport {
+    /// Güvenlik zincirinin tamamının başarılı
+    /// olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        self.integrity.valid
+            && !self.integrity.changed
+            && self.rasterast.is_valid()
+            && self.benefit_risk.is_valid()
+            && self.benefit_risk.benefit_outweighs_risk()
+            && self.approval.is_approved()
+            && self.truth_log.is_verified()
+    }
+
+    /// Gerçek işlem veya yayın için güvenlik
+    /// zincirinin hazır olup olmadığını bildirir.
+    pub fn is_ready_for_final_action(&self) -> bool {
+        self.is_valid()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
