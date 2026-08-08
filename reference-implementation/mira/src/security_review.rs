@@ -168,6 +168,40 @@ impl OriginalTextIntegrityRecord {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn original_text_integrity_report_detects_changes() {
+        let unchanged =
+            OriginalTextIntegrityRecord::from_texts(
+                "papers/hebun.md",
+                "Hebûn değişmez çekirdek ilkedir.",
+                "Hebûn değişmez çekirdek ilkedir.",
+            );
+
+        let unchanged_report =
+            unchanged.integrity_report();
+
+        assert!(unchanged_report.valid);
+        assert!(!unchanged_report.changed);
+
+        let changed =
+            OriginalTextIntegrityRecord::from_texts(
+                "papers/hebun.md",
+                "Hebûn değişmez çekirdek ilkedir.",
+                "Hebûn çekirdek ilkedir.",
+            );
+
+        let changed_report =
+            changed.integrity_report();
+
+        assert!(changed_report.valid);
+        assert!(changed_report.changed);
+    }
+}
+
 
 
 
