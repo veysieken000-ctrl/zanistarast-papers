@@ -264,7 +264,9 @@ impl ZenodoSubmission {
                 .all(|(expected, upload)| {
                     expected == &upload.filename
                 })
-    }
+       }
+     }
+
 /// Zenodo yayınının DOI ve kayıt kimliği sonucunu temsil eder.
 #[derive(
     Debug,
@@ -294,8 +296,6 @@ impl ZenodoPublicationResult {
         !self.deposition_id.trim().is_empty()
             && !self.doi.trim().is_empty()
     }
-}
-
 }
 
 /// Yayın işleminin başarısızlık nedenleri.
