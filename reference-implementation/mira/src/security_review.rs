@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 
 /// Zanistarast güvenlik ve Rasterast doğrulama
 /// sürecindeki bir incelemenin durumunu belirtir.
@@ -120,6 +121,28 @@ impl OriginalTextIntegrityRecord {
         self.is_valid() && !self.is_unchanged()
     }
 }
+
+/// Orijinal ve güncel metinlerin SHA-256
+    /// değerlerini hesaplayarak bütünlük kaydı oluşturur.
+    pub fn from_texts(
+        relative_path: impl Into<String>,
+        original_text: &str,
+        current_text: &str,
+    ) -> Self {
+        let original_sha256 =
+            format!("{:x}", Sha256::digest(original_text.as_bytes()));
+
+        let current_sha256 =
+            format!("{:x}", Sha256::digest(current_text.as_bytes()));
+
+        Self::new(
+            relative_path,
+            original_sha256,
+            current_sha256,
+        )
+    }
+
+
 
 
 
