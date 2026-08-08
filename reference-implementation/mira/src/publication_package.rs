@@ -103,7 +103,56 @@ impl PublicationMetadata {
             && !self.version.trim().is_empty()
     }
 }
+/// Zanistarast yayın metadata bilgisinin
+/// Zenodo için hazırlanmış temsilidir.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct ZenodoMetadata {
+    pub title: String,
+    pub creators: Vec<String>,
+    pub description: String,
+    pub keywords: Vec<String>,
+    pub language: String,
+    pub license: String,
+    pub version: String,
+}
 
+impl ZenodoMetadata {
+    /// Genel yayın metadata bilgisini
+    /// Zenodo metadata modeline dönüştürür.
+    pub fn from_publication_metadata(
+        metadata: &PublicationMetadata,
+    ) -> Self {
+        Self {
+            title: metadata.title.clone(),
+            creators: metadata.authors.clone(),
+            description: metadata.abstract_text.clone(),
+            keywords: metadata.keywords.clone(),
+            language: metadata.language.clone(),
+            license: metadata.license.clone(),
+            version: metadata.version.clone(),
+        }
+    }
+
+    /// Zenodo metadata kaydının zorunlu
+    /// bilgilerinin eksiksiz olup olmadığını bildirir.
+    pub fn is_complete(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.creators.is_empty()
+            && self
+                .creators
+                .iter()
+                .all(|creator| !creator.trim().is_empty())
+            && !self.description.trim().is_empty()
+            && !self.language.trim().is_empty()
+            && !self.license.trim().is_empty()
+            && !self.version.trim().is_empty()
+    }
+}
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationError {
@@ -922,6 +971,47 @@ fn publication_requests_have_unique_identifiers() {
                 "Temporary directory must be removed.",
             );
     }
+#[test]
+    fn prepares_complete_zenodo_metadata() {
+        let metadata = PublicationMetadata::new(
+            "Rasterast Verification",
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+            "Deterministic verification for academic publication.",
+            vec![
+                "Rasterast".to_string(),
+                "Zanistarast".to_string(),
+            ],
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        );
+
+        let zenodo =
+            ZenodoMetadata::from_publication_metadata(
+                &metadata,
+            );
+
+        assert!(zenodo.is_complete());
+
+        assert_eq!(
+            zenodo.title,
+            "Rasterast Verification",
+        );
+
+        assert_eq!(
+            zenodo.creators,
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+        );
+
+        assert_eq!(zenodo.language, "tr");
+        assert_eq!(zenodo.license, "CC-BY-4.0");
+        assert_eq!(zenodo.version, "1.0.0");
+    }
+
 }
 
 
