@@ -58,4 +58,53 @@ impl FormalFoundationRecord {
     }
 }
 
+/// Zanistarast matematiksel temelindeki
+/// tek bir biçimsel aksiyomu temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct FormalAxiom {
+    pub id: String,
+    pub statement: String,
+    pub rationale: String,
+}
+
+impl FormalAxiom {
+    /// Yeni bir biçimsel aksiyom oluşturur.
+    pub fn new(
+        id: impl Into<String>,
+        statement: impl Into<String>,
+        rationale: impl Into<String>,
+    ) -> Self {
+        Self {
+            id: id.into(),
+            statement: statement.into(),
+            rationale: rationale.into(),
+        }
+    }
+
+    /// Aksiyomun zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.id.trim().is_empty()
+            && !self.statement.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+    }
+
+    /// Aksiyomu genel biçimsel temel kaydına dönüştürür.
+    pub fn as_foundation_record(
+        &self,
+    ) -> FormalFoundationRecord {
+        FormalFoundationRecord::new(
+            self.id.clone(),
+            FormalFoundationKind::Axiom,
+            self.statement.clone(),
+        )
+    }
+}
 
