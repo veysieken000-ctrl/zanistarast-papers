@@ -265,6 +265,37 @@ impl ZenodoSubmission {
                     expected == &upload.filename
                 })
     }
+/// Zenodo yayınının DOI ve kayıt kimliği sonucunu temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct ZenodoPublicationResult {
+    pub deposition_id: String,
+    pub doi: String,
+}
+
+impl ZenodoPublicationResult {
+    pub fn new(
+        deposition_id: impl Into<String>,
+        doi: impl Into<String>,
+    ) -> Self {
+        Self {
+            deposition_id: deposition_id.into(),
+            doi: doi.into(),
+        }
+    }
+
+    /// Zenodo yayın sonucunun zorunlu
+    /// bilgilerinin eksiksiz olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.deposition_id.trim().is_empty()
+            && !self.doi.trim().is_empty()
+    }
+}
+
 }
 
 /// Yayın işleminin başarısızlık nedenleri.
@@ -1283,6 +1314,31 @@ fn publication_requests_have_unique_identifiers() {
         );
 
         assert!(submission.is_ready());
+    }
+#[test]
+    fn zenodo_publication_result_requires_deposition_and_doi() {
+        let result = ZenodoPublicationResult::new(
+            "1234567",
+            "10.5281/zenodo.1234567",
+        );
+
+        assert!(result.is_valid());
+
+        let missing_doi =
+            ZenodoPublicationResult::new(
+                "1234567",
+                "",
+            );
+
+        assert!(!missing_doi.is_valid());
+
+        let missing_deposition =
+            ZenodoPublicationResult::new(
+                "",
+                "10.5281/zenodo.1234567",
+            );
+
+        assert!(!missing_deposition.is_valid());
     }
 
 }
