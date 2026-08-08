@@ -100,6 +100,26 @@ impl OriginalTextIntegrityRecord {
         }
     }
 
+    /// Orijinal ve güncel metinlerin SHA-256
+    /// değerlerini hesaplayarak bütünlük kaydı oluşturur.
+    pub fn from_texts(
+        relative_path: impl Into<String>,
+        original_text: &str,
+        current_text: &str,
+    ) -> Self {
+        let original_sha256 =
+            format!("{:x}", Sha256::digest(original_text.as_bytes()));
+
+        let current_sha256 =
+            format!("{:x}", Sha256::digest(current_text.as_bytes()));
+
+        Self::new(
+            relative_path,
+            original_sha256,
+            current_sha256,
+        )
+    }
+
     /// Bütünlük kaydının zorunlu bilgilerinin
     /// eksiksiz olup olmadığını bildirir.
     pub fn is_valid(&self) -> bool {
@@ -122,25 +142,6 @@ impl OriginalTextIntegrityRecord {
     }
 }
 
-/// Orijinal ve güncel metinlerin SHA-256
-    /// değerlerini hesaplayarak bütünlük kaydı oluşturur.
-    pub fn from_texts(
-        relative_path: impl Into<String>,
-        original_text: &str,
-        current_text: &str,
-    ) -> Self {
-        let original_sha256 =
-            format!("{:x}", Sha256::digest(original_text.as_bytes()));
-
-        let current_sha256 =
-            format!("{:x}", Sha256::digest(current_text.as_bytes()));
-
-        Self::new(
-            relative_path,
-            original_sha256,
-            current_sha256,
-        )
-    }
 
 
 
