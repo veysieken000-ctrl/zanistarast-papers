@@ -1102,6 +1102,42 @@ fn publication_requests_have_unique_identifiers() {
         assert!(deposition.is_ready());
         assert_eq!(deposition.files.len(), 3);
     }
+#[test]
+    fn incomplete_zenodo_deposition_is_rejected() {
+        let metadata = PublicationMetadata::new(
+            "Rasterast Verification",
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+            "Deterministic verification for academic publication.",
+            vec![
+                "Rasterast".to_string(),
+                "Zanistarast".to_string(),
+            ],
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        );
+
+        let zenodo_metadata =
+            ZenodoMetadata::from_publication_metadata(
+                &metadata,
+            );
+
+        let empty_files = ZenodoDeposition::new(
+            zenodo_metadata.clone(),
+            Vec::new(),
+        );
+
+        assert!(!empty_files.is_ready());
+
+        let blank_file = ZenodoDeposition::new(
+            zenodo_metadata,
+            vec![" ".to_string()],
+        );
+
+        assert!(!blank_file.is_ready());
+    }
 
 }
 
