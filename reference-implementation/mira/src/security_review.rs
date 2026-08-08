@@ -445,6 +445,67 @@ mod tests {
         assert!(changed_report.valid);
         assert!(changed_report.changed);
     }
+ #[test]
+    fn validates_complete_security_chain() {
+        let integrity_record =
+            OriginalTextIntegrityRecord::from_texts(
+                "papers/hebun.md",
+                "Hebûn değişmez çekirdek ilkedir.",
+                "Hebûn değişmez çekirdek ilkedir.",
+            );
+
+        let report = SecurityValidationReport {
+            integrity:
+                integrity_record.integrity_report(),
+            rasterast:
+                RasterastVerificationResult::new(
+                    "hebun-paper",
+                    true,
+                    true,
+                    true,
+                ),
+            benefit_risk:
+                BenefitRiskAssessment::new(
+                    "hebun-paper",
+                    90,
+                    10,
+                    "Bilimsel fayda riskten yüksektir.",
+                ),
+            approval:
+                MudebbirApprovalRecord::new(
+                    "hebun-paper",
+                    true,
+                    "Müdebbir tarafından onaylandı.",
+                ),
+            truth_log:
+                TruthLogRecord::new(
+                    "hebun-paper",
+                    "Security validation completed.",
+                    true,
+                ),
+        };
+
+        assert!(report.is_valid());
+
+        assert!(
+            report.is_ready_for_final_action()
+        );
+
+        assert!(!report.integrity.changed);
+
+        assert!(report.rasterast.is_valid());
+
+        assert!(
+            report
+                .benefit_risk
+                .benefit_outweighs_risk()
+        );
+
+        assert!(report.approval.is_approved());
+
+        assert!(report.truth_log.is_verified());
+    }
+
 }
 
 
