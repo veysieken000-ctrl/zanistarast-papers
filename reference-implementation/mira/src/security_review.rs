@@ -196,6 +196,48 @@ impl OriginalTextIntegrityRecord {
     }
 }
 
+/// Rasterast doğrulamasının temel sonucunu temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct RasterastVerificationResult {
+    pub subject: String,
+    pub consistent: bool,
+    pub source_valid: bool,
+    pub integrity_preserved: bool,
+}
+
+impl RasterastVerificationResult {
+    /// Yeni bir Rasterast doğrulama sonucu oluşturur.
+    pub fn new(
+        subject: impl Into<String>,
+        consistent: bool,
+        source_valid: bool,
+        integrity_preserved: bool,
+    ) -> Self {
+        Self {
+            subject: subject.into(),
+            consistent,
+            source_valid,
+            integrity_preserved,
+        }
+    }
+
+    /// Rasterast doğrulamasının tamamen başarılı
+    /// olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.subject.trim().is_empty()
+            && self.consistent
+            && self.source_valid
+            && self.integrity_preserved
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
