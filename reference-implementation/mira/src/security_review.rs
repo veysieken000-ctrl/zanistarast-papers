@@ -238,6 +238,56 @@ impl RasterastVerificationResult {
     }
 }
 
+/// Bir güvenlik veya yayın kararının
+/// fayda–risk değerlendirmesini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct BenefitRiskAssessment {
+    pub subject: String,
+    pub benefit_score: u8,
+    pub risk_score: u8,
+    pub rationale: String,
+}
+
+impl BenefitRiskAssessment {
+    /// Yeni bir fayda–risk değerlendirmesi oluşturur.
+    pub fn new(
+        subject: impl Into<String>,
+        benefit_score: u8,
+        risk_score: u8,
+        rationale: impl Into<String>,
+    ) -> Self {
+        Self {
+            subject: subject.into(),
+            benefit_score,
+            risk_score,
+            rationale: rationale.into(),
+        }
+    }
+
+    /// Değerlendirmenin zorunlu bilgilerinin
+    /// geçerli olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.subject.trim().is_empty()
+            && !self.rationale.trim().is_empty()
+            && self.benefit_score <= 100
+            && self.risk_score <= 100
+    }
+
+    /// Faydanın riskten büyük veya eşit
+    /// olup olmadığını bildirir.
+    pub fn benefit_outweighs_risk(&self) -> bool {
+        self.is_valid()
+            && self.benefit_score >= self.risk_score
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
