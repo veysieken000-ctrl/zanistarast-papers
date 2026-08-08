@@ -531,6 +531,53 @@ impl MediumPublicationDraft {
                 })
     }
 }
+/// LinkedIn'de yayınlanmak üzere hazırlanmış
+/// akademik paylaşım taslağını temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct LinkedInPublicationDraft {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub summary: String,
+    pub canonical_identifier: Option<String>,
+}
+
+impl LinkedInPublicationDraft {
+    /// Genel yayın isteğinden LinkedIn taslağı oluşturur.
+    pub fn from_request(
+        request: &PublicationRequest,
+        canonical_identifier: Option<String>,
+    ) -> Self {
+        Self {
+            title: request.metadata.title.clone(),
+            authors: request.metadata.authors.clone(),
+            summary: request.metadata.abstract_text.clone(),
+            canonical_identifier,
+        }
+    }
+
+    /// LinkedIn taslağının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_ready(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.summary.trim().is_empty()
+            && self
+                .canonical_identifier
+                .as_ref()
+                .is_none_or(|identifier| {
+                    !identifier.trim().is_empty()
+                })
+    }
+}
 
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1770,6 +1817,41 @@ zanistarast-papers",
 
         let draft =
             MediumPublicationDraft::from_request(
+                &request,
+                Some(
+                    "10.5281/zenodo.1234567"
+                        .to_string(),
+                ),
+            );
+
+        assert!(draft.is_ready());
+
+        assert_eq!(
+            draft.title,
+            "Rasterast Verification",
+        );
+
+        assert_eq!(
+            draft.authors,
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+        );
+    }
+ #[test]
+    fn prepares_complete_linkedin_publication_draft() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(request.is_ready());
+
+        let draft =
+            LinkedInPublicationDraft::from_request(
                 &request,
                 Some(
                     "10.5281/zenodo.1234567"
