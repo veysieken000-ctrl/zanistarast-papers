@@ -341,6 +341,54 @@ impl ArxivSubmission {
     }
 }
 
+/// Hugging Face'e gönderilmeden önce hazırlanmış
+/// akademik yayın bilgisini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct HuggingFaceSubmission {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub abstract_text: String,
+    pub keywords: Vec<String>,
+    pub license: String,
+}
+
+impl HuggingFaceSubmission {
+    /// Genel yayın isteğinden Hugging Face
+    /// hazırlığı oluşturur.
+    pub fn from_request(
+        request: &PublicationRequest,
+    ) -> Self {
+        Self {
+            title: request.metadata.title.clone(),
+            authors: request.metadata.authors.clone(),
+            abstract_text:
+                request.metadata.abstract_text.clone(),
+            keywords:
+                request.metadata.keywords.clone(),
+            license:
+                request.metadata.license.clone(),
+        }
+    }
+
+    /// Hugging Face hazırlığının zorunlu
+    /// bilgilerinin eksiksiz olduğunu bildirir.
+    pub fn is_ready(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.abstract_text.trim().is_empty()
+            && !self.license.trim().is_empty()
+    }
+}
+
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationError {
@@ -1468,7 +1516,37 @@ fn publication_requests_have_unique_identifiers() {
             ],
         );
     }
+#[test]
+    fn prepares_complete_hugging_face_submission() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::HuggingFace,
+            complete_package(),
+            complete_metadata(),
+        );
 
+        request.approve_by_mudebbir();
+
+        assert!(request.is_ready());
+
+        let submission =
+            HuggingFaceSubmission::from_request(
+                &request,
+            );
+
+        assert!(submission.is_ready());
+
+        assert_eq!(
+            submission.title,
+            "Rasterast Verification",
+        );
+
+        assert_eq!(
+            submission.authors,
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+        );
+    }
 }
 
 
