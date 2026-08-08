@@ -77,6 +77,7 @@ pub mod repository_graph;
 pub mod repository_scan_report;
 pub mod work_center;
 pub mod security_review;
+pub mod formal_foundation;
 
 pub use task::{MiraRiskLevel, MiraTask, MiraTaskStatus};
 pub use rasterast::RasterastReport;
