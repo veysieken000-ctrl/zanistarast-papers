@@ -221,6 +221,52 @@ impl ZenodoUploadFile {
     }
 }
 
+/// Zenodo taslağı ile yüklenecek dosyaları
+/// tek yerel hazırlık paketinde birleştirir.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct ZenodoSubmission {
+    pub deposition: ZenodoDeposition,
+    pub upload_files: Vec<ZenodoUploadFile>,
+}
+
+impl ZenodoSubmission {
+    pub fn new(
+        deposition: ZenodoDeposition,
+        upload_files: Vec<ZenodoUploadFile>,
+    ) -> Self {
+        Self {
+            deposition,
+            upload_files,
+        }
+    }
+
+    /// Zenodo gönderiminin yerel hazırlık açısından
+    /// tamamen hazır olup olmadığını bildirir.
+    pub fn is_ready(&self) -> bool {
+        self.deposition.is_ready()
+            && !self.upload_files.is_empty()
+            && self
+                .upload_files
+                .iter()
+                .all(ZenodoUploadFile::is_ready)
+            && self.deposition.files.len()
+                == self.upload_files.len()
+            && self
+                .deposition
+                .files
+                .iter()
+                .zip(&self.upload_files)
+                .all(|(expected, upload)| {
+                    expected == &upload.filename
+                })
+    }
+}
+
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationError {
@@ -1191,6 +1237,52 @@ fn publication_requests_have_unique_identifiers() {
         );
 
         assert!(!missing_content.is_ready());
+    }
+#[test]
+    fn complete_zenodo_submission_is_ready() {
+        let metadata = PublicationMetadata::new(
+            "Rasterast Verification",
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+            "Deterministic verification for academic publication.",
+            vec![
+                "Rasterast".to_string(),
+                "Zanistarast".to_string(),
+            ],
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        );
+
+        let zenodo_metadata =
+            ZenodoMetadata::from_publication_metadata(
+                &metadata,
+            );
+
+        let deposition = ZenodoDeposition::new(
+            zenodo_metadata,
+            vec![
+                "rasterast-verification.pdf".to_string(),
+                "rasterast-verification.tex".to_string(),
+            ],
+        );
+
+        let submission = ZenodoSubmission::new(
+            deposition,
+            vec![
+                ZenodoUploadFile::new(
+                    "rasterast-verification.pdf",
+                    b"%PDF-1.7\n".to_vec(),
+                ),
+                ZenodoUploadFile::new(
+                    "rasterast-verification.tex",
+                    b"\\documentclass{article}".to_vec(),
+                ),
+            ],
+        );
+
+        assert!(submission.is_ready());
     }
 
 }
