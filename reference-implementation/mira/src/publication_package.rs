@@ -432,6 +432,57 @@ impl PapersWithCodeSubmission {
             && !self.repository_url.trim().is_empty()
     }
 }
+/// Zanistarast ana sitesinde yayınlanmak üzere
+/// hazırlanmış akademik içerik bilgisini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct WebsitePublicationSubmission {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub abstract_text: String,
+    pub version: String,
+    pub canonical_identifier: Option<String>,
+}
+
+impl WebsitePublicationSubmission {
+    /// Genel yayın isteğinden site yayın hazırlığı oluşturur.
+    pub fn from_request(
+        request: &PublicationRequest,
+        canonical_identifier: Option<String>,
+    ) -> Self {
+        Self {
+            title: request.metadata.title.clone(),
+            authors: request.metadata.authors.clone(),
+            abstract_text:
+                request.metadata.abstract_text.clone(),
+            version: request.metadata.version.clone(),
+            canonical_identifier,
+        }
+    }
+
+    /// Site yayın hazırlığının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_ready(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.abstract_text.trim().is_empty()
+            && !self.version.trim().is_empty()
+            && self
+                .canonical_identifier
+                .as_ref()
+                .is_none_or(|identifier| {
+                    !identifier.trim().is_empty()
+                })
+    }
+}
 
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1622,6 +1673,39 @@ zanistarast-papers",
             vec![
                 "Veysi yê MALA SAF".to_string(),
             ],
+        );
+    }
+#[test]
+    fn prepares_complete_website_publication_submission() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::Zenodo,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(request.is_ready());
+
+        let submission =
+            WebsitePublicationSubmission::from_request(
+                &request,
+                Some(
+                    "10.5281/zenodo.1234567"
+                        .to_string(),
+                ),
+            );
+
+        assert!(submission.is_ready());
+
+        assert_eq!(
+            submission.title,
+            "Rasterast Verification",
+        );
+
+        assert_eq!(
+            submission.canonical_identifier.as_deref(),
+            Some("10.5281/zenodo.1234567"),
         );
     }
 
