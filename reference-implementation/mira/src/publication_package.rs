@@ -388,6 +388,50 @@ impl HuggingFaceSubmission {
             && !self.license.trim().is_empty()
     }
 }
+/// Papers With Code'a gönderilmeden önce hazırlanmış
+/// akademik yayın bilgisini temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct PapersWithCodeSubmission {
+    pub title: String,
+    pub authors: Vec<String>,
+    pub abstract_text: String,
+    pub repository_url: String,
+}
+
+impl PapersWithCodeSubmission {
+    /// Genel yayın isteğinden Papers With Code
+    /// hazırlığı oluşturur.
+    pub fn from_request(
+        request: &PublicationRequest,
+        repository_url: impl Into<String>,
+    ) -> Self {
+        Self {
+            title: request.metadata.title.clone(),
+            authors: request.metadata.authors.clone(),
+            abstract_text:
+                request.metadata.abstract_text.clone(),
+            repository_url: repository_url.into(),
+        }
+    }
+
+    /// Papers With Code hazırlığının zorunlu
+    /// bilgilerinin eksiksiz olduğunu bildirir.
+    pub fn is_ready(&self) -> bool {
+        !self.title.trim().is_empty()
+            && !self.authors.is_empty()
+            && self
+                .authors
+                .iter()
+                .all(|author| !author.trim().is_empty())
+            && !self.abstract_text.trim().is_empty()
+            && !self.repository_url.trim().is_empty()
+    }
+}
 
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -1547,6 +1591,40 @@ fn publication_requests_have_unique_identifiers() {
             ],
         );
     }
+ #[test]
+    fn prepares_complete_papers_with_code_submission() {
+        let mut request = PublicationRequest::new(
+            PublicationTarget::PapersWithCode,
+            complete_package(),
+            complete_metadata(),
+        );
+
+        request.approve_by_mudebbir();
+
+        assert!(request.is_ready());
+
+        let submission =
+            PapersWithCodeSubmission::from_request(
+                &request,
+                "https://github.com/zanistarast/\
+zanistarast-papers",
+            );
+
+        assert!(submission.is_ready());
+
+        assert_eq!(
+            submission.title,
+            "Rasterast Verification",
+        );
+
+        assert_eq!(
+            submission.authors,
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+        );
+    }
+
 }
 
 
