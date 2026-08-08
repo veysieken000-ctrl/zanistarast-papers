@@ -153,6 +153,44 @@ impl ZenodoMetadata {
             && !self.version.trim().is_empty()
     }
 }
+
+/// Zenodo'ya gönderilmeden önce hazırlanan
+/// yayın taslağını temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    PartialEq,
+    Eq,
+)]
+pub struct ZenodoDeposition {
+    pub metadata: ZenodoMetadata,
+    pub files: Vec<String>,
+}
+
+impl ZenodoDeposition {
+    /// Zenodo yayın taslağı oluşturur.
+    pub fn new(
+        metadata: ZenodoMetadata,
+        files: Vec<String>,
+    ) -> Self {
+        Self {
+            metadata,
+            files,
+        }
+    }
+
+    /// Taslağın Zenodo'ya gönderilmeye
+    /// hazır olup olmadığını bildirir.
+    pub fn is_ready(&self) -> bool {
+        self.metadata.is_complete()
+            && !self.files.is_empty()
+            && self
+                .files
+                .iter()
+                .all(|file| !file.trim().is_empty())
+    }
+}
+
 /// Yayın işleminin başarısızlık nedenleri.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum PublicationError {
@@ -1029,6 +1067,40 @@ fn publication_requests_have_unique_identifiers() {
             );
 
         assert!(!zenodo.is_complete());
+    }
+ #[test]
+    fn complete_zenodo_deposition_is_ready() {
+        let metadata = PublicationMetadata::new(
+            "Rasterast Verification",
+            vec![
+                "Veysi yê MALA SAF".to_string(),
+            ],
+            "Deterministic verification for academic publication.",
+            vec![
+                "Rasterast".to_string(),
+                "Zanistarast".to_string(),
+            ],
+            "tr",
+            "CC-BY-4.0",
+            "1.0.0",
+        );
+
+        let zenodo_metadata =
+            ZenodoMetadata::from_publication_metadata(
+                &metadata,
+            );
+
+        let deposition = ZenodoDeposition::new(
+            zenodo_metadata,
+            vec![
+                "rasterast-verification.pdf".to_string(),
+                "rasterast-verification.tex".to_string(),
+                "rasterast-verification.bib".to_string(),
+            ],
+        );
+
+        assert!(deposition.is_ready());
+        assert_eq!(deposition.files.len(), 3);
     }
 
 }
