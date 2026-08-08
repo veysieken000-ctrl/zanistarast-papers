@@ -67,6 +67,8 @@ impl SecurityReview {
         self.status
             == SecurityReviewStatus::RequiresMudebbirApproval
     }
+    }
+
 /// Korunan bir metnin değişiklik öncesi ve güncel
 /// SHA-256 bütünlük değerlerini temsil eder.
 #[derive(
@@ -119,7 +121,7 @@ impl OriginalTextIntegrityRecord {
     }
 }
 
-}
+
 
 
 
