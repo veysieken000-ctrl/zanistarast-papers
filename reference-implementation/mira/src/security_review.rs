@@ -331,6 +331,50 @@ impl MudebbirApprovalRecord {
     }
 }
 
+/// Zanistarast güvenlik ve doğrulama zincirindeki
+/// doğrulanmış bir olayın kalıcı kayıt modelidir.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct TruthLogRecord {
+    pub subject: String,
+    pub event: String,
+    pub verified: bool,
+}
+
+impl TruthLogRecord {
+    /// Yeni bir Truth Log kaydı oluşturur.
+    pub fn new(
+        subject: impl Into<String>,
+        event: impl Into<String>,
+        verified: bool,
+    ) -> Self {
+        Self {
+            subject: subject.into(),
+            event: event.into(),
+            verified,
+        }
+    }
+
+    /// Truth Log kaydının zorunlu bilgilerinin
+    /// eksiksiz olup olmadığını bildirir.
+    pub fn is_valid(&self) -> bool {
+        !self.subject.trim().is_empty()
+            && !self.event.trim().is_empty()
+    }
+
+    /// Kaydın doğrulanmış bir olayı temsil edip
+    /// etmediğini bildirir.
+    pub fn is_verified(&self) -> bool {
+        self.is_valid() && self.verified
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
