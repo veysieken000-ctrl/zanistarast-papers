@@ -142,6 +142,32 @@ impl OriginalTextIntegrityRecord {
     }
 }
 
+/// Korunan bir metnin bütünlük doğrulama sonucunu temsil eder.
+#[derive(
+    Debug,
+    Clone,
+    Serialize,
+    Deserialize,
+    PartialEq,
+    Eq,
+)]
+pub struct OriginalTextIntegrityReport {
+    pub relative_path: String,
+    pub valid: bool,
+    pub changed: bool,
+}
+
+impl OriginalTextIntegrityRecord {
+    /// Mevcut bütünlük kaydından doğrulama raporu üretir.
+    pub fn integrity_report(&self) -> OriginalTextIntegrityReport {
+        OriginalTextIntegrityReport {
+            relative_path: self.relative_path.clone(),
+            valid: self.is_valid(),
+            changed: self.has_changed(),
+        }
+    }
+}
+
 
 
 
